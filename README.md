@@ -5,7 +5,13 @@ _Pybind11 bindings for
 
 ## Quickstart
 
-Initialize all submodules:
+Install with PyPI:
+
+```bash
+pip install git+https://github.com/aarnphm/whispercpp.git
+```
+
+For local setup, initialize all submodules:
 
 ```bash
 git submodule update --init --recursive
@@ -79,5 +85,4 @@ from whispercpp import api
 
 ## Development
 
-Recommended to use [bazel](https://bazel.build/). A `Makefile` is also provided
-for convenience.
+See [DEVELOPMENT.md](./DEVELOPMENT.md)

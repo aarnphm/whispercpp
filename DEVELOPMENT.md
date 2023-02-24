@@ -8,3 +8,6 @@ Start new shell:
 ```bash
 nix-shell
 ```
+
+Recommended to use [bazel](https://bazel.build/). A `Makefile` is also provided
+for convenience.
