@@ -4,7 +4,7 @@ _Pybind11 bindings for [whisper.cpp](https://github.com/ggerganov/whisper.cpp.gi
 
 ## Quickstart
 
-Install with PyPI:
+Install with Pip:
 
 ```bash
 pip install git+https://github.com/aarnphm/whispercpp.git
