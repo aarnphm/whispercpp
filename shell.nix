@@ -15,6 +15,7 @@ let
     glibcLocales
     coreutils
     git
+    bazel
   ];
 
   requiredPackages = basePackages
@@ -44,7 +45,8 @@ stdenv.mkDerivation rec {
     else
       source venv/bin/activate
     fi
-    pip install -r ./requirements/dev-requirements.lock.txt
+    pip install -r ./requirements/pypi.txt
+    pip install -e .
   '';
   enableParallelBuilding = true;
 

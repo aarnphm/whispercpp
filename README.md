@@ -1,6 +1,7 @@
 # whispercpp
 
-_Pybind11 bindings for [whisper.cpp](https://github.com/ggerganov/whisper.cpp.git)_
+_Pybind11 bindings for
+[whisper.cpp](https://github.com/ggerganov/whisper.cpp.git)_
 
 ## Quickstart
 
@@ -13,7 +14,7 @@ git submodule update --init --recursive
 Build the wheel:
 
 ```bash
-python setup.py bdist_wheel
+python3 -m build -w
 ```
 
 Install the wheel:
@@ -62,6 +63,14 @@ w.transcribe(arr)
 
 The Pybind11 bindings supports all of the features from whisper.cpp, that takes
 inspiration from [whisper-rs](https://github.com/tazz4843/whisper-rs)
+
+The binding can also be used via `api`:
+
+```python
+from whispercpp import api
+
+# Binding directly fromn whisper.cpp
+```
 
 ## TODO
 
