@@ -15,7 +15,7 @@ def update_submodules(directory: str):
 
 
 extension = "whispercpp/api.so"
-package_data = {"whispercpp": ["py.typed", "api.so"]}
+package_data = {"whispercpp": ["py.typed", "api.so", "*.pyi"]}
 ext_modules = []
 if psutil.LINUX:
     ext_modules = [Extension("whispercpp.api", [extension])]

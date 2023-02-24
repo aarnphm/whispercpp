@@ -8,18 +8,11 @@ on:
     branches:
       - main
     paths:
+      - "src/**"
       - "requirements/**"
-      - "src/bentoml/**"
-      - "src/bentoml_cli/**"
-      - "examples/**"
-      - "tests/**"
-      - "docs/**"
       - ".github/actions/setup-repo/"
-      - ".github/actions/tests-cov/"
-      - "codecov.yml"
       - "pyproject.toml"
       - ".github/workflows/ci.yml"
-      - "scripts/ci/config.yml"
   schedule:
     - cron: "0 6 * * 1/2" # Every other day 6AM UTC
 
@@ -30,9 +23,6 @@ concurrency:
 env:
   LINES: 200
   COLUMNS: 200
-  BENTOML_DEBUG: True
-  BENTOML_DO_NOT_TRACK: True
-  PYTEST_PLUGINS: bentoml.testing.pytest.plugin
 
 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#defaultsrun
 defaults:

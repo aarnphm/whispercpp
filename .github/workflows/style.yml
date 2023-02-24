@@ -12,8 +12,8 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - "src/**"
       - "requirements/**"
-      - "tests/**"
       - ".github/actions/**"
       - "pyproject.toml"
       - ".github/workflows/style.yml"
