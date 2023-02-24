@@ -7,6 +7,7 @@ import psutil
 from setuptools import setup
 from setuptools import Extension
 from wheel.bdist_wheel import bdist_wheel
+from setuptools.command.build_py import build_py
 
 
 def update_submodules(directory: str):
@@ -15,34 +16,48 @@ def update_submodules(directory: str):
 
 
 extension = "whispercpp/api.so"
-package_data = {"whispercpp": ["py.typed", "api.so", "*.pyi"]}
 ext_modules = []
 if psutil.LINUX:
     ext_modules = [Extension("whispercpp.api", [extension])]
 
 
+def compile_ext():
+    wd = path.dirname(path.abspath(__file__))
+    target = path.join(wd, "src", "whispercpp", "api.so")
+    if not path.exists(target):
+        update_submodules(wd)
+        print("Building pybind11 extension...")
+        bazel_script = Path(wd) / "tools" / "bazel"
+        check_output([bazel_script.__fspath__(), "build", ":api.so"], cwd=wd)
+        out = path.join(
+            check_output([bazel_script.__fspath__(), "info", "bazel-bin"])
+            .decode("utf-8")
+            .strip(),
+            "api.so",
+        )
+        shutil.copy2(out, target)
+
+
 class BdistWheel(bdist_wheel):
     def run(self):
-        wd = path.dirname(path.abspath(__file__))
-        target = path.join(wd, "src", "whispercpp", "api.so")
-        if not path.exists(target):
-            update_submodules(wd)
-            print("Building pybind11 extension...")
-            bazel_script = Path(wd).parent.parent / "tools" / "bazel"
-            check_output([bazel_script, "build", ":api.so"], cwd=wd)
-            out = path.join(
-                check_output([bazel_script, "info", "bazel-bin"])
-                .decode("utf-8")
-                .strip(),
-                "api.so",
-            )
-            shutil.copy2(out, target)
+        compile_ext()
         print("Building wheel...")
         bdist_wheel.run(self)
 
 
+class BuildPy(build_py):
+    def run(self):
+        compile_ext()
+        print("Installing package...")
+        build_py.run(self)
+
+
 setup(
-    package_data=package_data,
-    cmdclass={"bdist_wheel": BdistWheel},
+    includ_dirs=[
+        "./extern/whispercpp",
+        "./extern/pybind11/include",
+        "./src/whispercpp/",
+    ],
+    cmdclass={"bdist_wheel": BdistWheel, "build_py": BuildPy},
     ext_modules=ext_modules,
 )
