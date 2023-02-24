@@ -1,3 +1,4 @@
+psutil
 build
 attrs>=22.1.0
 librosa

@@ -29,14 +29,12 @@ classifiers = [
 [tool.setuptools.exclude-package-data]
 whispercpp = ["*.cc", "*.h", "BUILD", "*.o"]
 
-[tool.pytest.ini_options]
-addopts = ["-rfEX", "-pbentoml.testing.pytest.plugin"]
-python_files = ["test_*.py", "*_test.py"]
-testpaths = ["tests"]
-
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["whispercpp"]
+include = ["whispercpp*"]
+
+[tool.setuptools.package-data]
+whispercpp = ["py.typed", "*.so", "*.pyi"]
 
 [tool.ruff]
 # similar to black's
