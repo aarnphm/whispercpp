@@ -1,6 +1,6 @@
 # whispercpp
 
-_Pybind11 bindings for whisper.cpp_
+_Pybind11 bindings for [whisper.cpp](https://github.com/ggerganov/whisper.cpp.git)_
 
 ## Quickstart
 
