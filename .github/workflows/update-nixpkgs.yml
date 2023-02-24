@@ -1,0 +1,31 @@
+name: Update niv-managed dependencies
+on:
+  workflow_dispatch:
+  schedule:
+    # run this every day at 12:00AM UTC
+    - cron: "0 0 1/7 * *"
+
+jobs:
+  niv-updater:
+    name: "Create PR for niv-managed dependencies"
+    if: github.repository_owner == 'aarnphm'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install jq, curl
+        run: sudo apt-get install -y jq curl
+      - name: niv-updater-action
+        uses: knl/niv-updater-action@v12
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          pull_request_base: "main"
+          niv_version: "master"
+          keep_updating: true
+          branch_prefix: "chore/"
+          labels: |
+            nix/dependencies
