@@ -1,24 +1,56 @@
+[build-system]
+requires = ["setuptools>=65", "setuptools_scm[toml]>=7", "wheel", "psutil"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "whispercpp"
+description = "whispercpp: Pybind11 bindings for whisper.cpp"
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.8"
+version = "0.0.1"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+]
+
+[tool.setuptools.exclude-package-data]
+whispercpp = ["*.cc", "*.h", "BUILD", "*.o"]
+
 [tool.pytest.ini_options]
-addopts = ["-rfEX", "--cov-report=", "--cov-append"]
+addopts = ["-rfEX", "-pbentoml.testing.pytest.plugin"]
 python_files = ["test_*.py", "*_test.py"]
 testpaths = ["tests"]
 
-[tool.pylint.main]
-recursive = true
-enable = ["c-extension-no-member"]
-evaluation = "10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)"
-msg-template = "{msg_id}:{symbol} [{line:0>3d}:{column:0>2d}] {obj}: {msg}"
-output-format = "colorized"
-score = true
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["whispercpp"]
 
-[tool.pylint.classes]
-valid-metaclass-classmethod-first-arg = ["cls", "mcls", "kls"]
+[tool.ruff]
+# similar to black's
+line-length = 88
+# We ignore E501 (line too long) here because we keep user-visible strings on one line.
+ignore = ["E501"]
+exclude = [ "bazel-*/", "venv", "typings" ]
+target-version = "py310"
 
-[tool.pylint.logging]
-logging-format-style = "old" # using %s formatter for logging (performance-related)
+[tool.ruff.pydocstyle]
+convention = "google"
 
-[tool.pylint.miscellaneous]
-notes = ["FIXME", "XXX", "TODO", "NOTE", "WARNING"]
+[tool.ruff.isort]
+lines-after-imports = 2
 
 [tool.black]
 line-length = 88

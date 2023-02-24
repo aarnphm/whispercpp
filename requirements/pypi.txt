@@ -1,0 +1,4 @@
+build
+attrs>=22.1.0
+librosa
+ffmpeg-python==0.2.0
