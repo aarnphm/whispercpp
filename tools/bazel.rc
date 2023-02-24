@@ -1,0 +1,9 @@
+test --test_output=errors
+
+# Windows requires these for multi-python support:
+build --enable_runfiles
+startup --windows_enable_symlinks
+
+# Dynamic link cause issues like: `dyld: malformed mach-o: load commands size (59272) > 32768`
+# https://github.com/bazelbuild/bazel/issues/9190
+build:macos --dynamic_mode=off

@@ -1,0 +1,12 @@
+-r base-requirements.in
+hatch
+black[jupyter]
+codecov
+coverage
+isort
+pylint
+pytest-cov
+pytest
+pytest-xdist[psutil]
+pytest-asyncio
+build[virtualenv]

@@ -1,0 +1,42 @@
+name: Setup repo
+
+description: Setup repo with all features on CI
+
+inputs:
+  python-version:
+    description: "Python version"
+    required: true
+    default: "3.10"
+  architecture:
+    description: "Which architecture to run on"
+    required: true
+    default: x64
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+        architecture: ${{ inputs.architecture }}
+    - name: Get pip cache dir
+      id: pip-cache
+      shell: bash
+      run: echo "directory=$(pip cache dir)" >> $GITHUB_OUTPUT
+    - name: Get cache key prefix
+      id: get-cache-key-prefix
+      shell: bash
+      run: |
+        echo "prefix=$ImageOS-$ImageVersion" >> $GITHUB_OUTPUT
+    - name: Cache PyPI
+      id: cache-pypi
+      uses: actions/cache@v3.0.10
+      with:
+        key: ${{ steps.get-cache-key-prefix.outputs.prefix }}-pypi-${{ hashFiles('requirements/*-requirements.txt') }}
+        path: ${{ steps.pip-cache.outputs.directory }}
+        restore-keys: |
+          ${{ steps.get-cache-key-prefix.outputs.prefix }}-pypi--
+    - name: Install development dependencies
+      shell: bash
+      run: python -m pip install -r requirements/dev-requirements.lock.txt

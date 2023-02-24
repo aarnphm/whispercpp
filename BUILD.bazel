@@ -1,0 +1,66 @@
+load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier")
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_python//python:pip.bzl", "compile_pip_requirements")
+
+buildifier(
+    name = "buildifier",
+)
+
+
+compile_pip_requirements(
+    name = "dev-requirements",
+    requirements_in = "//requirements:dev-requirements.in",
+    requirements_txt = "//requirements:dev-requirements.lock.txt",
+)
+
+# This rule adds a convenient way to update the requirements.txt
+# lockfile based on the requirements.in.
+# Note that this rules will be used to distribute package with bazel.
+compile_pip_requirements(
+    name = "requirements",
+    requirements_in = "//requirements:base-requirements.in",
+    requirements_txt = "//requirements:base-requirements.lock.txt",
+)
+
+# The requirements.bzl file is generated with a reference to the interpreter for the host platform.
+# In order to check in a platform-agnostic file, we have to replace that reference with the symbol
+# loaded from our python toolchain.
+genrule(
+    name = "platform-agnostic",
+    srcs = ["@ecosystem//:requirements.bzl"],
+    outs = ["requirements.bzl"],
+    cmd = " | ".join([
+        "cat $<",
+        # Insert our load statement after the existing one so we don't produce a file with buildifier warnings
+        """sed -e '/^load.*/i\\'$$'\\n''load("@python310//:defs.bzl", "interpreter")'""",
+        """tr "'" '"' """,
+        """sed 's#"@python310_.*//:bin/python3"#interpreter#' >$@""",
+    ]),
+)
+
+write_file(
+    name = "gen-update",
+    out = "update.sh",
+    content = [
+        "#!/usr/bin/env bash",
+        # Bazel gives us a way to access the source folder!
+        "cd $BUILD_WORKSPACE_DIRECTORY",
+        "cp -fv bazel-bin/requirements.bzl requirements.bzl",
+    ],
+)
+
+sh_binary(
+    name = "vendor-requirements",
+    srcs = ["update.sh"],
+    data = [":platform-agnostic"],
+)
+
+# Similarly ensures that the requirements.bzl file is updated
+# based on the requirements.txt lockfile.
+diff_test(
+    name = "test-vendor",
+    failure_message = "Please run: bazel run //:vendor-requirements",
+    file1 = "//:requirements.bzl",
+    file2 = ":platform-agnostic",
+)
