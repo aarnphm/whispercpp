@@ -42,6 +42,9 @@ class BdistWheel(bdist_wheel):
 
 
 setup(
+    include_package_data=True,
+    packages=["whispercpp"],
+    package_dir={"": "src"},
     package_data=package_data,
     cmdclass={"bdist_wheel": BdistWheel},
     ext_modules=ext_modules,
