@@ -1,0 +1,14 @@
+{
+    "nixpkgs": {
+        "branch": "master",
+        "description": "Nix Packages collection",
+        "homepage": "",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "7d0ed7f2e5aea07ab22ccb338d27fbe347ed2f11",
+        "sha256": "0v27szwci00zi1gpznqs1lhalvhfhh19gxd8yb8brxi2mb1kc0bb",
+        "type": "tarball",
+        "url": "https://github.com/NixOS/nixpkgs/archive/7d0ed7f2e5aea07ab22ccb338d27fbe347ed2f11.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    }
+}
