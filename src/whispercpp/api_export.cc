@@ -66,10 +66,12 @@ PYBIND11_MODULE(api, m) {
   py::class_<Whisper>(m, "WhisperPreTrainedModel")
       .def(py::init<>())
       .def(py::init<const char *>())
-      .def_property_readonly_static("context",
-                                    [](Whisper &self) { return self.ctx; })
-      .def_property_readonly_static("params",
-                                    [](Whisper &self) { return self.params; })
+      .def_property(
+          "context", [](Whisper &self) { return self.ctx; },
+          [](Whisper &self, Context &ctx) { self.ctx = ctx; })
+      .def_property(
+          "params", [](Whisper &self) { return self.params; },
+          [](Whisper &self, FullParams &params) { self.params = params; })
       .def("transcribe", &Whisper::transcribe, "data"_a, "num_proc"_a = 1);
 }
 }; // namespace whisper
