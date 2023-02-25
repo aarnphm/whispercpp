@@ -3,9 +3,7 @@ from os import path
 from pathlib import Path
 from subprocess import check_output
 
-import psutil
 from setuptools import setup
-from setuptools import Extension
 from wheel.bdist_wheel import bdist_wheel
 from setuptools.command.build_py import build_py
 
@@ -16,9 +14,6 @@ def update_submodules(directory: str):
 
 
 extension = "whispercpp/api.so"
-ext_modules = []
-if psutil.LINUX:
-    ext_modules = [Extension("whispercpp.api", [extension])]
 
 
 def compile_ext():
@@ -59,5 +54,4 @@ setup(
         "./src/whispercpp/",
     ],
     cmdclass={"bdist_wheel": BdistWheel, "build_py": BuildPy},
-    ext_modules=ext_modules,
 )
