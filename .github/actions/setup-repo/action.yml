@@ -54,8 +54,9 @@ runs:
         touch ./requirements/bazel-pypi.lock.txt
         bazel run //requirements:pypi.update
         python -m pip install -r requirements/pypi.txt
-        # Make XDG_DATA_HOME dir
-        mkdir -p $HOME/.local/share/whispercpp
+    - name: Make directory
+      shell: bash
+      run: mkdir -p "$HOME/.local/share/whispercpp"
     - name: Setup node
       uses: actions/setup-node@v3
       with:
