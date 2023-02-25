@@ -12,7 +12,6 @@ if t.TYPE_CHECKING:
     import numpy as np
     import ffmpeg
     from numpy.typing import NDArray
-    from _pytest.capture import CaptureFixture
 else:
     np = LazyLoader("np", globals(), "numpy")
     ffmpeg = LazyLoader("ffmpeg", globals(), "ffmpeg")
@@ -38,8 +37,7 @@ def test_invalid_models():
         Whisper.from_pretrained("whisper_v0.1")
 
 
-def test_from_pretrained(capsys: CaptureFixture[str]):
-    capsys.readouterr()
+def test_from_pretrained():
     m = Whisper.from_pretrained("tiny.en")
     assert (
         " And so my fellow Americans ask not what your country can do for you ask what you can do for your country"

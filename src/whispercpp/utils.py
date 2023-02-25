@@ -13,7 +13,9 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-_data_home = environ.get("XDG_DATA_HOME", path.expanduser("~/.local/share"))
+_data_home = environ.get(
+    "XDG_DATA_HOME", path.expanduser(path.expandvars("$HOME/.local/share"))
+)
 MODELS_DIR = Path(_data_home) / "whispercpp"
 
 MODELS_URL = {
