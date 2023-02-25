@@ -51,6 +51,7 @@ runs:
     - name: Install development dependencies
       shell: bash
       run: |
+        touch ./requirements/bazel-pypi.lock.txt
         bazel run //requirements:pypi.update
         python -m pip install -r requirements/pypi.txt
     - name: Setup node

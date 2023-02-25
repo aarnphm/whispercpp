@@ -4,7 +4,7 @@ set -e
 
 # courtesy of https://github.com/grpc/grpc
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
-GIT_ROOT="$(cd -- "${SCRIPT_DIR}/.." &> /dev/null && pwd)"
+GIT_ROOT="$(git rev-parse --show-toplevel)"
 
 # DISABLE_BAZEL_WRAPPER can be set to eliminate the wrapper logic
 if [ "${DISABLE_BAZEL_WRAPPER}" != "" ] && [ "${OVERRIDE_BAZEL_VERSION}" == "" ]; then
