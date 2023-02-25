@@ -35,7 +35,7 @@ MODELS_URL = {
 }
 
 
-def download_model(model_name: str) -> str:
+def download_model(model_name: str) -> str:  # pragma: no cover
     models_dirs = path.join(_data_home, "whispercpp")
     if not path.exists(models_dirs):
         makedirs(models_dirs, exist_ok=True)
@@ -100,7 +100,7 @@ class LazyLoader(types.ModuleType):
         self.__dict__.update(module.__dict__)
         return module
 
-    def __getattr__(self, item: t.Any) -> t.Any:
+    def __getattr__(self, item: t.Any) -> t.Any:  # pragma: no cover
         if self._module is None:
             self._module = self._load()
         return getattr(self._module, item)

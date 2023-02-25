@@ -8,9 +8,6 @@ from .utils import MODELS_URL
 from .utils import download_model
 
 if _t.TYPE_CHECKING:
-    import numpy as np
-    from numpy.typing import NDArray
-
     from . import api
 else:
     api = LazyLoader("api", globals(), "whispercpp.api")
@@ -19,10 +16,6 @@ else:
 
 @_dataclass
 class Whisper:
-    context: api.Context
-    params: api.Params
-    transcribe: _t.Callable[[NDArray[np.float32], int | None], str]
-
     def __init__(self, *args: _t.Any, **kwargs: _t.Any):
         raise RuntimeError(
             "Using '__init__()' is not allowed. Use 'from_pretrained()' instead."

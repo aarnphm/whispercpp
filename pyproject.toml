@@ -37,9 +37,32 @@ include = ["whispercpp*"]
 whispercpp = ["py.typed", "*.so", "*.pyi"]
 
 [tool.pytest.ini_options]
-addopts = ["-rfEX", "-vvv", "--cov=src/whispercpp"]
+addopts = ["-rfEX", "-vvv", "--cov=src/whispercpp", "--cov-report=term-missing"]
 python_files = ["test_*.py", "*_test.py"]
 testpaths = ["tests"]
+
+[tool.coverage.paths]
+source = ["src"]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+source = ["src/whispercpp/"]
+
+[tool.coverage.report]
+show_missing = true
+precision = 2
+exclude_lines = [
+    "\\#\\s*pragma: no cover",
+    "^\\s*def __repr__",
+    "^\\s*raise AssertionError",
+    "^\\s*raise NotImplementedError",
+    "^\\s*except ImportError",
+    "if __name__ == .__main__.:",
+    "^\\s*if ((_)?t\\.)?TYPE_CHECKING:",
+    "^\\s*@(t\\.)?overload( |$)",
+    "@(abc\\.)?abstractmethod",
+]
 
 [tool.ruff]
 # similar to black's

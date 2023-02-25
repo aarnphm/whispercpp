@@ -19,7 +19,8 @@ else:
 ROOT = Path(__file__).parent.parent
 
 
-def preprocess(file: Path, sample_rate=16000) -> NDArray[np.float32]:
+def preprocess(file: Path, sample_rate: int = 16000) -> NDArray[np.float32]:
+    y: NDArray[np.float32]
     try:
         y, _ = (
             ffmpeg.input(file.__fspath__(), threads=0)
@@ -35,6 +36,11 @@ def preprocess(file: Path, sample_rate=16000) -> NDArray[np.float32]:
 def test_invalid_models():
     with pytest.raises(RuntimeError):
         Whisper.from_pretrained("whisper_v0.1")
+
+
+def test_forbid_init():
+    with pytest.raises(RuntimeError):
+        Whisper()
 
 
 def test_from_pretrained():

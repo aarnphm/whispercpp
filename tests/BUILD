@@ -5,3 +5,8 @@ py_test(
     srcs = ["export_test.py"],
     data = ["//samples:jfk.wav"],
 )
+
+py_test(
+    name = "utils",
+    srcs = ["utils_test.py"],
+)
