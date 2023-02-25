@@ -53,5 +53,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install bindings
         run: pip install .
+      - uses: FedericoCarboni/setup-ffmpeg@v2
+        id: setup-ffmpeg
       - name: Run python${{ matrix.python-version }} tests
         run: bazel test //tests/...
