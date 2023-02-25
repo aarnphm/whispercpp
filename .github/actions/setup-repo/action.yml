@@ -24,19 +24,44 @@ runs:
       id: pip-cache
       shell: bash
       run: echo "directory=$(pip cache dir)" >> $GITHUB_OUTPUT
+    - uses: bazelbuild/setup-bazelisk@v2
     - name: Get cache key prefix
       id: get-cache-key-prefix
       shell: bash
       run: |
         echo "prefix=$ImageOS-$ImageVersion" >> $GITHUB_OUTPUT
-    - name: Cache PyPI
-      id: cache-pypi
+    - name: PyPI cache
+      id: pypi-cache
       uses: actions/cache@v3.0.10
       with:
-        key: ${{ steps.get-cache-key-prefix.outputs.prefix }}-pypi-${{ hashFiles('requirements/*-requirements.txt') }}
+        key: ${{ steps.get-cache-key-prefix.outputs.prefix }}-pypi
         path: ${{ steps.pip-cache.outputs.directory }}
         restore-keys: |
-          ${{ steps.get-cache-key-prefix.outputs.prefix }}-pypi--
+          ${{ steps.get-cache-key-prefix.outputs.prefix }}-pypi-
+    - name: Bazel cache
+      id: bazel-cache
+      uses: actions/cache@v3.0.10
+      with:
+        key: ${{ steps.get-cache-key-prefix.outputs.prefix }}-bazel
+        path: |
+          ~/.cache/bazel
+          tools/
+        restore-keys: |
+          ${{ steps.get-cache-key-prefix.outputs.prefix }}-bazel-
     - name: Install development dependencies
       shell: bash
-      run: python -m pip install -r requirements/*.txt
+      run: |
+        touch ./requirements/bazel-pypi.lock.txt
+        bazel run //requirements:pypi.update
+        python -m pip install -r requirements/pypi.txt
+    - name: Make directory
+      shell: bash
+      run: mkdir -p "$HOME/.local/share/whispercpp"
+    - name: Setup node
+      uses: actions/setup-node@v3
+      with:
+        node-version: "17"
+    - name: Install pyright
+      shell: bash
+      run: npm install -g npm@^7 pyright
+

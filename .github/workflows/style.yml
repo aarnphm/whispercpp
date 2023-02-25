@@ -28,7 +28,7 @@ defaults:
     shell: bash --noprofile --norc -exo pipefail {0}
 
 jobs:
-  codestyle:
+  check:
     runs-on: ubuntu-latest
     if: "!github.event.repository.fork" # Don't run on fork repository
     timeout-minutes: 5
@@ -51,3 +51,12 @@ jobs:
           fetch-depth: 0 # fetch all tags and branches
       - name: Setup CI
         uses: ./.github/actions/setup-repo
+      - name: Format check
+        run: |
+          black --check src
+          isort --check .
+      - name: Lint check
+        run: ruff check src 
+      - name: Type check
+        if: ${{ github.event_name == 'pull_request' }}
+        run: git diff --name-only --diff-filter=AM "origin/$GITHUB_BASE_REF" -z -- '*.py{,i}' | xargs -0 --no-run-if-empty pyright

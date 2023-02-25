@@ -2,10 +2,19 @@
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 
 def internal_deps():
     """Load internal dependencies that are used within the BentoML projects."""
+
+    # bentoml/plugins
+    maybe(
+        git_repository,
+        name = "com_github_bentoml_plugins",
+        remote = "https://github.com/bentoml/plugins.git",
+        commit = "a59d762c6ec292869bfcc7491c9235a8fbc81009",
+        shallow_since = "1677316749 -0800",
+    )
 
     # whisper.cpp
     maybe(
@@ -18,6 +27,7 @@ def internal_deps():
         remote = "https://github.com/ggerganov/whisper.cpp.git",
         shallow_since = "1676824501 +0200",
     )
+
     maybe(
         http_archive,
         name = "rules_cc",
@@ -63,8 +73,7 @@ def internal_deps():
     )
 
     # python rules
-    maybe(
-        http_archive,
+    http_archive(
         name = "rules_python",
         sha256 = "29a801171f7ca190c543406f9894abf2d483c206e14d6acbd695623662320097",
         strip_prefix = "rules_python-0.18.1",

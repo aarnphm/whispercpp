@@ -36,6 +36,11 @@ include = ["whispercpp*"]
 [tool.setuptools.package-data]
 whispercpp = ["py.typed", "*.so", "*.pyi"]
 
+[tool.pytest.ini_options]
+addopts = ["-rfEX", "-vvv", "--cov=src/whispercpp"]
+python_files = ["test_*.py", "*_test.py"]
+testpaths = ["tests"]
+
 [tool.ruff]
 # similar to black's
 line-length = 88
@@ -81,7 +86,7 @@ force_alphabetical_sort_within_sections = true
 skip_glob = ["test/*", "venv/*", "lib/*", "bazel-*"]
 
 [tool.pyright]
-pythonVersion = "3.10"
+pythonVersion = "3.11"
 exclude = ["bazel-*", "extern"]
 typeCheckingMode = "strict"
 analysis.useLibraryCodeForTypes = true
