@@ -1,1 +1,4 @@
 vendor/
+extern/
+nix/
+venv/

@@ -28,7 +28,7 @@ defaults:
     shell: bash --noprofile --norc -exo pipefail {0}
 
 jobs:
-  codestyle:
+  check:
     runs-on: ubuntu-latest
     if: "!github.event.repository.fork" # Don't run on fork repository
     timeout-minutes: 5
