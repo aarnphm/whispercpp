@@ -8,15 +8,15 @@ import importlib
 import urllib.request as request
 from os import path
 from os import environ
-from pathlib import Path
+from os import makedirs
 
 logger = logging.getLogger(__name__)
 
 
 _data_home = environ.get(
-    "XDG_DATA_HOME", path.expanduser(path.expandvars("$HOME/.local/share"))
+    "XDG_DATA_HOME",
+    path.join(path.expanduser(path.expandvars("$HOME")), ".local", "share"),
 )
-MODELS_DIR = Path(_data_home) / "whispercpp"
 
 MODELS_URL = {
     model_type: f"https://huggingface.co/datasets/ggerganov/whisper.cpp/resolve/main/ggml-{model_type}.bin"
@@ -35,12 +35,15 @@ MODELS_URL = {
 }
 
 
-def download_model(model_name: str) -> Path:
-    model_path = MODELS_DIR / f"ggml-{model_name}.bin"
-    if model_path.exists():
-        return model_path
-    print(f"Downloading model {model_name}. It may take a while...")
-    request.urlretrieve(MODELS_URL[model_name], model_path)
+def download_model(model_name: str) -> str:
+    models_dir = path.join(_data_home, "whispercpp")
+    if not path.exists(models_dir):
+        makedirs(model_dirs, exist_ok=True)
+
+    model_path = path.join(models_dir, f"ggml-{model_name}.bin")
+    if not path.exists(model_path):
+        print(f"Downloading model {model_name}. It may take a while...")
+        request.urlretrieve(MODELS_URL[model_name], model_path)
     return model_path
 
 
