@@ -36,11 +36,11 @@ MODELS_URL = {
 
 
 def download_model(model_name: str) -> str:
-    models_dir = path.join(_data_home, "whispercpp")
-    if not path.exists(models_dir):
-        makedirs(model_dirs, exist_ok=True)
+    models_dirs = path.join(_data_home, "whispercpp")
+    if not path.exists(models_dirs):
+        makedirs(models_dirs, exist_ok=True)
 
-    model_path = path.join(models_dir, f"ggml-{model_name}.bin")
+    model_path = path.join(models_dirs, f"ggml-{model_name}.bin")
     if not path.exists(model_path):
         print(f"Downloading model {model_name}. It may take a while...")
         request.urlretrieve(MODELS_URL[model_name], model_path)
