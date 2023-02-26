@@ -12,8 +12,8 @@ def internal_deps():
         git_repository,
         name = "com_github_bentoml_plugins",
         remote = "https://github.com/bentoml/plugins.git",
-        commit = "a59d762c6ec292869bfcc7491c9235a8fbc81009",
-        shallow_since = "1677316749 -0800",
+        commit = "fa1eddd13e1ef767abf55cced896554f7cbd6fb9",
+        shallow_since = "1677395503 -0800",
     )
 
     # whisper.cpp
