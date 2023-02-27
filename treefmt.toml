@@ -1,0 +1,20 @@
+# One CLI to format the code tree - https://github.com/numtide/treefmt
+
+[formatter.python]
+# Formatter to run
+command = "sh"
+options = [
+"-eucx",
+"""
+black .
+isort .
+""",
+"--"
+]
+includes = [ "*.py" ]
+
+[formatter.nix]
+# Formatter to run
+command = "nixfmt"
+includes = [ "*.nix" ]
+excludes = ["nix/sources.nix"]

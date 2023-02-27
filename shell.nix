@@ -8,21 +8,13 @@ let
   lib = import <nixpkgs/lib>;
   inherit (lib) optional optionals;
 
-  mach-nix = import (pkgs.fetchFromGitHub {
-    owner = "DavHau";
-    repo = "mach-nix";
-    rev = "70daee1b200c9a24a0f742f605edadacdcb5c998";
-    sha256 = "0krc4yhnpbzc4yhja9frnmym2vqm5zyacjnqb3fq9z9gav8vs9ls";
-  }) { inherit pkgs; };
-
-  pyEnv = mach-nix.mkPython {
-    requirements = builtins.readFile ./requirements/pypi.txt;
-  };
-
   basePackages = with pkgs; [
-    pyEnv
+      (python310.withPackages (ps: with ps; [ pynvim pip virtualenv ipython ]))
+      
     git
-    bazel
+      bazel_6
+      nixfmt
+      treefmt
     which
 
     # Without this, we see a whole bunch of warnings about LANG, LC_ALL and locales in general.
@@ -46,6 +38,17 @@ in stdenv.mkDerivation rec {
   buildInputs = [ env ];
 
   enableParallelBuilding = true;
+
+  shellHook = ''
+    if [[ ! -d venv ]]; then
+      python -m virtualenv venv --download
+      source venv/bin/activate
+    else
+      source venv/bin/activate
+    fi
+
+    pip install -r ./requirements/bazel-pypi.lock.txt
+  '';
 
   LOCALE_ARCHIVE =
     if stdenv.isLinux then "${glibcLocales}/lib/locale/locale-archive" else "";
