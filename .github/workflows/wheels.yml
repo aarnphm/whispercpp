@@ -33,12 +33,9 @@ jobs:
           - ["3.9", "cp39"]
           - ["3.10", "cp310"]
           - ["3.11", "cp311"]
-        os: [ubuntu-latest, macos-latest]
         platform:
           - [ubuntu-latest, manylinux_x86_64]
-          - [ubuntu-latest, musllinux_x86_64]
           - [ubuntu-latest, manylinux_aarch64]
-          - [ubuntu-latest, musllinux_aarch64]
           - [macos-latest, macosx_x86_64]
           - [macos-latest, macosx_arm64]
 
