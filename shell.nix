@@ -1,6 +1,7 @@
-{ sources ? import ./nix/sources.nix
-, pkgs ? import sources.nixpkgs { overlays = [ ]; config = { }; }
-}:
+{ sources ? import ./nix/sources.nix, pkgs ? import sources.nixpkgs {
+  overlays = [ ];
+  config = { };
+} }:
 
 with pkgs;
 let
@@ -16,8 +17,7 @@ let
 
   pyEnv = mach-nix.mkPython {
     requirements = builtins.readFile ./requirements/pypi.txt;
-    };
-
+  };
 
   basePackages = with pkgs; [
     pyEnv
@@ -33,16 +33,12 @@ let
 
   env = buildEnv {
     name = "whispercpp-environment";
-    paths = basePackages
-    ++ lib.optional stdenv.isLinux inotify-tools
-    ++ lib.optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
-    CoreFoundation
-    CoreServices
-  ]);
+    paths = basePackages ++ lib.optional stdenv.isLinux inotify-tools
+      ++ lib.optionals stdenv.isDarwin
+      (with darwin.apple_sdk.frameworks; [ CoreFoundation CoreServices ]);
   };
 
-in
-stdenv.mkDerivation rec {
+in stdenv.mkDerivation rec {
   name = "python-environment";
 
   phases = [ "nobuild" ];
@@ -51,7 +47,8 @@ stdenv.mkDerivation rec {
 
   enableParallelBuilding = true;
 
-  LOCALE_ARCHIVE = if stdenv.isLinux then "${glibcLocales}/lib/locale/locale-archive" else "";
+  LOCALE_ARCHIVE =
+    if stdenv.isLinux then "${glibcLocales}/lib/locale/locale-archive" else "";
 
   nobuild = ''
     echo Do not run this derivation with nix-build, it can only be used with nix-shell
