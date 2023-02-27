@@ -84,7 +84,7 @@ alias(
 py_package(
     name = "whispercpp_pkg",
     layout = "src",
-    packages = ["whispercpp"],
+    packages = ["src.whispercpp"],
     deps = [":whispercpp_lib"],
 )
 
@@ -121,6 +121,7 @@ py_wheel(
         "//:x86_64-unknown-linux-gnu": "manylinux2014_x86_64",
     }),
     python_tag = "py3",
+    strip_path_prefixes = ["src"],
     version = "0.0.1",
     visibility = ["//:__subpackages__"],
     deps = [":whispercpp_pkg"],
