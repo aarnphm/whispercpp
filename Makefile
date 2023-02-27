@@ -38,4 +38,4 @@ api: api_export.o context.o
 	$(CXX) $(CXXFLAGS) $(EXTRA_CXXFLAGS) -shared -o src/whispercpp/api.so src/whispercpp/*.o
 
 clean:
-	rm -f **/*.o **/*.so
+	rm -rf **/*.o **/*.so

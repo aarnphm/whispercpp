@@ -1,4 +1,3 @@
-import shutil
 from os import path
 from pathlib import Path
 from subprocess import check_output
@@ -13,24 +12,13 @@ def update_submodules(directory: str):
     check_output(["git", "submodule", "update", "--init", "--recursive"], cwd=directory)
 
 
-extension = "whispercpp/api.so"
-
-
 def compile_ext():
     wd = path.dirname(path.abspath(__file__))
-    target = path.join(wd, "src", "whispercpp", "api.so")
-    if not path.exists(target):
+    if not path.exists(path.join(wd, "src", "whispercpp", "api.so")):
         update_submodules(wd)
         print("Building pybind11 extension...")
         bazel_script = Path(wd) / "tools" / "bazel"
-        check_output([bazel_script.__fspath__(), "build", ":api.so"], cwd=wd)
-        out = path.join(
-            check_output([bazel_script.__fspath__(), "info", "bazel-bin"])
-            .decode("utf-8")
-            .strip(),
-            "api.so",
-        )
-        shutil.copy2(out, target)
+        check_output([bazel_script.__fspath__(), "run", "//:extensions"], cwd=wd)
 
 
 class BdistWheel(bdist_wheel):
@@ -48,7 +36,7 @@ class BuildPy(build_py):
 
 
 setup(
-    includ_dirs=[
+    include_dirs=[
         "./extern/whispercpp",
         "./extern/pybind11/include",
         "./src/whispercpp/",

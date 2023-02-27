@@ -1,10 +1,28 @@
+load("@rules_python//python:versions.bzl", "gen_python_config_settings")
 load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier")
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 load("@rules_cc//cc:defs.bzl", "cc_library")
-load("@rules_python//python:defs.bzl", "py_library")
-load("@rules_python//python:packaging.bzl", "py_package", "py_wheel")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_python//python:packaging.bzl", "py_wheel")
+load("@com_github_bentoml_plugins//rules/py:packaging.bzl", "py_package")
 
 package(default_visibility = ["//visibility:public"])
+
+gen_python_config_settings()
+
+filegroup(
+    name = "pyproject",
+    srcs = ["pyproject.toml"],
+)
+
+exports_files([
+    "LICENSE",
+    "README.md",
+])
+
+buildifier(
+    name = "buildifier",
+)
 
 cc_library(
     name = "context",
@@ -41,37 +59,69 @@ pybind_extension(
     deps = [":context"],
 )
 
-py_library(
-    name = "whispercpp_lib",
-    srcs = ["//src/whispercpp:__init__.py"],
-    data = [
-        ":api.so",
-        "//src/whispercpp:api.pyi",
+write_file(
+    name = "gen_extensions",
+    out = "extensions.sh",
+    content = [
+        "#!/usr/bin/env bash",
+        "cd $BUILD_WORKSPACE_DIRECTORY",
+        "cp -fv bazel-bin/api.so src/whispercpp/api.so",
     ],
+)
+
+sh_binary(
+    name = "extensions",
+    srcs = [":gen_extensions"],
+    data = [":api.so"],
+)
+
+# public exports
+alias(
+    name = "whispercpp_lib",
+    actual = "//src/whispercpp:whispercpp_lib",
 )
 
 py_package(
     name = "whispercpp_pkg",
-    packages = ["src.whispercpp"],
+    layout = "src",
+    packages = ["whispercpp"],
     deps = [":whispercpp_lib"],
 )
 
 py_wheel(
     name = "whispercpp_wheel",
+    author = "Aaron Pham",
+    author_email = "aarnphm@bentoml.com",
+    classifiers = [
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: POSIX :: Linux",
+        "Topic :: Scientific/Engineering",
+        "Topic :: Scientific/Engineering :: Mathematics",
+        "Topic :: Scientific/Engineering :: Artificial Intelligence",
+        "Topic :: Software Development",
+        "Topic :: Software Development :: Libraries",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+    ],
+    description_file = "//:README.md",
     distribution = "whispercpp",
+    license = "Apache 2.0",
+    platform = select({
+        "//:aarch64-apple-darwin": "macosx_11_0_arm64",
+        "//:aarch64-unknown-linux-gnu": "manylinux2014_aarch64",
+        "//:x86_64-apple-darwin": "macosx_11_0_x86_64",  # this is typically macosx_10_9_x86_64?
+        "//:x86_64-pc-windows-msvc": "win_amd64",
+        "//:x86_64-unknown-linux-gnu": "manylinux2014_x86_64",
+    }),
     python_tag = "py3",
     version = "0.0.1",
-    deps = [
-        ":api.so",
-        ":whispercpp_pkg",
-    ],
-)
-
-filegroup(
-    name = "pyproject",
-    srcs = ["pyproject.toml"],
-)
-
-buildifier(
-    name = "buildifier",
+    visibility = ["//:__subpackages__"],
+    deps = [":whispercpp_pkg"],
 )

@@ -12,8 +12,8 @@ def internal_deps():
         git_repository,
         name = "com_github_bentoml_plugins",
         remote = "https://github.com/bentoml/plugins.git",
-        commit = "fa1eddd13e1ef767abf55cced896554f7cbd6fb9",
-        shallow_since = "1677395503 -0800",
+        commit = "4f163511ac63e129527876621225f4be5679d160",
+        shallow_since = "1677462988 -0800",
     )
 
     # whisper.cpp
@@ -72,7 +72,7 @@ def internal_deps():
         ],
     )
 
-    # python rules
+    # Override python rules defined under @com_github_bentoml_plugins
     http_archive(
         name = "rules_python",
         sha256 = "29a801171f7ca190c543406f9894abf2d483c206e14d6acbd695623662320097",

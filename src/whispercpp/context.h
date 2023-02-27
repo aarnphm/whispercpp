@@ -5,7 +5,7 @@
 #else
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
-#include "whispercpp/whisper.h"
+#include "whisper.h"
 #endif
 #include <string>
 #include <vector>

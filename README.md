@@ -4,7 +4,7 @@ _Pybind11 bindings for [whisper.cpp](https://github.com/ggerganov/whisper.cpp.gi
 
 ## Quickstart
 
-Install with Pip:
+Install with pip:
 
 ```bash
 pip install git+https://github.com/aarnphm/whispercpp.git
@@ -19,13 +19,21 @@ git submodule update --init --recursive
 Build the wheel:
 
 ```bash
+# Option 1: using pypa/build
 python3 -m build -w
+
+# Option 2: using bazel
+./tools/bazel build //:whispercpp_wheel
 ```
 
 Install the wheel:
 
 ```bash
+# Option 1: via pypa/build
 pip install dist/*.whl
+
+# Option 2: using bazel
+pip install $(./tools/bazel info bazel-bin)/*.whl
 ```
 
 The binding provides a `Whisper` class:
