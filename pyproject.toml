@@ -115,3 +115,7 @@ exclude = ["bazel-*", "extern"]
 typeCheckingMode = "strict"
 analysis.useLibraryCodeForTypes = true
 enableTypeIgnoreComments = true
+
+[tool.cibuildwheel]
+test-requires = "pytest"
+test-command = "pytest {project}/tests"

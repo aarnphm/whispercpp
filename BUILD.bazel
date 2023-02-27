@@ -113,6 +113,10 @@ py_wheel(
     description_file = "//:README.md",
     distribution = "whispercpp",
     license = "Apache 2.0",
+    # TODO: Currently, we are using cibuildwheel on CI to release wheel.
+    # We can probably use bazel for this in the future. For now, this is available
+    # for local build only.
+    # If we want to run this in CI, probably need to define a few more platform.
     platform = select({
         "//:aarch64-apple-darwin": "macosx_11_0_arm64",
         "//:aarch64-unknown-linux-gnu": "manylinux2014_aarch64",

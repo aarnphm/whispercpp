@@ -1,0 +1,81 @@
+name: wheels
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+    types: [labeled, opened, synchronized, reopened]
+
+concurrency:
+  group: wheels-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  LINES: 200
+  COLUMNS: 200
+
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#defaultsrun
+defaults:
+  run:
+    shell: bash --noprofile --norc -exo pipefail {0}
+
+jobs:
+  build:
+    # Similar to numpy/numpy wheels actions setup.
+    name: Build wheels for ${{ matrix.python[1] }}-${{ matrix.platform[1] }}
+    runs-on: ${{ matrix.platform[0] }}
+    timeout-minutes: 20
+    if: "!github.event.repository.fork" # Don't run on fork repository
+    strategy:
+      matrix:
+        python: 
+          - ["3.8", "cp38"]
+          - ["3.9", "cp39"]
+          - ["3.10", "cp310"]
+          - ["3.11", "cp311"]
+        os: [ubuntu-latest, macos-latest]
+        platform:
+          - [ubuntu-latest, manylinux_x86_64]
+          - [ubuntu-latest, musllinux_x86_64]
+          - [ubuntu-latest, manylinux_aarch64]
+          - [ubuntu-latest, musllinux_aarch64]
+          - [macos-latest, macosx_x86_64]
+          - [macos-latest, macosx_arm64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # fetch all tags and branches
+      - name: Setup CI
+        uses: ./.github/actions/setup-repo
+        with:
+          python-version: ${{ matrix.python[0] }}
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.12.0
+        env:
+          CIBW_BUILD: ${{ matrix.python[1] }}-${{ matrix.platform[1] }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.python[1] }}-${{ startsWith(matrix.platform[1], 'macosx') && 'macosx' || matrix.platform[1] }}
+          path: ./wheelhouse/*.whl
+
+  publish:
+    needs: [build]
+    name: Publish built wheels to PyPI
+    runs-on: ubuntu-latest
+    # if: github.repository_owner == 'aarnphm' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: github.repository_owner == 'aarnphm'
+    steps:
+      - uses: actions/download-artifact@v3
+      - name: Display structure of downloaded files
+        run: |
+          apt-get install -y tree
+          tree
+      - name: Publish built wheels
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: ${{ failure() }}
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+
