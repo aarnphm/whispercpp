@@ -29,7 +29,7 @@ runs:
       id: get-cache-key-prefix
       shell: bash
       run: |
-        echo "prefix=$ImageOS-$ImageVersion" >> $GITHUB_OUTPUT
+        echo "prefix=${{ runner.os }}-${{ inputs.python-version }}" >> $GITHUB_OUTPUT
     - name: PyPI cache
       id: pypi-cache
       uses: actions/cache@v3.0.10
@@ -43,15 +43,12 @@ runs:
       uses: actions/cache@v3.0.10
       with:
         key: ${{ steps.get-cache-key-prefix.outputs.prefix }}-bazel
-        path: |
-          ~/.cache/bazel
-          tools/
+        path: tools/
         restore-keys: |
           ${{ steps.get-cache-key-prefix.outputs.prefix }}-bazel-
     - name: Install development dependencies
       shell: bash
       run: |
-        touch ./requirements/bazel-pypi.lock.txt
         bazel run //requirements:pypi.update
         python -m pip install -r requirements/pypi.txt
     - name: Make directory
