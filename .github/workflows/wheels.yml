@@ -3,11 +3,15 @@ name: wheels
 on:
   workflow_dispatch:
   push:
+    branch:
+      - main
   pull_request:
+    branch:
+      - main
     types: [labeled, opened, synchronized, reopened]
 
 concurrency:
-  group: wheels-${{ github.event.pull_request.number || github.sha }}
+  group: wheels-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 env:

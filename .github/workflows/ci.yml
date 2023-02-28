@@ -2,12 +2,16 @@ name: CI
 
 on:
   push:
+    branch:
+      - main
   pull_request:
+    branch:
+      - main
   schedule:
     - cron: "0 6 * * 1/2" # Every other day 6AM UTC
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.sha }}-${{ github.head_ref || github.run_id }}
+  group: ci-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 env:
