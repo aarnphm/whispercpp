@@ -62,7 +62,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: cp-python${{ matrix.python }}-${{ matrix.os }}
-          path: ${{ steps.baze-bin.outputs.path }}/*.whl
+          path: ${{ steps.bazel-bin.outputs.path }}/*.whl
 
   publish:
     needs: [build]
