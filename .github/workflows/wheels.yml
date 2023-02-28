@@ -64,10 +64,9 @@ jobs:
         run: |
           echo "path=$(./tools/bazel info bazel-bin)" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v3
-        needs: bazel-bin
         with:
           name: ${{ matrix.python[1] }}-${{ startsWith(matrix.platform[1], 'macosx') && 'macosx' || matrix.platform[1] }}
-          path: ${{ needs.bazel-bin.outputs.path }}/*.whl
+          path: ${{ steps.bazel-bin.outputs.path }}/*.whl
 
   publish:
     needs: [build]
