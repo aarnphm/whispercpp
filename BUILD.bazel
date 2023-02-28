@@ -19,6 +19,7 @@ filegroup(
 exports_files([
     "LICENSE",
     "README.md",
+    "README.rst",
 ])
 
 buildifier(
@@ -112,8 +113,9 @@ py_wheel(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
     ],
-    description_file = "//:README.md",
+    description_file = "README.rst",
     distribution = "whispercpp",
+    homepage = "https://github.com/aarnphm/whispercpp",
     license = "Apache 2.0",
     platform = select({
         "//:aarch64-apple-darwin": "macosx_11_0_arm64",
@@ -124,7 +126,9 @@ py_wheel(
     }),
     python_tag = python_abi(),
     strip_path_prefixes = ["src"],
-    version = "0.0.2.dev0",
+    twine = "@pypi_twine//:pkg",
+    # NOTE: This can be replaced by building with --stamp --embed_label=1.2.3
+    version = "{BUILD_EMBED_LABEL}",
     visibility = ["//:__subpackages__"],
     deps = [":whispercpp_pkg"],
 )

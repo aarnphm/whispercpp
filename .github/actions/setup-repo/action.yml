@@ -43,14 +43,11 @@ runs:
       uses: actions/cache@v3.0.10
       with:
         key: ${{ steps.get-cache-key-prefix.outputs.prefix }}-bazel
-        path: tools/
+        path: |
+          ~/.cache/bazel
+          tools/
         restore-keys: |
           ${{ steps.get-cache-key-prefix.outputs.prefix }}-bazel-
-    - name: Install development dependencies
-      shell: bash
-      run: |
-        bazel run //requirements:pypi.update
-        python -m pip install -r requirements/pypi.txt
     - name: Make directory
       shell: bash
       run: mkdir -p "$HOME/.local/share/whispercpp"

@@ -10,11 +10,6 @@ extra_args = [
     "--resolver",
     "backtracking",
     "--no-annotate",
-    "--upgrade",
-    "--unsafe-package",
-    "wheel",
-    "--unsafe-package",
-    "pip",
 ]
 
 # This rule adds a convenient way to update the requirements.txt

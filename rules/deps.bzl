@@ -73,9 +73,10 @@ def internal_deps():
     )
 
     # Override python rules defined under @com_github_bentoml_plugins
-    http_archive(
+    # Use main for maxium on the edge, not hermetic.
+    git_repository(
         name = "rules_python",
-        sha256 = "29a801171f7ca190c543406f9894abf2d483c206e14d6acbd695623662320097",
-        strip_prefix = "rules_python-0.18.1",
-        url = "https://github.com/bazelbuild/rules_python/releases/download/0.18.1/rules_python-0.18.1.tar.gz",
+        remote = "https://github.com/bazelbuild/rules_python.git",
+        commit = "c504355672223144cefb2cbf3f69e2d38e7e2726",
+        shallow_since = "1677541135 -0800",
     )

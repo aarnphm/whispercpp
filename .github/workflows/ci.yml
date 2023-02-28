@@ -27,7 +27,8 @@ jobs:
         os: [ubuntu-latest, macos-latest]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         exclude:
-          - python-version: "3.11"
+          # Currently, there is a bug with bazel. Disable for offline investigation.
+          python-version: "3.11"
 
     if: "!github.event.repository.fork" # Don't run on fork repository
     name: python${{ matrix.python-version }} integration tests (${{ matrix.os }})
@@ -43,9 +44,12 @@ jobs:
         uses: ./.github/actions/setup-repo
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install bindings
-        run: pip install .
       - uses: FedericoCarboni/setup-ffmpeg@v2
         id: setup-ffmpeg
-      - name: Run python${{ matrix.python-version }} tests
+      - name: Install development dependencies and bindings
+        run: |
+          bazel run //requirements:pypi.update
+          python -m pip install -r requirements/pypi.txt
+          python -m pip install .
+      - name: Run tests on python${{ matrix.python-version }}
         run: bazel test //tests/...

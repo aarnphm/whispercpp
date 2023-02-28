@@ -20,18 +20,6 @@ defaults:
     shell: bash --noprofile --norc -exo pipefail {0}
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    if: "!github.event.repository.fork" # Don't run on fork repository
-    timeout-minutes: 5
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # fetch all tags and branches
-      - name: Setup CI
-        uses: ./.github/actions/setup-repo
-
   lint:
     runs-on: ubuntu-latest
     if: "!github.event.repository.fork" # Don't run on fork repository
@@ -43,12 +31,16 @@ jobs:
           fetch-depth: 0 # fetch all tags and branches
       - name: Setup CI
         uses: ./.github/actions/setup-repo
+      - name: Install development dependencies and bindings
+        run: |
+          bazel run //requirements:pypi.update
+          python -m pip install -r requirements/pypi.txt
       - name: Format check
         run: |
           black --check src
           isort --check .
       - name: Lint check
-        run: ruff check src 
+        run: ruff check src
       - name: Setup node
         uses: actions/setup-node@v3
         with:
