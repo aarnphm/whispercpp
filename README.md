@@ -7,6 +7,12 @@ _Pybind11 bindings for [whisper.cpp](https://github.com/ggerganov/whisper.cpp.gi
 Install with pip:
 
 ```bash
+pip install whispercpp
+```
+
+To use the latest version, install from source:
+
+```bash
 pip install git+https://github.com/aarnphm/whispercpp.git
 ```
 
@@ -126,6 +132,8 @@ See [DEVELOPMENT.md](./DEVELOPMENT.md)
    ctx = api.Context.from_file("/path/to/saved_weight.bin")
    ```
 
+   > Note: The context can also be accessed from the `Whisper` class via `w.context`
+
 2. `api.Params`
 
    This class is a wrapper around `whisper_params`
@@ -135,3 +143,18 @@ See [DEVELOPMENT.md](./DEVELOPMENT.md)
 
    params = api.Params()
    ```
+
+   > Note: The params can also be accessed from the `Whisper` class via `w.params`
+
+## Why not?
+
+* [whispercpp.py](https://github.com/stlukey/whispercpp.py). There are a few key differences here:
+
+  * They provides the Cython bindings. From the UX standpoint, this achieves the same goal as `whispercpp`. The difference is `whispercpp` use Pybind11 instead.
+     Feel free to use it if you prefer Cython over Pybind11. Note that `whispercpp.py` and `whispercpp` are mutually exclusive, as they also use the `whispercpp` namespace.
+  * `whispercpp` provides similar APIs as [`whisper-rs`](https://github.com/tazz4843/whisper-rs), which provides a nicer UX to work with. There are literally two APIs (`from_pretrained` and `transcribe`) to quickly use whisper.cpp in Python.
+  * `whispercpp` doesn't pollute your `$HOME` directory, rather it follows the [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) for saved weights.
+
+* Using `cdll` and `ctypes` and be done with it?
+
+  * This is also valid, but requires a lot of hacking and it is pretty slow comparing to Cython and Pybind11.

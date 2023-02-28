@@ -54,11 +54,3 @@ runs:
     - name: Make directory
       shell: bash
       run: mkdir -p "$HOME/.local/share/whispercpp"
-    - name: Setup node
-      uses: actions/setup-node@v3
-      with:
-        node-version: "17"
-    - name: Install pyright
-      shell: bash
-      run: npm install -g npm@^7 pyright
-
