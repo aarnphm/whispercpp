@@ -5,18 +5,10 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  push:
+  pull_request:
   schedule:
     - cron: "0 0 * * 1/2" # Every other day 12AM UTC
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-    paths:
-      - "src/**"
-      - "requirements/**"
-      - ".github/actions/**"
-      - "pyproject.toml"
-      - ".github/workflows/style.yml"
 
 env:
   LINES: 200

@@ -2,17 +2,7 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
   pull_request:
-    branches:
-      - main
-    paths:
-      - "src/**"
-      - "requirements/**"
-      - ".github/actions/setup-repo/"
-      - "pyproject.toml"
-      - ".github/workflows/ci.yml"
   schedule:
     - cron: "0 6 * * 1/2" # Every other day 6AM UTC
 
