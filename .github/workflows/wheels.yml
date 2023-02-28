@@ -59,7 +59,11 @@ jobs:
           path=$(./tools/bazel info bazel-bin)
           workspace=$(./tools/bazel info workspace)
           mkdir -p "$workspace/dist"
-          cp "$path/*.whl" "$workspace/dist/"
+          find "$path" -iname "*.whl" -exec cp {} "$workspace/dist/" \;
+      - name: Building sdist
+        run: |
+          pip install build
+          python -m build -s
       - uses: actions/upload-artifact@v3
         with:
           path: ./dist/*.whl
