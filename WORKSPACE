@@ -22,3 +22,10 @@ install_deps()
 load("@pybind11_bazel//:python_configure.bzl", "python_configure")
 
 python_configure(name = "local_config_python")
+
+load("//rules:python.bzl", "declare_python_abi")
+
+declare_python_abi(
+    name = "python_abi",
+    python_version = "3",
+)

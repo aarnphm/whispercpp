@@ -5,6 +5,6 @@ package(default_visibility = ["//:__subpackages__"])
 exports_files(["deps.bzl"])
 
 bzl_library(
-    name = "packaging.bzl",
-    srcs = ["packaging.bzl"],
+    name = "python.bzl",
+    srcs = ["python.bzl"],
 )

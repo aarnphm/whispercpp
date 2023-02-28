@@ -23,7 +23,7 @@ jobs:
   build:
     # Similar to numpy/numpy wheels actions setup.
     name: Build wheels for ${{ matrix.python[1] }}-${{ matrix.platform[1] }}
-    runs-on: ${{ matrix.platform[0] }}
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     if: "!github.event.repository.fork" # Don't run on fork repository
     strategy:
@@ -35,30 +35,39 @@ jobs:
           - ["3.10", "cp310"]
           - ["3.11", "cp311"]
         platform:
-          - [ubuntu-latest, manylinux_x86_64]
-          - [ubuntu-latest, manylinux_aarch64]
-          - [macos-latest, macosx_x86_64]
-          - [macos-latest, macosx_arm64]
+          - [ubuntu-latest, manylinux_x86_64, x64]
+          - [ubuntu-latest, manylinux_aarch64, aarch64]
+          - [macos-latest, macosx_x86_64, x64]
+          - [macos-latest, macosx_arm64, aarch64]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # fetch all tags and branches
-      - name: Set up Clang ${{ matrix.platform[0] }}
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python[0] }}
+      - name: Set up Clang [Linux]
         if: ${{ ! startsWith(matrix.platform[1], 'macosx') }}
         uses: egor-tensin/setup-clang@v1
-      - name: Set up Clang ${{ matrix.platform[0] }}
+      - name: Set up Clang [MacOS]
         if: ${{ startsWith(matrix.platform[1], 'macosx') }}
         run: brew install llvm
       - name: Build wheels
         run: |
           ./tools/bazel build //:whispercpp_wheel
           ls -rthla $(./tools/bazel info bazel-bin)
+      - name: Get output wheel path
+        id: bazel-bin
+        run: |
+          echo "path=$(./tools/bazel info bazel-bin)" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v3
+        needs: bazel-bin
         with:
           name: ${{ matrix.python[1] }}-${{ startsWith(matrix.platform[1], 'macosx') && 'macosx' || matrix.platform[1] }}
-          path: bazel-bin/*.whl
+          path: ${{ needs.bazel-bin.outputs.path }}/*.whl
 
   publish:
     needs: [build]
