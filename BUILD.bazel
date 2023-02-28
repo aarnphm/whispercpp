@@ -90,6 +90,14 @@ py_package(
     deps = [":whispercpp_lib"],
 )
 
+config_setting(
+    name = "ci",
+    values = {
+        "define": "ci=true",
+        "compilation_mode": "dbg",
+    },
+)
+
 py_wheel(
     name = "whispercpp_wheel",
     abi = python_abi(),
@@ -128,7 +136,10 @@ py_wheel(
     strip_path_prefixes = ["src"],
     twine = "@pypi_twine//:pkg",
     # NOTE: This can be replaced by building with --stamp --embed_label=1.2.3
-    version = "{BUILD_EMBED_LABEL}",
+    version = select({
+        "//conditions:default": "0.0.0",
+        ":ci": "{BUILD_EMBED_LABEL}",
+    }),
     visibility = ["//:__subpackages__"],
     deps = [":whispercpp_pkg"],
 )

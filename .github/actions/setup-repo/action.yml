@@ -24,7 +24,6 @@ runs:
       id: pip-cache
       shell: bash
       run: echo "directory=$(pip cache dir)" >> $GITHUB_OUTPUT
-    - uses: bazelbuild/setup-bazelisk@v2
     - name: Get cache key prefix
       id: get-cache-key-prefix
       shell: bash
