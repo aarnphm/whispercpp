@@ -51,9 +51,6 @@ jobs:
       matrix:
         python: ["3.8", "3.9", "3.10", "3.11"]
         os: ["ubuntu-latest", "macos-latest"]
-    env:
-      TWINE_USERNAME: __token__
-      TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -81,6 +78,9 @@ jobs:
           name: artifact
           path: dist
       - name: Publish built wheels
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
           pip install twine
           twine upload dist/* --repository pypi --verbose
