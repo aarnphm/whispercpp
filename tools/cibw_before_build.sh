@@ -1,8 +1,11 @@
+#!/bin/bash
+
 set -xe
 
 # Setup clang
 if [[ $RUNNER_OS == "Linux" ]]; then
-    yum install -y clang
+    export CC=g++
 elif [[ $RUNNER_OS == "macOS" ]]; then
     brew install llvm
+    export CC=clang
 fi
