@@ -22,33 +22,38 @@ defaults:
 jobs:
   build:
     # Similar to numpy/numpy wheels actions setup.
-    name: Build wheels for ${{ matrix.python }}-${{ matrix.platform[1] }}
-    runs-on: ${{ matrix.platform[0] }}
+    name: Build wheels for python${{ matrix.python }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     if: "!github.event.repository.fork" # Don't run on fork repository
     strategy:
       fail-fast: false
       matrix:
-        python: ["cp38", "cp39", "cp310", "cp311"]
-        platform:
-          - [ubuntu-latest, manylinux_x86_64]
-          - [ubuntu-latest, manylinux_aarch64]
-          - [macos-latest, macosx_x86_64]
-          - [macos-latest, macosx_arm64]
-    env:
-      CIBW_BUILD: ${{ matrix.python }}-${{ matrix.platform[1] }}
+        python: ["3.8", "3.9", "3.10", "3.11"]
+        os: ["ubuntu-latest", "macos-latest"]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # fetch all tags and branches
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python }}
       - name: Set up QEMU
         if: runner.os == 'Linux'
         uses: docker/setup-qemu-action@v2
         with:
           platforms: all
+      - name: Set up Clang [Linux]
+        if: runner.os == 'Linux'
+        uses: egor-tensin/setup-clang@v1
+      - name: Set up Clang [MacOS]
+        if: ${{ startsWith(matrix.os, 'macos') }}
+        run: brew install llvm
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.0
+        run: |
+          ./tools/bazel build //:whispercpp_wheel
       - name: Get output wheel path
         id: bazel-bin
         run: |
@@ -57,7 +62,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.python }}-${{ startsWith(matrix.platform[1], 'macosx') && 'macosx' || matrix.platform[1] }}
-          path: ./wheelhouse/*.whl
+          path: ${{ steps.baze-bin.outputs.path }}/*.whl
 
   publish:
     needs: [build]
