@@ -124,7 +124,7 @@ py_wheel(
     }),
     python_tag = python_abi(),
     strip_path_prefixes = ["src"],
-    version = "0.0.1",
+    version = "0.0.2.dev0",
     visibility = ["//:__subpackages__"],
     deps = [":whispercpp_pkg"],
 )
