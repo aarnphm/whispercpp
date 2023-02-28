@@ -9,3 +9,4 @@ pytest-xdist[psutil]
 pytest-asyncio
 build
 virtualenv
+twine

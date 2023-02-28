@@ -11,10 +11,6 @@ inputs:
     description: "Which architecture to run on"
     required: true
     default: x64
-  update-requirements:
-    description: "Whether to run requirements.txt update"
-    required: false
-    default: true
 
 runs:
   using: composite
@@ -52,12 +48,6 @@ runs:
           tools/
         restore-keys: |
           ${{ steps.get-cache-key-prefix.outputs.prefix }}-bazel-
-    - name: Install development dependencies
-      shell: bash
-      if: ${{ inputs.update-requirements }}
-      run: |
-        bazel run //requirements:pypi.update
-        python -m pip install -r requirements/pypi.txt
     - name: Make directory
       shell: bash
       run: mkdir -p "$HOME/.local/share/whispercpp"
