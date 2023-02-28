@@ -25,8 +25,7 @@ jobs:
     name: Build wheels for python${{ matrix.python }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
-    # if: "!github.event.repository.fork" # Don't run on fork repository
-    if: ${{ failure() }}
+    if: "!github.event.repository.fork" # Don't run on fork repository
     strategy:
       fail-fast: false
       matrix:
@@ -55,15 +54,15 @@ jobs:
       - name: Build wheels
         run: |
           ./tools/bazel build //:whispercpp_wheel
-      - name: Get output wheel path
-        id: bazel-bin
+      - name: Copy built wheels to dist
         run: |
-          echo "path=$(./tools/bazel info bazel-bin)" >> "$GITHUB_OUTPUT"
-          ls -rthla $(./tools/bazel info bazel-bin)
+          path=$(./tools/bazel info bazel-bin)
+          workspace=$(./tools/bazel info workspace)
+          mkdir -p "$workspace/dist"
+          cp "$path/*.whl" "$workspace/dist/"
       - uses: actions/upload-artifact@v3
         with:
-          name: cp-python${{ matrix.python }}-${{ matrix.os }}
-          path: ${{ steps.bazel-bin.outputs.path }}/*.whl
+          path: ./dist/*.whl
 
   publish:
     # needs: [build]
