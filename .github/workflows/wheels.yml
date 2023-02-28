@@ -1,0 +1,84 @@
+name: wheels
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+    types: [labeled, opened, synchronized, reopened]
+
+concurrency:
+  group: wheels-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  LINES: 200
+  COLUMNS: 200
+
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#defaultsrun
+defaults:
+  run:
+    shell: bash --noprofile --norc -exo pipefail {0}
+
+jobs:
+  build:
+    # Similar to numpy/numpy wheels actions setup.
+    name: Build wheels for python${{ matrix.python }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    if: "!github.event.repository.fork" # Don't run on fork repository
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.8", "3.9", "3.10", "3.11"]
+        os: ["ubuntu-latest", "macos-latest"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # fetch all tags and branches
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: all
+      - name: Set up Clang [Linux]
+        if: runner.os == 'Linux'
+        uses: egor-tensin/setup-clang@v1
+      - name: Set up Clang [MacOS]
+        if: ${{ startsWith(matrix.os, 'macos') }}
+        run: brew install llvm
+      - name: Build wheels
+        run: |
+          ./tools/bazel build //:whispercpp_wheel
+      - name: Get output wheel path
+        id: bazel-bin
+        run: |
+          echo "path=$(./tools/bazel info bazel-bin)" >> "$GITHUB_OUTPUT"
+          ls -rthla $(./tools/bazel info bazel-bin)
+      - uses: actions/upload-artifact@v3
+        with:
+          name: cp-python${{ matrix.python }}-${{ matrix.os }}
+          path: ${{ steps.bazel-bin.outputs.path }}/*.whl
+
+  publish:
+    needs: [build]
+    name: Publish wheels to PyPI
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'aarnphm'
+    steps:
+      - uses: actions/download-artifact@v3
+      - name: Display structure of downloaded files
+        run: |
+          apt-get install -y tree
+          tree
+      - name: Publish built wheels
+        uses: pypa/gh-action-pypi-publish@release/v1
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+

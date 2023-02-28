@@ -5,6 +5,7 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_python//python:packaging.bzl", "py_wheel")
 load("@com_github_bentoml_plugins//rules/py:packaging.bzl", "py_package")
+load("@python_abi//:abi.bzl", "python_abi")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -90,6 +91,7 @@ py_package(
 
 py_wheel(
     name = "whispercpp_wheel",
+    abi = python_abi(),
     author = "Aaron Pham",
     author_email = "aarnphm@bentoml.com",
     classifiers = [
@@ -120,7 +122,7 @@ py_wheel(
         "//:x86_64-pc-windows-msvc": "win_amd64",
         "//:x86_64-unknown-linux-gnu": "manylinux2014_x86_64",
     }),
-    python_tag = "py3",
+    python_tag = python_abi(),
     strip_path_prefixes = ["src"],
     version = "0.0.1",
     visibility = ["//:__subpackages__"],
