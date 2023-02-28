@@ -23,7 +23,7 @@ jobs:
   build:
     # Similar to numpy/numpy wheels actions setup.
     name: Build wheels for ${{ matrix.python[1] }}-${{ matrix.platform[1] }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.platform[0] }}
     timeout-minutes: 20
     if: "!github.event.repository.fork" # Don't run on fork repository
     strategy:
@@ -35,16 +35,17 @@ jobs:
           - ["3.10", "cp310"]
           - ["3.11", "cp311"]
         platform:
-          - [ubuntu-latest, manylinux_x86_64, x64]
-          - [ubuntu-latest, manylinux_aarch64, aarch64]
-          - [macos-latest, macosx_x86_64, x64]
-          - [macos-latest, macosx_arm64, aarch64]
+          - [ubuntu-latest, manylinux_x86_64]
+          - [ubuntu-latest, manylinux_aarch64]
+          - [macos-latest, macosx_x86_64]
+          - [macos-latest, macosx_arm64]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # fetch all tags and branches
+          name: Build on ubuntu-18.04 armv7
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -56,9 +57,9 @@ jobs:
         if: ${{ startsWith(matrix.platform[1], 'macosx') }}
         run: brew install llvm
       - name: Build wheels
-        run: |
-          ./tools/bazel build //:whispercpp_wheel
-          ls -rthla $(./tools/bazel info bazel-bin)
+        uses: pypa/cibuildwheel@v2.12.0
+        env:
+          CIBW_BUILD: ${{ matrix.python[1] }}-${{ matrix.platform[1] }}
       - name: Get output wheel path
         id: bazel-bin
         run: |
