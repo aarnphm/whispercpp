@@ -51,7 +51,7 @@ jobs:
         uses: egor-tensin/setup-clang@v1
       - name: Build wheels
         run: |
-          pip install cibuilwheel
+          pip install cibuildwheel
           python -m cibuildwheel --output-dir dist/
         env:
           CIBW_BUILD: cp311-* cp310-* cp39-* cp38-*
