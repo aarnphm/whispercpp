@@ -120,10 +120,12 @@ enableTypeIgnoreComments = true
 test-requires = "pytest"
 test-command = "pytest {project}/tests"
 build-verbosity = "3"
-before-build = "bash {project}/tools/cibw_before_build.sh {project}"
+before-build = "bash {project}/tools/cibw_before_build.sh"
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
+environment = { RUNNER_OS="MacOS" }
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
+environment = { RUNNER_OS="Linux" }
