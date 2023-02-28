@@ -20,7 +20,7 @@ defaults:
     shell: bash --noprofile --norc -exo pipefail {0}
 
 jobs:
-  build:
+  build-wheels:
     # Similar to numpy/numpy wheels actions setup.
     name: Build wheels for python${{ matrix.python }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -48,37 +48,56 @@ jobs:
       - name: Set up Clang [Linux]
         if: runner.os == 'Linux'
         uses: egor-tensin/setup-clang@v1
-      - name: Set up Clang [MacOS]
-        if: ${{ startsWith(matrix.os, 'macos') }}
-        run: brew install llvm
       - name: Build wheels
-        run: |
-          ./tools/bazel build //:whispercpp_wheel
+        run: ./tools/bazel build //:whispercpp_wheel
       - name: Copy built wheels to dist
         id: bazel
+        run: |
+          path=$(./tools/bazel info bazel-bin)
+          workspace=$(./tools/bazel info workspace)
+          echo "path=$(echo $workspace)" >> "$GITHUB_OUTPUT"
+
+          mkdir -p "$workspace/dist"
+          find "$path" -iname "*.whl" -exec cp {} "$workspace/dist/" \;
+      - uses: actions/upload-artifact@v3
+        with:
+          path: ${{ steps.bazel.outputs.path }}/dist/*
+
+  build-sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # fetch all tags and branches
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Build sdist
         run: |
           # TODO: when bazel support releasing sdist, we can remove this.
           pip install build
 
-          path=$(./tools/bazel info bazel-bin)
-          workspace=$(./tools/bazel info workspace)
-          echo "path=$(echo $workspace)" >> "$GITHUB_OUTPUT"
-          mkdir -p "$workspace/dist"
-          find "$path" -iname "*.whl" -exec cp {} "$workspace/dist/" \;
-          python -m build -s -o "$workspace/dist"
+          python -m build --sdist
       - uses: actions/upload-artifact@v3
         with:
-          path: ${{ steps.bazel.outputs.path }}/dist
+          path: dist/*.tar.gz
 
   publish:
-    needs: [build]
+    needs: [build-wheels, build-sdist]
     name: Publish wheels to PyPI
     runs-on: ubuntu-latest
     if: github.repository_owner == 'aarnphm'
     steps:
       - uses: actions/download-artifact@v3
-      - name: run
-        run: ls -rthla
+        with:
+          name: artifact
+          path: dist
+      - name: Check content
+        run: |
+          ls -rthla dist
       - name: Publish built wheels
         uses: pypa/gh-action-pypi-publish@release/v1
         # if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
