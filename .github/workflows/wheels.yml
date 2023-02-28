@@ -46,7 +46,11 @@ jobs:
         with:
           fetch-depth: 0 # fetch all tags and branches
       - name: Set up Clang
+        if: ${{ ! startsWith(matrix.platform[1], 'macosx') }}
         uses: egor-tensin/setup-clang@v1
+      - name: Set up Clang
+        if: ${{ startsWith(matrix.platform[1], 'macosx') }}
+        run: brew install clang
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.0
         env:
