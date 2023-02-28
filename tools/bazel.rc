@@ -6,7 +6,6 @@ startup --windows_enable_symlinks
 
 # never strip debug
 build --strip=never
-build --client_env=CC=g++
 build --cxxopt=-std=c++14 --host_cxxopt=-std=c++14
 build --define=use_fast_cpp_protos=true
 build:opt --compilation_mode=opt
