@@ -8,7 +8,7 @@ description = "whispercpp: Pybind11 bindings for whisper.cpp"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { text = "Apache-2.0" }
 requires-python = ">=3.8"
-version = "0.0.5"
+version = "0.0.6"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
