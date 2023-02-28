@@ -83,6 +83,5 @@ jobs:
       - name: Publish built wheels
         run: |
           pip install twine
-          twine upload dist/*
-
-          ./tools/bazel run -c dbg --define=ci=true --stamp --embed_label=${{ steps.get-info.outputs.version }} -- //:whispercpp_wheel.publish
+          twine upload dist/* --repository pypi
+          ./tools/bazel run -c dbg --define=ci=true --stamp --embed_label=${{ steps.get-info.outputs.version }} -- //:whispercpp_wheel.publish --repository pypi
