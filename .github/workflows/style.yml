@@ -49,6 +49,13 @@ jobs:
           isort --check .
       - name: Lint check
         run: ruff check src 
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "17"
+      - name: Install pyright
+        shell: bash
+        run: npm install -g npm@^7 pyright
       - name: Type check
         if: ${{ github.event_name == 'pull_request' }}
         run: git diff --name-only --diff-filter=AM "origin/$GITHUB_BASE_REF" -z -- '*.py{,i}' | xargs -0 --no-run-if-empty pyright
