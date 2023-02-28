@@ -55,21 +55,23 @@ jobs:
         run: |
           ./tools/bazel build //:whispercpp_wheel
       - name: Copy built wheels to dist
+        id: bazel
         run: |
+          # TODO: when bazel support releasing sdist, we can remove this.
+          pip install build
+
           path=$(./tools/bazel info bazel-bin)
           workspace=$(./tools/bazel info workspace)
+          echo "path=$(echo $workspace)" >> "$GITHUB_OUTPUT"
           mkdir -p "$workspace/dist"
           find "$path" -iname "*.whl" -exec cp {} "$workspace/dist/" \;
-      - name: Building sdist
-        run: |
-          pip install build
-          python -m build -s
+          python -m build -s -o "$workspace/dist"
       - uses: actions/upload-artifact@v3
         with:
-          path: ./dist/*.whl
+          path: ${{ steps.bazel.outputs.path }}/dist
 
   publish:
-    # needs: [build]
+    needs: [build]
     name: Publish wheels to PyPI
     runs-on: ubuntu-latest
     if: github.repository_owner == 'aarnphm'
