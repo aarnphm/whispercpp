@@ -115,3 +115,17 @@ exclude = ["bazel-*", "extern"]
 typeCheckingMode = "strict"
 analysis.useLibraryCodeForTypes = true
 enableTypeIgnoreComments = true
+
+[tool.cibuildwheel]
+test-requires = "pytest"
+test-command = "pytest {project}/tests"
+build-frontend = "build"
+build-verbosity = "3"
+
+[tool.cibuildwheel.macos]
+archs = ["x86_64", "arm64"]
+environment = { RUNNER_OS="MacOS" }
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64", "aarch64"]
+environment = { RUNNER_OS="Linux" }
