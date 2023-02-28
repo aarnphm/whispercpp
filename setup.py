@@ -8,6 +8,7 @@ from setuptools.command.build_py import build_py
 
 
 def update_submodules(directory: str):
+    check_output(["git", "init"])
     check_output(["git", "submodule", "sync", "--recursive"], cwd=directory)
     check_output(["git", "submodule", "update", "--init", "--recursive"], cwd=directory)
 
