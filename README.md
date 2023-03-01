@@ -158,3 +158,7 @@ See [DEVELOPMENT.md](./DEVELOPMENT.md)
 * Using `cdll` and `ctypes` and be done with it?
 
   * This is also valid, but requires a lot of hacking and it is pretty slow comparing to Cython and Pybind11.
+
+## Examples
+
+See [examples](./examples) for more information
