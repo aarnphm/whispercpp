@@ -314,4 +314,3 @@ public:
 };
 
 void ExportContextApi(py::module &m);
-void ExportParamsApi(py::module &m);

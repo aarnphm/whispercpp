@@ -316,6 +316,60 @@ float Context::full_get_token_prob(int segment, int token) {
   return whisper_full_get_token_p(ctx, segment, token);
 }
 
+void ExportContextApi(py::module &m) {
+  py::class_<Context>(m, "Context", "A light wrapper around whisper_context")
+      .def_static("from_file", &Context::from_file, "filename"_a)
+      .def_static("from_buffer", &Context::from_buffer, "buffer"_a)
+      .def("free", &Context::free)
+      .def("pc_to_mel", &Context::pc_to_mel, "pcm"_a, "threads"_a = 1,
+           "phase_vocoder"_a = false)
+      .def("set_mel", &Context::set_mel, "mel"_a)
+      .def("encode", &Context::encode, "offset"_a, "threads"_a = 1)
+      .def("decode", &Context::decode, "tokens"_a, "n_past"_a, "threads"_a = 1)
+      .def("tokenize", &Context::tokenize, "text"_a, "max_tokens"_a)
+      .def("lang_max_id", &Context::lang_max_id)
+      .def("lang_str_to_id", &Context::lang_str_to_id, "lang"_a)
+      .def("lang_id_to_str", &Context::lang_id_to_str, "id"_a)
+      .def("lang_detect", &Context::lang_detect, "offset_ms"_a, "threads"_a = 1)
+      .def("get_logits", &Context::get_logits, "segment"_a)
+      .def("token_to_str", &Context::token_to_str, "token_id"_a)
+      .def("lang_token", &Context::lang_token, "lang_id"_a)
+      .def_property_readonly("n_len", &Context::n_len)
+      .def_property_readonly("n_vocab", &Context::n_vocab)
+      .def_property_readonly("n_text_ctx", &Context::n_text_ctx)
+      .def_property_readonly("n_audio_ctx", &Context::n_audio_ctx)
+      .def_property_readonly("is_multilingual", &Context::is_multilingual)
+      .def_property_readonly("eot_token", &Context::eot_token)
+      .def_property_readonly("sot_token", &Context::sot_token)
+      .def_property_readonly("prev_token", &Context::prev_token)
+      .def_property_readonly("solm_token", &Context::solm_token)
+      .def_property_readonly("not_token", &Context::not_token)
+      .def_property_readonly("beg_token", &Context::beg_token)
+      .def_property_readonly("token_translate", &Context::token_translate)
+      .def_property_readonly("token_transcribe", &Context::token_transcribe)
+      .def("print_timings", &Context::print_timings)
+      .def("reset_timings", &Context::reset_timings)
+      .def("sys_info", &Context::sys_info)
+      .def("full", &Context::full, "params"_a, "data"_a)
+      .def("full_parallel", &Context::full_parallel, "params"_a, "data"_a,
+           "num_processor"_a)
+      .def("full_n_segments", &Context::full_n_segments)
+      .def("full_lang_id", &Context::full_lang_id)
+      .def("full_get_segment_start", &Context::full_get_segment_t0, "segment"_a)
+      .def("full_get_segment_end", &Context::full_get_segment_t1, "segment"_a)
+      .def("full_get_segment_text", &Context::full_get_segment_text,
+           "segment"_a)
+      .def("full_n_tokens", &Context::full_n_tokens, "segment"_a)
+      .def("full_get_token_text", &Context::full_get_token_text, "segment"_a,
+           "token"_a)
+      .def("full_get_token_id", &Context::full_get_token_id, "segment"_a,
+           "token"_a)
+      .def("full_get_token_data", &Context::full_get_token_data, "segment"_a,
+           "token"_a)
+      .def("full_get_token_prob", &Context::full_get_token_prob, "segment"_a,
+           "token"_a);
+}
+
 FullParams
 FullParams::from_sampling_strategy(SamplingStrategies sampling_strategies) {
 
@@ -617,175 +671,4 @@ SamplingStrategies SamplingStrategies::from_strategy_type(StrategyType type) {
   default:
     throw std::invalid_argument("Invalid strategy type");
   };
-}
-
-void ExportContextApi(py::module &m) {
-  py::class_<Context>(m, "Context", "A light wrapper around whisper_context")
-      .def_static("from_file", &Context::from_file, "filename"_a)
-      .def_static("from_buffer", &Context::from_buffer, "buffer"_a)
-      .def("free", &Context::free)
-      .def("pc_to_mel", &Context::pc_to_mel, "pcm"_a, "threads"_a = 1,
-           "phase_vocoder"_a = false)
-      .def("set_mel", &Context::set_mel, "mel"_a)
-      .def("encode", &Context::encode, "offset"_a, "threads"_a = 1)
-      .def("decode", &Context::decode, "tokens"_a, "n_past"_a, "threads"_a = 1)
-      .def("tokenize", &Context::tokenize, "text"_a, "max_tokens"_a)
-      .def("lang_max_id", &Context::lang_max_id)
-      .def("lang_str_to_id", &Context::lang_str_to_id, "lang"_a)
-      .def("lang_id_to_str", &Context::lang_id_to_str, "id"_a)
-      .def("lang_detect", &Context::lang_detect, "offset_ms"_a, "threads"_a = 1)
-      .def("n_len", &Context::n_len)
-      .def("n_vocab", &Context::n_vocab)
-      .def("n_text_ctx", &Context::n_text_ctx)
-      .def("n_audio_ctx", &Context::n_audio_ctx)
-      .def("is_multilingual", &Context::is_multilingual)
-      .def("get_logits", &Context::get_logits, "segment"_a)
-      .def("token_to_str", &Context::token_to_str, "token_id"_a)
-      .def("eot_token", &Context::eot_token)
-      .def("sot_token", &Context::sot_token)
-      .def("prev_token", &Context::prev_token)
-      .def("solm_token", &Context::solm_token)
-      .def("not_token", &Context::not_token)
-      .def("beg_token", &Context::beg_token)
-      .def("lang_token", &Context::lang_token, "lang_id"_a)
-      .def("token_translate", &Context::token_translate)
-      .def("token_transcribe", &Context::token_transcribe)
-      .def("print_timings", &Context::print_timings)
-      .def("reset_timings", &Context::reset_timings)
-      .def("sys_info", &Context::sys_info)
-      .def("full", &Context::full, "params"_a, "data"_a)
-      .def("full_parallel", &Context::full_parallel, "params"_a, "data"_a,
-           "num_processor"_a)
-      .def("full_n_segments", &Context::full_n_segments)
-      .def("full_lang_id", &Context::full_lang_id)
-      .def("full_get_segment_start", &Context::full_get_segment_t0, "segment"_a)
-      .def("full_get_segment_end", &Context::full_get_segment_t1, "segment"_a)
-      .def("full_get_segment_text", &Context::full_get_segment_text,
-           "segment"_a)
-      .def("full_n_tokens", &Context::full_n_tokens, "segment"_a)
-      .def("full_get_token_text", &Context::full_get_token_text, "segment"_a,
-           "token"_a)
-      .def("full_get_token_id", &Context::full_get_token_id, "segment"_a,
-           "token"_a)
-      .def("full_get_token_data", &Context::full_get_token_data, "segment"_a,
-           "token"_a)
-      .def("full_get_token_prob", &Context::full_get_token_prob, "segment"_a,
-           "token"_a);
-}
-
-void ExportParamsApi(py::module &m) {
-  py::enum_<SamplingStrategies::StrategyType>(m, "StrategyType")
-      .value("SAMPLING_GREEDY", SamplingStrategies::GREEDY)
-      .value("SAMPLING_BEAM_SEARCH", SamplingStrategies::BEAM_SEARCH)
-      .export_values();
-
-  py::class_<SamplingGreedy>(m, "SamplingGreedyStrategy")
-      .def(py::init<>())
-      .def_property(
-          "best_of", [](SamplingGreedy &self) { return self.best_of; },
-          [](SamplingGreedy &self, int best_of) { self.best_of = best_of; });
-
-  py::class_<SamplingBeamSearch>(m, "SamplingBeamSearchStrategy")
-      .def(py::init<>())
-      .def_property(
-          "beam_size", [](SamplingBeamSearch &self) { return self.beam_size; },
-          [](SamplingBeamSearch &self, int beam_size) {
-            self.beam_size = beam_size;
-          })
-      .def_property(
-          "patience", [](SamplingBeamSearch &self) { return self.patience; },
-          [](SamplingBeamSearch &self, float patience) {
-            self.patience = patience;
-          });
-
-  py::class_<SamplingStrategies>(m, "SamplingStrategies",
-                                 "Available sampling strategy for whisper")
-      .def_static("from_strategy_type", &SamplingStrategies::from_strategy_type,
-                  "strategy"_a)
-      .def_property(
-          "type", [](SamplingStrategies &self) { return self.type; },
-          [](SamplingStrategies &self, SamplingStrategies::StrategyType type) {
-            self.type = type;
-          })
-      .def_property(
-          "greedy", [](SamplingStrategies &self) { return self.greedy; },
-          [](SamplingStrategies &self, SamplingGreedy greedy) {
-            self.greedy = greedy;
-          })
-      .def_property(
-          "beam_search",
-          [](SamplingStrategies &self) { return self.beam_search; },
-          [](SamplingStrategies &self, SamplingBeamSearch beam_search) {
-            self.beam_search = beam_search;
-          });
-
-  py::class_<FullParams>(m, "Params", "Whisper parameters container")
-      .def_static("from_sampling_strategy", &FullParams::from_sampling_strategy,
-                  "sampling_strategy"_a)
-      .def_property("num_threads", &FullParams::get_n_threads,
-                    &FullParams::set_n_threads)
-      .def_property("num_max_text_ctx", &FullParams::get_n_max_text_ctx,
-                    &FullParams::set_n_max_text_ctx)
-      .def_property("offset_ms", &FullParams::get_offset_ms,
-                    &FullParams::set_offset_ms)
-      .def_property("duration_ms", &FullParams::get_duration_ms,
-                    &FullParams::set_duration_ms)
-      .def_property("translate", &FullParams::get_translate,
-                    &FullParams::set_translate)
-      .def_property("no_context", &FullParams::get_no_context,
-                    &FullParams::set_no_context)
-      .def_property("single_segment", &FullParams::get_single_segment,
-                    &FullParams::set_single_segment)
-      .def_property("print_special", &FullParams::get_print_special,
-                    &FullParams::set_print_special)
-      .def_property("print_progress", &FullParams::get_print_progress,
-                    &FullParams::set_print_progress)
-      .def_property("print_realtime", &FullParams::get_print_realtime,
-                    &FullParams::set_print_realtime)
-      .def_property("print_timestamps", &FullParams::get_print_timestamps,
-                    &FullParams::set_print_timestamps)
-      .def_property("token_timestamps", &FullParams::get_token_timestamps,
-                    &FullParams::set_token_timestamps)
-      .def_property("timestamp_token_probability_threshold",
-                    &FullParams::get_thold_pt, &FullParams::set_thold_pt)
-      .def_property("timestamp_token_sum_probability_threshold",
-                    &FullParams::get_thold_ptsum, &FullParams::set_thold_ptsum)
-      .def_property("max_segment_length", &FullParams::get_max_len,
-                    &FullParams::set_max_len)
-      .def_property("split_on_word", &FullParams::get_split_on_word,
-                    &FullParams::set_split_on_word)
-      .def_property("max_tokens", &FullParams::get_max_tokens,
-                    &FullParams::set_max_tokens)
-      .def_property("speed_up", &FullParams::get_speed_up,
-                    &FullParams::set_speed_up)
-      .def_property("audio_ctx", &FullParams::get_audio_ctx,
-                    &FullParams::set_audio_ctx)
-      .def("set_tokens", &FullParams::set_tokens, "tokens"_a)
-      .def_property_readonly("prompt_tokens", &FullParams::get_prompt_tokens)
-      .def_property_readonly("prompt_num_tokens",
-                             &FullParams::get_prompt_n_tokens)
-      .def_property("language", &FullParams::get_language,
-                    &FullParams::set_language)
-      .def_property("suppress_blank", &FullParams::get_suppress_blank,
-                    &FullParams::set_suppress_blank)
-      .def_property("suppress_none_speech_tokens",
-                    &FullParams::get_suppress_none_speech_tokens,
-                    &FullParams::set_suppress_none_speech_tokens)
-      .def_property("temperature", &FullParams::get_temperature,
-                    &FullParams::set_temperature)
-      .def_property("max_intial_timestamps", &FullParams::get_max_intial_ts,
-                    &FullParams::set_max_intial_ts)
-      .def_property("length_penalty", &FullParams::get_length_penalty,
-                    &FullParams::set_length_penalty)
-      .def_property("temperature_inc", &FullParams::get_temperature_inc,
-                    &FullParams::set_temperature_inc)
-      .def_property("entropy_threshold", &FullParams::get_entropy_thold,
-                    &FullParams::set_entropy_thold)
-      .def_property("logprob_threshold", &FullParams::get_logprob_thold,
-                    &FullParams::set_logprob_thold)
-      .def_property("no_speech_threshold", &FullParams::get_no_speech_thold,
-                    &FullParams::set_no_speech_thold);
-  // TODO: idk what to do with setting all the callbacks for FullParams. API are
-  // there, but need more time investingating conversion from Python callback to
-  // C++ callback
 }

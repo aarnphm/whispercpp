@@ -8,6 +8,9 @@ from .utils import MODELS_URL
 from .utils import download_model
 
 if t.TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import NDArray
+
     from . import api
 else:
     api = LazyLoader("api", globals(), "whispercpp.api")
@@ -27,20 +30,31 @@ class Whisper:
         context: api.Context
         params: api.Params
 
-    @classmethod
-    def from_pretrained(cls, model_name: str):
+    @staticmethod
+    def from_pretrained(model_name: str):
         if model_name not in MODELS_URL:
             raise RuntimeError(
                 f"'{model_name}' is not a valid preconverted model. Choose one of {list(MODELS_URL)}"
             )
-        _ref = object.__new__(cls)
-        _cpp_binding = api.WhisperPreTrainedModel(download_model(model_name))
-        context = _cpp_binding.context
-        params = _cpp_binding.params
-        transcribe = _cpp_binding.transcribe
-        del cls, _cpp_binding
+        _ref = object.__new__(Whisper)
+        context = api.Context.from_file(download_model(model_name))
+        params = api.Params.from_sampling_strategy(
+            api.SamplingStrategies.from_strategy_type(api.SAMPLING_GREEDY)
+        )
+        params.print_progress = False
+        params.print_realtime = False
+        context.reset_timings()
         _ref.__dict__.update(locals())
         return _ref
+
+    def transcribe(self, data: NDArray[np.float32], num_proc: int = 1):
+        self.context.full_parallel(self.params, data, num_proc)
+        return "".join(
+            [
+                self.context.full_get_segment_text(i)
+                for i in range(self.context.full_n_segments())
+            ]
+        )
 
 
 __all__ = ["Whisper", "api"]
