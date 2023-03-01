@@ -72,7 +72,7 @@ line-length = 88
 # We ignore E501 (line too long) here because we keep user-visible strings on one line.
 ignore = ["E501"]
 exclude = [ "bazel-*/", "venv", "typings" ]
-target-version = "0.0.8.dev0"
+target-version = "py310"
 
 [tool.ruff.pydocstyle]
 convention = "google"
