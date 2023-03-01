@@ -7,6 +7,7 @@
 #include "pybind11/stl.h"
 #include "whisper.h"
 #endif
+#include <stdio.h>
 #include <string>
 #include <vector>
 
@@ -30,6 +31,15 @@ struct SamplingStrategies {
     struct SamplingGreedy greedy;
     struct SamplingBeamSearch beam_search;
   };
+
+  SamplingStrategies(SamplingGreedy greedy) : type(GREEDY) {
+    this->greedy = greedy;
+  };
+  SamplingStrategies(SamplingBeamSearch beam_search) : type(BEAM_SEARCH) {
+    this->beam_search = beam_search;
+  };
+
+  static SamplingStrategies from_strategy_type(StrategyType type);
 };
 
 class FullParams {
@@ -292,7 +302,7 @@ public:
   int full_get_segment_t0(int segment);
   int full_get_segment_t1(int segment);
 
-  std::string full_get_segment_text(int segment);
+  const char *full_get_segment_text(int segment);
   int full_n_tokens(int segment);
 
   std::string full_get_token_text(int segment, int token);

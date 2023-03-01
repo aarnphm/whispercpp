@@ -280,12 +280,12 @@ int Context::full_get_segment_t1(int segment) {
 }
 
 // Get the text of the specified segment.
-std::string Context::full_get_segment_text(int segment) {
+const char *Context::full_get_segment_text(int segment) {
   const char *ret = whisper_full_get_segment_text(ctx, segment);
   if (ret == nullptr) {
     throw std::runtime_error("null pointer");
   }
-  return std::string(ret);
+  return ret;
 }
 
 // Get numbers of tokens in specified segments.
@@ -608,6 +608,17 @@ void FullParams::set_logits_filter_callback_user_data(void *user_data) {
   fp.logits_filter_callback_user_data = user_data;
 }
 
+SamplingStrategies SamplingStrategies::from_strategy_type(StrategyType type) {
+  switch (type) {
+  case GREEDY:
+    return SamplingStrategies(SamplingGreedy());
+  case BEAM_SEARCH:
+    return SamplingStrategies(SamplingBeamSearch());
+  default:
+    throw std::invalid_argument("Invalid strategy type");
+  };
+}
+
 void ExportContextApi(py::module &m) {
   py::class_<Context>(m, "Context", "A light wrapper around whisper_context")
       .def_static("from_file", &Context::from_file, "filename"_a)
@@ -689,7 +700,8 @@ void ExportParamsApi(py::module &m) {
 
   py::class_<SamplingStrategies>(m, "SamplingStrategies",
                                  "Available sampling strategy for whisper")
-      .def(py::init<>())
+      .def_static("from_strategy_type", &SamplingStrategies::from_strategy_type,
+                  "strategy"_a)
       .def_property(
           "type", [](SamplingStrategies &self) { return self.type; },
           [](SamplingStrategies &self, SamplingStrategies::StrategyType type) {
