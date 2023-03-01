@@ -10,43 +10,44 @@ struct new_segment_callback_data {
   std::vector<std::string> *results;
 };
 
-struct Whisper {
-  Context ctx;
-  FullParams params;
+class Whisper {
+public:
+  ~Whisper() = default;
+  Whisper(const char *model_path) {
+    Context context = Context::from_file(model_path);
+    this->context = context;
 
-  Whisper() : ctx(), params(defaults()){};
-  Whisper(const char *model_path)
-      : ctx(Context::from_file(model_path)), params(defaults()) {}
-
-  // Set default params to recommended.
-  static FullParams defaults() {
-    FullParams p = FullParams::from_sampling_strategy(
+    // Set default params to recommended.
+    FullParams params = FullParams::from_sampling_strategy(
         SamplingStrategies::from_strategy_type(SamplingStrategies::GREEDY));
     // disable printing progress
-    p.set_print_progress(false);
+    params.set_print_progress(false);
     // disable realtime print, using callback
-    p.set_print_realtime(false);
-
+    params.set_print_realtime(false);
     // invoke new_segment_callback for faster transcription.
-    p.set_new_segment_callback([](struct whisper_context *ctx, int n_new,
-                                  void *user_data) {
+    params.set_new_segment_callback([](struct whisper_context *ctx, int n_new,
+                                       void *user_data) {
       const auto &results = ((new_segment_callback_data *)user_data)->results;
 
       const int n_segments = whisper_full_n_segments(ctx);
 
-      for (int i = n_segments - n_new; i < n_segments; i++) {
+      // print the last n_new segments
+      const int s0 = n_segments - n_new;
+
+      for (int i = s0; i < n_segments; i++) {
         const char *text = whisper_full_get_segment_text(ctx, i);
-        results->push_back(text);
+        results->push_back(std::move(text));
       };
     });
-    return p;
+    this->params = params;
   }
 
   std::string transcribe(std::vector<float> data, int num_proc) {
     std::vector<std::string> results;
+    results.reserve(data.size());
     new_segment_callback_data user_data = {&results};
     params.set_new_segment_callback_user_data(&user_data);
-    if (ctx.full_parallel(params, data, num_proc) != 0) {
+    if (context.full_parallel(params, data, num_proc) != 0) {
       throw std::runtime_error("transcribe failed");
     }
 
@@ -55,6 +56,13 @@ struct Whisper {
     // This is not efficient, for larger files.
     return std::accumulate(results.begin(), results.end(), std::string(delim));
   };
+
+  Context get_context() { return context; };
+  FullParams get_params() { return params; };
+
+private:
+  Context context;
+  FullParams params;
 };
 
 PYBIND11_MODULE(api, m) {
@@ -74,14 +82,9 @@ PYBIND11_MODULE(api, m) {
   ExportParamsApi(m);
 
   py::class_<Whisper>(m, "WhisperPreTrainedModel")
-      .def(py::init<>())
       .def(py::init<const char *>())
-      .def_property(
-          "context", [](Whisper &self) { return self.ctx; },
-          [](Whisper &self, Context &ctx) { self.ctx = ctx; })
-      .def_property(
-          "params", [](Whisper &self) { return self.params; },
-          [](Whisper &self, FullParams &params) { self.params = params; })
+      .def_property_readonly("context", &Whisper::get_context)
+      .def_property_readonly("params", &Whisper::get_params)
       .def("transcribe", &Whisper::transcribe, "data"_a, "num_proc"_a = 1);
 }
 }; // namespace whisper

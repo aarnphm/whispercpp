@@ -23,7 +23,7 @@ class Whisper:
 
     if t.TYPE_CHECKING:
         # The following will be populated by from_pretrained.
-        _ref: api.WhisperPreTrainedModel
+        _ref: Whisper
         context: api.Context
         params: api.Params
 

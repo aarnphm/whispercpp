@@ -675,8 +675,8 @@ void ExportContextApi(py::module &m) {
 
 void ExportParamsApi(py::module &m) {
   py::enum_<SamplingStrategies::StrategyType>(m, "StrategyType")
-      .value("GREEDY", SamplingStrategies::GREEDY)
-      .value("BEAM_SEARCH", SamplingStrategies::BEAM_SEARCH)
+      .value("SAMPLING_GREEDY", SamplingStrategies::GREEDY)
+      .value("SAMPLING_BEAM_SEARCH", SamplingStrategies::BEAM_SEARCH)
       .export_values();
 
   py::class_<SamplingGreedy>(m, "SamplingGreedyStrategy")
