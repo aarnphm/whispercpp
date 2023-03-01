@@ -3,8 +3,8 @@ name: wheels
 on:
   workflow_dispatch:
   push:
-    branch:
-      - main
+    tags:
+      - "v*"
   pull_request:
     branch:
       - main
@@ -28,7 +28,7 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: github.repository_owner == 'aarnphm' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')  # Don't run on fork repository
+    if: github.repository_owner == 'aarnphm' # Don't run on fork repository
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -43,6 +43,7 @@ jobs:
 
           python -m build --sdist
       - name: Upload to PyPI
+        if:  github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
@@ -54,7 +55,7 @@ jobs:
     name: Build wheels for python${{ matrix.python }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
-    if: github.repository_owner == 'aarnphm' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')  # Don't run on fork repository
+    if: github.repository_owner == 'aarnphm' # Don't run on fork repository
     strategy:
       fail-fast: false
       matrix:
@@ -85,6 +86,7 @@ jobs:
           VERSION=${{ github.ref_name }}
           echo "version=${VERSION:1}" >>$GITHUB_OUTPUT
       - name: Publish built wheels
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}

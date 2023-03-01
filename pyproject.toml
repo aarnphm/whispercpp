@@ -112,7 +112,7 @@ skip_glob = ["test/*", "venv/*", "lib/*", "bazel-*"]
 
 [tool.pyright]
 pythonVersion = "3.11"
-exclude = ["bazel-*", "extern"]
+exclude = ["bazel-*", "extern", "venv"]
 typeCheckingMode = "strict"
 analysis.useLibraryCodeForTypes = true
 enableTypeIgnoreComments = true

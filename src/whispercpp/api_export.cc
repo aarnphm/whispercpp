@@ -1,9 +1,14 @@
 #include "context.h"
-#include <iterator>
+#include <algorithm>
+#include <functional>
+#include <numeric>
 #include <sstream>
-#include <stdio.h>
 
 namespace whisper {
+
+struct new_segment_callback_data {
+  std::vector<std::string> *results;
+};
 
 struct Whisper {
   Context ctx;
@@ -13,37 +18,42 @@ struct Whisper {
   Whisper(const char *model_path)
       : ctx(Context::from_file(model_path)), params(defaults()) {}
 
+  // Set default params to recommended.
   static FullParams defaults() {
-    SamplingStrategies st = SamplingStrategies();
-    st.type = SamplingStrategies::GREEDY;
-    st.greedy = SamplingGreedy();
-    FullParams p = FullParams::from_sampling_strategy(st);
+    FullParams p = FullParams::from_sampling_strategy(
+        SamplingStrategies::from_strategy_type(SamplingStrategies::GREEDY));
     // disable printing progress
     p.set_print_progress(false);
+    // disable realtime print, using callback
+    p.set_print_realtime(false);
+
+    // invoke new_segment_callback for faster transcription.
+    p.set_new_segment_callback([](struct whisper_context *ctx, int n_new,
+                                  void *user_data) {
+      const auto &results = ((new_segment_callback_data *)user_data)->results;
+
+      const int n_segments = whisper_full_n_segments(ctx);
+
+      for (int i = n_segments - n_new; i < n_segments; i++) {
+        const char *text = whisper_full_get_segment_text(ctx, i);
+        results->push_back(text);
+      };
+    });
     return p;
   }
 
   std::string transcribe(std::vector<float> data, int num_proc) {
-    std::vector<std::string> res;
-    int ret;
-    if (num_proc > 0) {
-      ret = ctx.full_parallel(params, data, num_proc);
-    } else {
-      ret = ctx.full(params, data);
-    }
-    if (ret != 0) {
+    std::vector<std::string> results;
+    new_segment_callback_data user_data = {&results};
+    params.set_new_segment_callback_user_data(&user_data);
+    if (ctx.full_parallel(params, data, num_proc) != 0) {
       throw std::runtime_error("transcribe failed");
     }
-    for (int i = 0; i < ctx.full_n_segments(); i++) {
-      res.push_back(ctx.full_get_segment_text(i));
-    }
 
-    // We are copying this in memory here, not ideal.
     const char *const delim = "";
-    std::ostringstream imploded;
-    std::copy(res.begin(), res.end(),
-              std::ostream_iterator<std::string>(imploded, delim));
-    return imploded.str();
+    // We are allocating a new string for every element in the vector.
+    // This is not efficient, for larger files.
+    return std::accumulate(results.begin(), results.end(), std::string(delim));
   };
 };
 
