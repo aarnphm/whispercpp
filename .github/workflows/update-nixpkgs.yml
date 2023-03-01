@@ -10,14 +10,7 @@ jobs:
     name: "Create PR for niv-managed dependencies"
     if: github.repository_owner == 'aarnphm'
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Install jq, curl
-        run: sudo apt-get install -y jq curl
       - name: niv-updater-action
         uses: knl/niv-updater-action@v12
         env:
