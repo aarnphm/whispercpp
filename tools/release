@@ -46,7 +46,7 @@ fi
 
 MINOR="$((${VERSION##*.} + 1))"
 DEV_VERSION="${VERSION%.*}.${MINOR}.dev0"
-sed -i.bak "s/version =.*/version = \"$DEV_VERSION\"/g" pyproject.toml && rm pyproject.toml.bak
+sed -i.bak "s/^version =.*/version = \"$DEV_VERSION\"/g" pyproject.toml && rm pyproject.toml.bak
 sed -i.bak "s/\"\/\/conditions:default\":.*/\"\/\/conditions:default\": \"$DEV_VERSION\",/g" BUILD.bazel && rm BUILD.bazel.bak
 git add pyproject.toml BUILD.bazel && git commit --signoff -S -sv -m "chore: bump development version [generated]"
 git push origin main
