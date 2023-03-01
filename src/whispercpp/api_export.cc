@@ -123,10 +123,7 @@ PYBIND11_MODULE(api, m) {
       .def_property("logprob_threshold", &Params::get_logprob_thold,
                     &Params::set_logprob_thold)
       .def_property("no_speech_threshold", &Params::get_no_speech_thold,
-                    &Params::set_no_speech_thold)
-      .def("set_new_segment_callback", [](Params &self, py::function callback) {
-        self.set_new_segment_callback((whisper_new_segment_callback)callback)
-      });
+                    &Params::set_no_speech_thold);
   // TODO: idk what to do with setting all the callbacks for Params. API are
   // there, but need more time investingating conversion from Python callback to
   // C++ callback
