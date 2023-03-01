@@ -16,18 +16,6 @@ def internal_deps():
         shallow_since = "1677462988 -0800",
     )
 
-    # whisper.cpp
-    maybe(
-        new_git_repository,
-        name = "com_github_ggerganov_whisper",
-        build_file = Label("//extern:whispercpp.BUILD"),
-        commit = "0d229163bbea769c7a3e0e500e45850c9a6e2e42",
-        init_submodules = True,
-        recursive_init_submodules = True,
-        remote = "https://github.com/ggerganov/whisper.cpp.git",
-        shallow_since = "1676824501 +0200",
-    )
-
     maybe(
         http_archive,
         name = "rules_cc",
@@ -72,11 +60,22 @@ def internal_deps():
         ],
     )
 
+    # Use main for maximum on the edge, not hermetic.
+
+    # whisper.cpp
+    maybe(
+        new_git_repository,
+        name = "com_github_ggerganov_whisper",
+        build_file = Label("//extern:whispercpp.BUILD"),
+        branch = "master",
+        init_submodules = True,
+        recursive_init_submodules = True,
+        remote = "https://github.com/ggerganov/whisper.cpp.git",
+    )
+
     # Override python rules defined under @com_github_bentoml_plugins
-    # Use main for maxium on the edge, not hermetic.
     git_repository(
         name = "rules_python",
         remote = "https://github.com/bazelbuild/rules_python.git",
-        commit = "c504355672223144cefb2cbf3f69e2d38e7e2726",
-        shallow_since = "1677541135 -0800",
+        branch = "main",
     )
