@@ -48,6 +48,7 @@ pybind_extension(
     srcs = [
         "//src/whispercpp:api_export.cc",
         "//src/whispercpp:context.h",
+        "@com_github_ggerganov_whisper//:examples/common.h",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
     copts = [
@@ -58,7 +59,10 @@ pybind_extension(
         "-Wall",
     ],
     defines = ["BAZEL_BUILD"],
-    deps = [":context"],
+    deps = [
+        ":context",
+        "@com_github_ggerganov_whisper//:common",
+    ],
 )
 
 write_file(

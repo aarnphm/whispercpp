@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from whispercpp import api
 from whispercpp import Whisper
 from whispercpp.utils import LazyLoader
 
@@ -20,7 +21,6 @@ ROOT = Path(__file__).parent.parent
 
 
 def preprocess(file: Path, sample_rate: int = 16000) -> NDArray[np.float32]:
-    y: NDArray[np.float32]
     try:
         y, _ = (
             ffmpeg.input(file.__fspath__(), threads=0)
@@ -49,3 +49,17 @@ def test_from_pretrained():
         " And so my fellow Americans ask not what your country can do for you ask what you can do for your country"
         == m.transcribe(preprocess(ROOT / "samples" / "jfk.wav"))
     )
+
+
+def test_load_wav_file():
+    np.testing.assert_almost_equal(
+        preprocess(ROOT / "samples" / "jfk.wav"),
+        api.load_wav_file(ROOT.joinpath("samples", "jfk.wav").resolve().__fspath__()),
+    )
+
+
+def test_transcribe_from_wav():
+    m = Whisper.from_pretrained("tiny.en")
+    assert m.transcribe_from_file(
+        ROOT.joinpath("samples", "jfk.wav").resolve().__fspath__()
+    ) == m.transcribe(preprocess(ROOT / "samples" / "jfk.wav"))

@@ -56,4 +56,5 @@ jobs:
           python -m pip install -r requirements/pypi.txt
           python -m pip install .
       - name: Run tests on python${{ matrix.python-version }}
-        run: bazel test //tests/...
+        run: |
+          bazel test //tests/... //examples/...

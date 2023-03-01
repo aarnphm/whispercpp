@@ -14,7 +14,7 @@ if t.TYPE_CHECKING:
 def test_invalid_load_module():
     with pytest.raises(ImportError):
         print(dir(LazyLoader("invalid", globals(), "invalid")))
-        del globals["invalid"]
+        del globals()["invalid"]
 
 
 def test_lazy_warning(caplog: LogCaptureFixture):

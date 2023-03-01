@@ -3,6 +3,28 @@
 #include <functional>
 #include <numeric>
 #include <sstream>
+#ifdef BAZEL_BUILD
+#include "examples/common.h"
+#include <pybind11/numpy.h>
+#else
+#include "common.h"
+#include <pybind11/numpy.h>
+#endif
+
+// Some black magic to make zero-copy numpy array
+// See https://github.com/pybind/pybind11/issues/1042#issuecomment-642215028
+template <typename Sequence>
+inline py::array_t<typename Sequence::value_type> as_pyarray(Sequence &&seq) {
+  auto size = seq.size();
+  auto data = seq.data();
+  std::unique_ptr<Sequence> seq_ptr =
+      std::make_unique<Sequence>(std::move(seq));
+  auto capsule = py::capsule(seq_ptr.get(), [](void *p) {
+    std::unique_ptr<Sequence>(reinterpret_cast<Sequence *>(p));
+  });
+  seq_ptr.release();
+  return py::array(size, data, capsule);
+}
 
 namespace whisper {
 PYBIND11_MODULE(api, m) {
@@ -17,6 +39,18 @@ PYBIND11_MODULE(api, m) {
 
   // NOTE: export Context API
   ExportContextApi(m);
+
+  m.def(
+      "load_wav_file",
+      [](const char *filename) {
+        std::vector<float> pcmf32;
+        std::vector<std::vector<float>> pcmf32s;
+        if (!::read_wav(filename, pcmf32, pcmf32s, false)) {
+          throw std::runtime_error("Failed to load wav file");
+        }
+        return as_pyarray(std::move(pcmf32));
+      },
+      "filename"_a);
 
   // NOTE: export Params API
   py::enum_<SamplingStrategies::StrategyType>(m, "StrategyType")

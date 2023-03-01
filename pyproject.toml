@@ -39,9 +39,9 @@ include = ["whispercpp*"]
 whispercpp = ["py.typed", "*.so", "*.pyi"]
 
 [tool.pytest.ini_options]
-addopts = ["-rfEX", "-vvv", "--cov=src/whispercpp", "--cov-report=term-missing"]
+addopts = ["-rfEX", "-vvv", "--cov-report=term-missing", "--ignore=extern", "--ignore-glob=bazel-*"]
 python_files = ["test_*.py", "*_test.py"]
-testpaths = ["tests"]
+testpaths = ["tests", "examples"]
 
 [tool.coverage.paths]
 source = ["src"]

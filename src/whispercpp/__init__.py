@@ -56,5 +56,8 @@ class Whisper:
             ]
         )
 
+    def transcribe_from_file(self, filename: str, num_proc: int = 1):
+        return self.transcribe(api.load_wav_file(filename), num_proc)
+
 
 __all__ = ["Whisper", "api"]
