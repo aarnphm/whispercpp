@@ -1,4 +1,4 @@
-# whispercpp
+# whispercpp [![CI](https://github.com/aarnphm/whispercpp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aarnphm/whispercpp/actions/workflows/ci.yml)
 
 _Pybind11 bindings for [whisper.cpp](https://github.com/ggerganov/whisper.cpp.git)_
 
