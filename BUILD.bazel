@@ -137,7 +137,7 @@ py_wheel(
     twine = "@pypi_twine//:pkg",
     # NOTE: This can be replaced by building with --stamp --embed_label=1.2.3
     version = select({
-        "//conditions:default": "0.0.0",
+        "//conditions:default": "0.0.8.dev0",
         ":ci": "{BUILD_EMBED_LABEL}",
     }),
     visibility = ["//:__subpackages__"],
