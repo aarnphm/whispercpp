@@ -1,3 +1,6 @@
+"""
+Demonstrate how to use the C++ binding directly.
+"""
 from __future__ import annotations
 
 import sys
@@ -20,7 +23,6 @@ _model: w.Whisper | None = None
 
 
 def preprocess(file: Path, sample_rate: int = 16000) -> NDArray[np.float32]:
-    y: NDArray[np.float32]
     try:
         y, _ = (
             ffmpeg.input(file.__fspath__(), threads=0)
