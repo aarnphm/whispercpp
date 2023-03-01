@@ -11,8 +11,9 @@ from bentoml._internal.utils import LazyLoader
 if t.TYPE_CHECKING:
     import numpy as np
     import ffmpeg
-    import whispercpp as w
     from numpy.typing import NDArray
+
+    import whispercpp as w
 else:
     ffmpeg = LazyLoader("ffmpeg", globals(), "ffmpeg")
     np = LazyLoader("np", globals(), "numpy")
