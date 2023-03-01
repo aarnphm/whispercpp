@@ -42,12 +42,11 @@ struct SamplingStrategies {
   static SamplingStrategies from_strategy_type(StrategyType type);
 };
 
-class FullParams {
+class Params {
 public:
-  whisper_full_params fp;
+  whisper_full_params wfp;
 
-  static FullParams
-  from_sampling_strategy(SamplingStrategies sampling_strategies);
+  static Params from_sampling_strategy(SamplingStrategies sampling_strategies);
 
   // Set the number of threads to use for decoding.
   // Defaults to min(4, std::thread::hardware_concurrency()).
@@ -292,10 +291,9 @@ public:
   void reset_timings();
   std::string sys_info();
 
-  int full(FullParams params, std::vector<float> data);
+  int full(Params params, std::vector<float> data);
 
-  int full_parallel(FullParams params, std::vector<float> data,
-                    int num_processor);
+  int full_parallel(Params params, std::vector<float> data, int num_processor);
 
   int full_n_segments();
   int full_lang_id();

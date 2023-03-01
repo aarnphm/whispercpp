@@ -228,8 +228,8 @@ std::string Context::sys_info() {
 //
 // Uses the specified decoding strategy to obtain the text. This is
 // usually the only function you need to call as an end user.
-int Context::full(FullParams params, std::vector<float> data) {
-  int ret = whisper_full(ctx, params.fp, data.data(), data.size());
+int Context::full(Params params, std::vector<float> data) {
+  int ret = whisper_full(ctx, params.wfp, data.data(), data.size());
   if (ret == -1) {
     throw std::runtime_error("unable to calculate spectrogram");
   } else if (ret == 7) {
@@ -245,9 +245,9 @@ int Context::full(FullParams params, std::vector<float> data) {
 
 // Split the input audio into chunks and delegate to full
 // Transcription accuracy can be worse at the beggining and end of the chunks.
-int Context::full_parallel(FullParams params, std::vector<float> data,
+int Context::full_parallel(Params params, std::vector<float> data,
                            int num_processor) {
-  int ret = whisper_full_parallel(ctx, params.fp, data.data(), data.size(),
+  int ret = whisper_full_parallel(ctx, params.wfp, data.data(), data.size(),
                                   num_processor);
   if (ret == -1) {
     throw std::runtime_error("unable to calculate spectrogram");
@@ -370,10 +370,9 @@ void ExportContextApi(py::module &m) {
            "token"_a);
 }
 
-FullParams
-FullParams::from_sampling_strategy(SamplingStrategies sampling_strategies) {
+Params Params::from_sampling_strategy(SamplingStrategies sampling_strategies) {
 
-  FullParams rt;
+  Params rt;
   whisper_sampling_strategy ss;
 
   switch (sampling_strategies.type) {
@@ -398,268 +397,263 @@ FullParams::from_sampling_strategy(SamplingStrategies sampling_strategies) {
     break;
   }
 
-  rt.fp = fp;
+  rt.wfp = fp;
   return rt;
 };
 
 // Set the number of threads to use for decoding.
 // Defaults to min(4, std::thread::hardware_concurrency()).
-void FullParams::set_n_threads(size_t threads) { fp.n_threads = threads; }
-size_t FullParams::get_n_threads() { return fp.n_threads; }
+void Params::set_n_threads(size_t threads) { wfp.n_threads = threads; }
+size_t Params::get_n_threads() { return wfp.n_threads; }
 
 // Set max tokens from past text as prompt for decoder.
 // defaults to 16384
-void FullParams::set_n_max_text_ctx(size_t max_text_ctx) {
-  fp.n_max_text_ctx = max_text_ctx;
+void Params::set_n_max_text_ctx(size_t max_text_ctx) {
+  wfp.n_max_text_ctx = max_text_ctx;
 }
-size_t FullParams::get_n_max_text_ctx() { return fp.n_max_text_ctx; }
+size_t Params::get_n_max_text_ctx() { return wfp.n_max_text_ctx; }
 
 // Set offset in milliseconds to start decoding from.
 // defaults to 0
-void FullParams::set_offset_ms(size_t offset) { fp.offset_ms = offset; }
-size_t FullParams::get_offset_ms() { return fp.offset_ms; }
+void Params::set_offset_ms(size_t offset) { wfp.offset_ms = offset; }
+size_t Params::get_offset_ms() { return wfp.offset_ms; }
 
 // Set audio duration in milliseconds to decode.
 // defaults to 0 (decode until end of audio)
-void FullParams::set_duration_ms(size_t duration) { fp.duration_ms = duration; }
-size_t FullParams::get_duration_ms() { return fp.duration_ms; }
+void Params::set_duration_ms(size_t duration) { wfp.duration_ms = duration; }
+size_t Params::get_duration_ms() { return wfp.duration_ms; }
 
 // Whether to translate to output to language specified under `language`
 // parameter. Defaults to false.
-void FullParams::set_translate(bool translate) { fp.translate = translate; }
-bool FullParams::get_translate() { return fp.translate; }
+void Params::set_translate(bool translate) { wfp.translate = translate; }
+bool Params::get_translate() { return wfp.translate; }
 
 // Do not use past translation (if any) as initial prompt for the decoder.
 // Defaults to false.
-void FullParams::set_no_context(bool no_context) { fp.no_context = no_context; }
-bool FullParams::get_no_context() { return fp.no_context; }
+void Params::set_no_context(bool no_context) { wfp.no_context = no_context; }
+bool Params::get_no_context() { return wfp.no_context; }
 
 // Force single segment output. This may be useful for streaming.
 // Defaults to false
-void FullParams::set_single_segment(bool single_segment) {
-  fp.single_segment = single_segment;
+void Params::set_single_segment(bool single_segment) {
+  wfp.single_segment = single_segment;
 }
-bool FullParams::get_single_segment() { return fp.single_segment; }
+bool Params::get_single_segment() { return wfp.single_segment; }
 
 // Whether to print special tokens (<SOT>, <EOT>, <BEG>)
 // Defaults to false
-void FullParams::set_print_special(bool print_special) {
-  fp.print_special = print_special;
+void Params::set_print_special(bool print_special) {
+  wfp.print_special = print_special;
 }
-bool FullParams::get_print_special() { return fp.print_special; }
+bool Params::get_print_special() { return wfp.print_special; }
 
 // Whether to print progress information
 // Defaults to false
-void FullParams::set_print_progress(bool print_progress) {
-  fp.print_progress = print_progress;
+void Params::set_print_progress(bool print_progress) {
+  wfp.print_progress = print_progress;
 }
-bool FullParams::get_print_progress() { return fp.print_progress; }
+bool Params::get_print_progress() { return wfp.print_progress; }
 
 // Print results from within whisper.cpp.
 // Try to use the callback methods instead:
 // [set_new_segment_callback](FullParams::set_new_segment_callback),
 // [set_new_segment_callback_user_data](FullParams::set_new_segment_callback_user_data).
 // Defaults to false
-void FullParams::set_print_realtime(bool print_realtime) {
-  fp.print_realtime = print_realtime;
+void Params::set_print_realtime(bool print_realtime) {
+  wfp.print_realtime = print_realtime;
 }
-bool FullParams::get_print_realtime() { return fp.print_realtime; }
+bool Params::get_print_realtime() { return wfp.print_realtime; }
 
 // Whether to print timestamps for each text segment when printing realtime
 // Only has an effect if [set_print_realtime](FullParams::set_print_realtime)
 // is set to true. Defaults to true.
-void FullParams::set_print_timestamps(bool print_timestamps) {
-  fp.print_timestamps = print_timestamps;
+void Params::set_print_timestamps(bool print_timestamps) {
+  wfp.print_timestamps = print_timestamps;
 }
-bool FullParams::get_print_timestamps() { return fp.print_timestamps; }
+bool Params::get_print_timestamps() { return wfp.print_timestamps; }
 
 // [EXPERIMENTAL] token-level timestamps
 // default to false
-void FullParams::set_token_timestamps(bool token_timestamps) {
-  fp.token_timestamps = token_timestamps;
+void Params::set_token_timestamps(bool token_timestamps) {
+  wfp.token_timestamps = token_timestamps;
 }
-bool FullParams::get_token_timestamps() { return fp.token_timestamps; }
+bool Params::get_token_timestamps() { return wfp.token_timestamps; }
 
 // [EXPERIMENTAL] Set timestamp token probability threshold.
 // Defaults to 0.01
-void FullParams::set_thold_pt(float thold_pt) { fp.thold_pt = thold_pt; }
-float FullParams::get_thold_pt() { return fp.thold_pt; }
+void Params::set_thold_pt(float thold_pt) { wfp.thold_pt = thold_pt; }
+float Params::get_thold_pt() { return wfp.thold_pt; }
 
 // [EXPERIMENTAL] Set timestamp token sum probability threshold.
 // Defaults to 0.01
-void FullParams::set_thold_ptsum(float thold_ptsum) {
-  fp.thold_ptsum = thold_ptsum;
+void Params::set_thold_ptsum(float thold_ptsum) {
+  wfp.thold_ptsum = thold_ptsum;
 }
-float FullParams::get_thold_ptsum() { return fp.thold_ptsum; }
+float Params::get_thold_ptsum() { return wfp.thold_ptsum; }
 
 // [EXPERIMENTAL] max segment length in characters
 // defaults to 0 (no limit)
-void FullParams::set_max_len(size_t max_len) { fp.max_len = max_len; }
-size_t FullParams::get_max_len() { return fp.max_len; }
+void Params::set_max_len(size_t max_len) { wfp.max_len = max_len; }
+size_t Params::get_max_len() { return wfp.max_len; }
 
 // [EXPERIMENTAL] split on word rather on token (in conjunction with max_len)
 // defaults to false
-void FullParams::set_split_on_word(bool split_on_word) {
-  fp.split_on_word = split_on_word;
+void Params::set_split_on_word(bool split_on_word) {
+  wfp.split_on_word = split_on_word;
 }
-bool FullParams::get_split_on_word() { return fp.split_on_word; }
+bool Params::get_split_on_word() { return wfp.split_on_word; }
 
 // [EXPERIMENTAL] Set the maximum tokens per segment. Default to 0 (no limit).
-void FullParams::set_max_tokens(size_t max_tokens) {
-  fp.max_tokens = max_tokens;
-}
-size_t FullParams::get_max_tokens() { return fp.max_tokens; }
+void Params::set_max_tokens(size_t max_tokens) { wfp.max_tokens = max_tokens; }
+size_t Params::get_max_tokens() { return wfp.max_tokens; }
 
 // [EXPERIMENTAL] Speed-up techniques (can reduce the quality of output)
 // Speed-up the audio by 2x using Phase Vocoder
 // defaults to false
-void FullParams::set_speed_up(bool speed_up) { fp.speed_up = speed_up; }
-bool FullParams::get_speed_up() { return fp.speed_up; }
+void Params::set_speed_up(bool speed_up) { wfp.speed_up = speed_up; }
+bool Params::get_speed_up() { return wfp.speed_up; }
 
 // [EXPERIMENTAL] Speed-up techniques (can reduce the quality of output)
 // Overwrite the audio context size. Default to 0 to use the default value
-void FullParams::set_audio_ctx(size_t audio_ctx) { fp.audio_ctx = audio_ctx; }
-size_t FullParams::get_audio_ctx() { return fp.audio_ctx; }
+void Params::set_audio_ctx(size_t audio_ctx) { wfp.audio_ctx = audio_ctx; }
+size_t Params::get_audio_ctx() { return wfp.audio_ctx; }
 
 // Set tokens to provide the model as initial input.
 // These tokens are prepended to any existing text content from a previous
 // call.
 // Calling this more than once will overwrite the previous tokens.
 // Defaults to an empty vector.
-void FullParams::set_tokens(std::vector<int> &tokens) {
-  fp.prompt_tokens = reinterpret_cast<whisper_token *>(&tokens);
-  fp.prompt_n_tokens = tokens.size();
+void Params::set_tokens(std::vector<int> &tokens) {
+  wfp.prompt_tokens = reinterpret_cast<whisper_token *>(&tokens);
+  wfp.prompt_n_tokens = tokens.size();
 }
-const whisper_token *FullParams::get_prompt_tokens() {
-  return fp.prompt_tokens;
-}
-size_t FullParams::get_prompt_n_tokens() { return fp.prompt_n_tokens; }
+const whisper_token *Params::get_prompt_tokens() { return wfp.prompt_tokens; }
+size_t Params::get_prompt_n_tokens() { return wfp.prompt_n_tokens; }
 
 // Set target language.
 // For auto-detection, set this either to 'auto' or nullptr.
 // defaults to 'en'.
-void FullParams::set_language(std::string *language) {
-  fp.language = language->c_str();
+void Params::set_language(std::string *language) {
+  wfp.language = language->c_str();
 }
-std::string FullParams::get_language() { return std::string(fp.language); }
+std::string Params::get_language() { return std::string(wfp.language); }
 
 // Set suppress_blank. See
 // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/decoding.py#L89
 // for more information.
 // Defaults to true.
-void FullParams::set_suppress_blank(bool suppress_blank) {
-  fp.suppress_blank = suppress_blank;
+void Params::set_suppress_blank(bool suppress_blank) {
+  wfp.suppress_blank = suppress_blank;
 }
-bool FullParams::get_suppress_blank() { return fp.suppress_blank; }
+bool Params::get_suppress_blank() { return wfp.suppress_blank; }
 
 // Set suppress none speech tokens. See
 // https://github.com/openai/whisper/blob/7858aa9c08d98f75575035ecd6481f462d66ca27/whisper/tokenizer.py#L224-L253
 // for more information.
 // Defaults to true.
-void FullParams::set_suppress_none_speech_tokens(
-    bool suppress_non_speech_tokens) {
-  fp.suppress_non_speech_tokens = suppress_non_speech_tokens;
+void Params::set_suppress_none_speech_tokens(bool suppress_non_speech_tokens) {
+  wfp.suppress_non_speech_tokens = suppress_non_speech_tokens;
 }
-bool FullParams::get_suppress_none_speech_tokens() {
-  return fp.suppress_non_speech_tokens;
+bool Params::get_suppress_none_speech_tokens() {
+  return wfp.suppress_non_speech_tokens;
 }
 
 // Set initial decoding temperature. Defaults to 1.0.
 // See https://ai.stackexchange.com/a/32478
-void FullParams::set_temperature(float temperature) {
-  fp.temperature = temperature;
+void Params::set_temperature(float temperature) {
+  wfp.temperature = temperature;
 }
-float FullParams::get_temperature() { return fp.temperature; }
+float Params::get_temperature() { return wfp.temperature; }
 
 // Set max intial timestamps. See
 // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/decoding.py#L97
 // for more information.
 // Defaults to 1.0
-void FullParams::set_max_intial_ts(size_t max_intial_ts) {
-  fp.max_initial_ts = max_intial_ts;
+void Params::set_max_intial_ts(size_t max_intial_ts) {
+  wfp.max_initial_ts = max_intial_ts;
 }
-size_t FullParams::get_max_intial_ts() { return fp.max_initial_ts; }
+size_t Params::get_max_intial_ts() { return wfp.max_initial_ts; }
 
 // Set length penalty. See
 // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/transcribe.py#L267
 // for more information.
 // Defaults to -1.0.
-void FullParams::set_length_penalty(float length_penalty) {
-  fp.length_penalty = length_penalty;
+void Params::set_length_penalty(float length_penalty) {
+  wfp.length_penalty = length_penalty;
 }
-float FullParams::get_length_penalty() { return fp.length_penalty; }
+float Params::get_length_penalty() { return wfp.length_penalty; }
 
 // Set temperatur increase. See
 // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/transcribe.py#L274-L278
 // Defaults to 0.2
-void FullParams::set_temperature_inc(float temperature_inc) {
-  fp.temperature_inc = temperature_inc;
+void Params::set_temperature_inc(float temperature_inc) {
+  wfp.temperature_inc = temperature_inc;
 }
-float FullParams::get_temperature_inc() { return fp.temperature_inc; }
+float Params::get_temperature_inc() { return wfp.temperature_inc; }
 
 // Set entropy threshold, similar to OpenAI's compression ratio threshold.
 // See
 // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/transcribe.py#L274-L278
 // for more information.
 // Defaults to 2.4.
-void FullParams::set_entropy_thold(float entropy_thold) {
-  fp.entropy_thold = entropy_thold;
+void Params::set_entropy_thold(float entropy_thold) {
+  wfp.entropy_thold = entropy_thold;
 }
-float FullParams::get_entropy_thold() { return fp.entropy_thold; }
+float Params::get_entropy_thold() { return wfp.entropy_thold; }
 
 // Set logprob_thold. See
 // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/transcribe.py#L274-L278
 // for more information.
 // Defaults to -1.0.
-void FullParams::set_logprob_thold(float logprob_thold) {
-  fp.logprob_thold = logprob_thold;
+void Params::set_logprob_thold(float logprob_thold) {
+  wfp.logprob_thold = logprob_thold;
 }
-float FullParams::get_logprob_thold() { return fp.logprob_thold; }
+float Params::get_logprob_thold() { return wfp.logprob_thold; }
 
 /// Set no_speech_thold. Currently (as of v1.2.0) not implemented.
 /// Defaults to 0.6.
-void FullParams::set_no_speech_thold(float no_speech_thold) {
-  fp.no_speech_thold = no_speech_thold;
+void Params::set_no_speech_thold(float no_speech_thold) {
+  wfp.no_speech_thold = no_speech_thold;
 }
-float FullParams::get_no_speech_thold() { return fp.no_speech_thold; }
+float Params::get_no_speech_thold() { return wfp.no_speech_thold; }
 
 // called for every newly generated text segments
 // Do not use this function unless you know what you are doing.
 // Defaults to None.
-void FullParams::set_new_segment_callback(
+void Params::set_new_segment_callback(
     whisper_new_segment_callback new_segment_callback) {
-  fp.new_segment_callback = new_segment_callback;
+  wfp.new_segment_callback = new_segment_callback;
 }
 // Set the user data to be passed to the new segment callback.
 // Defaults to None. See set_new_segment_callback.
-void FullParams::set_new_segment_callback_user_data(void *user_data) {
-  fp.new_segment_callback_user_data = user_data;
+void Params::set_new_segment_callback_user_data(void *user_data) {
+  wfp.new_segment_callback_user_data = user_data;
 }
 
 // Set the callback for starting the encoder.
 // Do not use this function unless you know what you are doing.
 // Defaults to None.
-void FullParams::set_encoder_begin_callback(
+void Params::set_encoder_begin_callback(
     whisper_encoder_begin_callback callback) {
-  fp.encoder_begin_callback = callback;
+  wfp.encoder_begin_callback = callback;
 }
 // Set the user data to be passed to the encoder begin callback.
 // Defaults to None. See set_encoder_begin_callback.
-void FullParams::set_encoder_begin_callback_user_data(void *user_data) {
-  fp.encoder_begin_callback_user_data = user_data;
+void Params::set_encoder_begin_callback_user_data(void *user_data) {
+  wfp.encoder_begin_callback_user_data = user_data;
 }
 
 // Set the callback for each decoder to filter obtained logits.
 // Do not use this function unless you know what you are doing.
 // Defaults to None.
-void FullParams::set_logits_filter_callback(
+void Params::set_logits_filter_callback(
     whisper_logits_filter_callback callback) {
-  fp.logits_filter_callback = callback;
+  wfp.logits_filter_callback = callback;
 }
 // Set the user data to be passed to the logits filter callback.
 // Defaults to None. See set_logits_filter_callback.
-void FullParams::set_logits_filter_callback_user_data(void *user_data) {
-  fp.logits_filter_callback_user_data = user_data;
+void Params::set_logits_filter_callback_user_data(void *user_data) {
+  wfp.logits_filter_callback_user_data = user_data;
 }
 
 SamplingStrategies SamplingStrategies::from_strategy_type(StrategyType type) {

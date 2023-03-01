@@ -64,74 +64,72 @@ PYBIND11_MODULE(api, m) {
             self.beam_search = beam_search;
           });
 
-  py::class_<FullParams>(m, "Params", "Whisper parameters container")
-      .def_static("from_sampling_strategy", &FullParams::from_sampling_strategy,
+  py::class_<Params>(m, "Params", "Whisper parameters container")
+      .def_static("from_sampling_strategy", &Params::from_sampling_strategy,
                   "sampling_strategy"_a)
-      .def_property("num_threads", &FullParams::get_n_threads,
-                    &FullParams::set_n_threads)
-      .def_property("num_max_text_ctx", &FullParams::get_n_max_text_ctx,
-                    &FullParams::set_n_max_text_ctx)
-      .def_property("offset_ms", &FullParams::get_offset_ms,
-                    &FullParams::set_offset_ms)
-      .def_property("duration_ms", &FullParams::get_duration_ms,
-                    &FullParams::set_duration_ms)
-      .def_property("translate", &FullParams::get_translate,
-                    &FullParams::set_translate)
-      .def_property("no_context", &FullParams::get_no_context,
-                    &FullParams::set_no_context)
-      .def_property("single_segment", &FullParams::get_single_segment,
-                    &FullParams::set_single_segment)
-      .def_property("print_special", &FullParams::get_print_special,
-                    &FullParams::set_print_special)
-      .def_property("print_progress", &FullParams::get_print_progress,
-                    &FullParams::set_print_progress)
-      .def_property("print_realtime", &FullParams::get_print_realtime,
-                    &FullParams::set_print_realtime)
-      .def_property("print_timestamps", &FullParams::get_print_timestamps,
-                    &FullParams::set_print_timestamps)
-      .def_property("token_timestamps", &FullParams::get_token_timestamps,
-                    &FullParams::set_token_timestamps)
+      .def_property("num_threads", &Params::get_n_threads,
+                    &Params::set_n_threads)
+      .def_property("num_max_text_ctx", &Params::get_n_max_text_ctx,
+                    &Params::set_n_max_text_ctx)
+      .def_property("offset_ms", &Params::get_offset_ms, &Params::set_offset_ms)
+      .def_property("duration_ms", &Params::get_duration_ms,
+                    &Params::set_duration_ms)
+      .def_property("translate", &Params::get_translate, &Params::set_translate)
+      .def_property("no_context", &Params::get_no_context,
+                    &Params::set_no_context)
+      .def_property("single_segment", &Params::get_single_segment,
+                    &Params::set_single_segment)
+      .def_property("print_special", &Params::get_print_special,
+                    &Params::set_print_special)
+      .def_property("print_progress", &Params::get_print_progress,
+                    &Params::set_print_progress)
+      .def_property("print_realtime", &Params::get_print_realtime,
+                    &Params::set_print_realtime)
+      .def_property("print_timestamps", &Params::get_print_timestamps,
+                    &Params::set_print_timestamps)
+      .def_property("token_timestamps", &Params::get_token_timestamps,
+                    &Params::set_token_timestamps)
       .def_property("timestamp_token_probability_threshold",
-                    &FullParams::get_thold_pt, &FullParams::set_thold_pt)
+                    &Params::get_thold_pt, &Params::set_thold_pt)
       .def_property("timestamp_token_sum_probability_threshold",
-                    &FullParams::get_thold_ptsum, &FullParams::set_thold_ptsum)
-      .def_property("max_segment_length", &FullParams::get_max_len,
-                    &FullParams::set_max_len)
-      .def_property("split_on_word", &FullParams::get_split_on_word,
-                    &FullParams::set_split_on_word)
-      .def_property("max_tokens", &FullParams::get_max_tokens,
-                    &FullParams::set_max_tokens)
-      .def_property("speed_up", &FullParams::get_speed_up,
-                    &FullParams::set_speed_up)
-      .def_property("audio_ctx", &FullParams::get_audio_ctx,
-                    &FullParams::set_audio_ctx)
-      .def("set_tokens", &FullParams::set_tokens, "tokens"_a)
-      .def_property_readonly("prompt_tokens", &FullParams::get_prompt_tokens)
-      .def_property_readonly("prompt_num_tokens",
-                             &FullParams::get_prompt_n_tokens)
-      .def_property("language", &FullParams::get_language,
-                    &FullParams::set_language)
-      .def_property("suppress_blank", &FullParams::get_suppress_blank,
-                    &FullParams::set_suppress_blank)
+                    &Params::get_thold_ptsum, &Params::set_thold_ptsum)
+      .def_property("max_segment_length", &Params::get_max_len,
+                    &Params::set_max_len)
+      .def_property("split_on_word", &Params::get_split_on_word,
+                    &Params::set_split_on_word)
+      .def_property("max_tokens", &Params::get_max_tokens,
+                    &Params::set_max_tokens)
+      .def_property("speed_up", &Params::get_speed_up, &Params::set_speed_up)
+      .def_property("audio_ctx", &Params::get_audio_ctx, &Params::set_audio_ctx)
+      .def("set_tokens", &Params::set_tokens, "tokens"_a)
+      .def_property_readonly("prompt_tokens", &Params::get_prompt_tokens)
+      .def_property_readonly("prompt_num_tokens", &Params::get_prompt_n_tokens)
+      .def_property("language", &Params::get_language, &Params::set_language)
+      .def_property("suppress_blank", &Params::get_suppress_blank,
+                    &Params::set_suppress_blank)
       .def_property("suppress_none_speech_tokens",
-                    &FullParams::get_suppress_none_speech_tokens,
-                    &FullParams::set_suppress_none_speech_tokens)
-      .def_property("temperature", &FullParams::get_temperature,
-                    &FullParams::set_temperature)
-      .def_property("max_intial_timestamps", &FullParams::get_max_intial_ts,
-                    &FullParams::set_max_intial_ts)
-      .def_property("length_penalty", &FullParams::get_length_penalty,
-                    &FullParams::set_length_penalty)
-      .def_property("temperature_inc", &FullParams::get_temperature_inc,
-                    &FullParams::set_temperature_inc)
-      .def_property("entropy_threshold", &FullParams::get_entropy_thold,
-                    &FullParams::set_entropy_thold)
-      .def_property("logprob_threshold", &FullParams::get_logprob_thold,
-                    &FullParams::set_logprob_thold)
-      .def_property("no_speech_threshold", &FullParams::get_no_speech_thold,
-                    &FullParams::set_no_speech_thold);
-  // TODO: idk what to do with setting all the callbacks for FullParams. API are
+                    &Params::get_suppress_none_speech_tokens,
+                    &Params::set_suppress_none_speech_tokens)
+      .def_property("temperature", &Params::get_temperature,
+                    &Params::set_temperature)
+      .def_property("max_intial_timestamps", &Params::get_max_intial_ts,
+                    &Params::set_max_intial_ts)
+      .def_property("length_penalty", &Params::get_length_penalty,
+                    &Params::set_length_penalty)
+      .def_property("temperature_inc", &Params::get_temperature_inc,
+                    &Params::set_temperature_inc)
+      .def_property("entropy_threshold", &Params::get_entropy_thold,
+                    &Params::set_entropy_thold)
+      .def_property("logprob_threshold", &Params::get_logprob_thold,
+                    &Params::set_logprob_thold)
+      .def_property("no_speech_threshold", &Params::get_no_speech_thold,
+                    &Params::set_no_speech_thold)
+      .def("set_new_segment_callback", [](Params &self, py::function callback) {
+        self.set_new_segment_callback((whisper_new_segment_callback)callback)
+      });
+  // TODO: idk what to do with setting all the callbacks for Params. API are
   // there, but need more time investingating conversion from Python callback to
   // C++ callback
+  // Callback has to be pure here. Otherwise this won't work.
 }
 }; // namespace whisper
