@@ -1,0 +1,6 @@
+bentoml[grpc,grpc-reflection]>=1.0.15
+build
+attrs>=22.1.0
+ffmpeg-python==0.2.0
+whispercpp
+locust
