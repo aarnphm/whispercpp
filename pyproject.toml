@@ -8,7 +8,7 @@ description = "whispercpp: Pybind11 bindings for whisper.cpp"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { text = "Apache-2.0" }
 requires-python = ">=3.8"
-version = "0.0.6"
+version = "0.0.7"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -72,7 +72,7 @@ line-length = 88
 # We ignore E501 (line too long) here because we keep user-visible strings on one line.
 ignore = ["E501"]
 exclude = [ "bazel-*/", "venv", "typings" ]
-target-version = "py310"
+target-version = "0.0.7"
 
 [tool.ruff.pydocstyle]
 convention = "google"
