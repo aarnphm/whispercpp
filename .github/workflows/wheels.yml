@@ -6,9 +6,9 @@ on:
     tags:
       - "v*"
   pull_request:
-    branch:
+    branches:
       - main
-    types: [labeled, opened, synchronized, reopened]
+    types: [labeled, opened, reopened]
 
 concurrency:
   group: wheels-${{ github.head_ref || github.run_id }}
@@ -52,15 +52,22 @@ jobs:
           twine upload dist/* --repository pypi --verbose
 
   build-wheel:
-    name: Build wheels for python${{ matrix.python }} (${{ matrix.os }})
+    name: Build wheels for python${{ matrix.python[0] }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     if: github.repository_owner == 'aarnphm' # Don't run on fork repository
     strategy:
       fail-fast: false
       matrix:
-        python: ["3.8", "3.9", "3.10", "3.11"]
         os: ["ubuntu-latest", "macos-latest"]
+        python:
+          - ["3.8", "38"]
+          - ["3.9", "39"]
+          - ["3.10","310"]
+          - [ "3.11", "311"]
+        exclude:
+          # Currently, there is a bug with bazel. Disable for offline investigation.
+          - python: ["3.11", "311"]
 
     steps:
       - name: Checkout
@@ -70,7 +77,7 @@ jobs:
       - name: Setup CI
         uses: ./.github/actions/setup-repo
         with:
-          python-version: ${{ matrix.python }}
+          python-version: ${{ matrix.python[0] }}
       - name: Set up QEMU
         if: runner.os == 'Linux'
         uses: docker/setup-qemu-action@v2
@@ -91,5 +98,5 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
 
-          ./tools/bazel run //requirements:pypi.update
+          ./tools/bazel run //requirements:pypi_${{ matrix.python[1] }}.update
           ./tools/bazel run -c dbg --define=ci=true --stamp --embed_label=${{ steps.get-info.outputs.version }} -- //:whispercpp_wheel.publish --repository pypi --verbose

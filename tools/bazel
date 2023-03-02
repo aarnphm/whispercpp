@@ -61,7 +61,10 @@ if [ ! -x "${filename_abs}" ]; then
     chmod a+x "${filename_abs}"
 fi
 
-! [ -f "$GIT_ROOT/requirements/bazel-pypi.lock.txt" ] && touch "$GIT_ROOT/requirements/bazel-pypi.lock.txt"
+! [ -f "$GIT_ROOT/requirements/bazel-pypi-310.lock.txt" ] && touch "$GIT_ROOT/requirements/bazel-pypi-310.lock.txt"
+! [ -f "$GIT_ROOT/requirements/bazel-pypi-311.lock.txt" ] && touch "$GIT_ROOT/requirements/bazel-pypi-311.lock.txt"
+! [ -f "$GIT_ROOT/requirements/bazel-pypi-39.lock.txt" ] && touch "$GIT_ROOT/requirements/bazel-pypi-39.lock.txt"
+! [ -f "$GIT_ROOT/requirements/bazel-pypi-38.lock.txt" ] && touch "$GIT_ROOT/requirements/bazel-pypi-38.lock.txt"
 
 popd > /dev/null
 exec "${filename_abs}" "$@"

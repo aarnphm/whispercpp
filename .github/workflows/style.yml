@@ -6,11 +6,12 @@ concurrency:
 
 on:
   push:
-    branch:
+    branches:
       - main
   pull_request:
-    branch:
+    branches:
       - main
+    types: [labeled, opened, reopened]
   schedule:
     - cron: "0 0 * * 1/2" # Every other day 12AM UTC
 
@@ -27,7 +28,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     if: "!github.event.repository.fork" # Don't run on fork repository
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -37,7 +38,7 @@ jobs:
         uses: ./.github/actions/setup-repo
       - name: Install development dependencies and bindings
         run: |
-          bazel run //requirements:pypi.update
+          bazel run //requirements:pypi_310.update
           python -m pip install -r requirements/pypi.txt
       - name: Format check
         run: |

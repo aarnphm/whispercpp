@@ -74,8 +74,9 @@ def internal_deps():
     )
 
     # Override python rules defined under @com_github_bentoml_plugins
-    git_repository(
+    http_archive(
         name = "rules_python",
-        remote = "https://github.com/bazelbuild/rules_python.git",
-        branch = "main",
+        sha256 = "ffc7b877c95413c82bfd5482c017edcf759a6250d8b24e82f41f3c8b8d9e287e",
+        strip_prefix = "rules_python-0.19.0",
+        url = "https://github.com/bazelbuild/rules_python/releases/download/0.19.0/rules_python-0.19.0.tar.gz",
     )

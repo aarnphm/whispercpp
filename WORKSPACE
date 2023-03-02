@@ -8,11 +8,35 @@ load("@com_github_bentoml_plugins//rules:deps.bzl", plugins_repositories = "inte
 
 plugins_repositories()
 
+load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_multi_toolchains")
+
+py_repositories()
+
+load("@rules_python//python/pip_install:repositories.bzl", "pip_install_dependencies")
+
+pip_install_dependencies()
+
+default_python_version = "3.10"
+
+python_register_multi_toolchains(
+    name = "python",
+    default_version = default_python_version,
+    python_versions = [
+        "3.8",
+        "3.9",
+        "3.10",
+        "3.11",
+    ],
+    register_coverage_tool = True,
+)
+
 load("@rules_python//python:pip.bzl", "pip_parse")
+load("@python//3.10:defs.bzl", "interpreter")
 
 pip_parse(
     name = "pypi",
-    requirements_lock = "//requirements:bazel-pypi.lock.txt",
+    python_interpreter_target = interpreter,
+    requirements_lock = "//requirements:bazel-pypi-310.lock.txt",
 )
 
 load("@pypi//:requirements.bzl", "install_deps")
