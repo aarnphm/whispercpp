@@ -31,7 +31,7 @@ runs:
         echo "prefix=${{ runner.os }}-${{ inputs.python-version }}" >> $GITHUB_OUTPUT
     - name: PyPI cache
       id: pypi-cache
-      uses: actions/cache@v3.0.10
+      uses: actions/cache@v3
       with:
         key: ${{ steps.get-cache-key-prefix.outputs.prefix }}-pypi
         path: ${{ steps.pip-cache.outputs.directory }}
@@ -39,7 +39,7 @@ runs:
           ${{ steps.get-cache-key-prefix.outputs.prefix }}-pypi-
     - name: Bazel cache
       id: bazel-cache
-      uses: actions/cache@v3.0.10
+      uses: actions/cache@v3
       with:
         key: ${{ steps.get-cache-key-prefix.outputs.prefix }}-bazel
         path: |

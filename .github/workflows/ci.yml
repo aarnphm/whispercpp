@@ -30,9 +30,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
-        exclude:
-          # Currently, there is a bug with bazel. Disable for offline investigation.
-          - python-version: "3.11"
 
     if: "!github.event.repository.fork" # Don't run on fork repository
     name: python${{ matrix.python-version }} integration tests (${{ matrix.os }})
