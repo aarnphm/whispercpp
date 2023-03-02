@@ -125,6 +125,7 @@ py_wheel(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: Implementation :: CPython",
     ],
     description_file = "README.rst",
     distribution = "whispercpp",
@@ -143,7 +144,7 @@ py_wheel(
     # NOTE: This can be replaced by building with --stamp --embed_label=1.2.3
     version = select({
         "//conditions:default": "0.0.9.dev0",
-        ":ci": "{VERSION}",
+        ":ci": "{BUILD_EMBED_LABEL}",
     }),
     visibility = ["//:__subpackages__"],
     deps = [":whispercpp_pkg"],
