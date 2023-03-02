@@ -54,7 +54,9 @@ def test_from_pretrained():
 def test_load_wav_file():
     np.testing.assert_almost_equal(
         preprocess(ROOT / "samples" / "jfk.wav"),
-        api.load_wav_file(ROOT.joinpath("samples", "jfk.wav").resolve().__fspath__()),
+        api.load_wav_file(
+            ROOT.joinpath("samples", "jfk.wav").resolve().__fspath__()
+        ).mono,
     )
 
 
