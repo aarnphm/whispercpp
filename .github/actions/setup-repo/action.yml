@@ -50,3 +50,6 @@ runs:
     - name: Make directory
       shell: bash
       run: mkdir -p "$HOME/.local/share/whispercpp"
+    - name: Touch based requirements file
+      shell: bash
+      run: touch "${{ github.workspace }}/requirements/bazel-pypi-${VERSION//./}.lock.txt"
