@@ -52,4 +52,6 @@ runs:
       run: mkdir -p "$HOME/.local/share/whispercpp"
     - name: Touch based requirements file
       shell: bash
-      run: touch "${{ github.workspace }}/requirements/bazel-pypi-${VERSION//./}.lock.txt"
+      run: |
+        VERSION="${{ inputs.python-version }}"
+        touch "${{ github.workspace }}/requirements/bazel-pypi-${VERSION//./}.lock.txt"
