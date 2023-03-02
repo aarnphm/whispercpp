@@ -16,20 +16,6 @@ load("@rules_python//python/pip_install:repositories.bzl", "pip_install_dependen
 
 pip_install_dependencies()
 
-default_python_version = "3.10"
-
-python_register_multi_toolchains(
-    name = "python",
-    default_version = default_python_version,
-    python_versions = [
-        "3.8",
-        "3.9",
-        "3.10",
-        "3.11",
-    ],
-    register_coverage_tool = True,
-)
-
 load("@rules_python//python:pip.bzl", "pip_parse")
 
 pip_parse(

@@ -1,35 +1,13 @@
 from __future__ import annotations
 
-import sys
 import typing as t
-from os import path
-from os import getcwd
-from os import environ
 from pathlib import Path
 
 import pytest
 
-if environ.get("__BAZEL_TEST__") is not None:
-    # NOTE: in bazel, the compiled so will be under the runfiles directory
-    # probably need to write a rule to extend this C extension.
-    import runfiles
-
-    r = runfiles.Create({"RUNFILES_DIR": getcwd()})
-    loc = r.Rlocation(".", source_repo="com_github_aarnphm_whispercpp")
-    sys.path.insert(0, path.join(loc, "src"))
-    # NOTE: This is a hack to add compiled api binary to the lib. This shouldn't
-    # happen outside of tests. This makes the test hermetic
-    import whispercpp
-    from whispercpp import Whisper
-    from whispercpp.utils import LazyLoader
-
-    sys.path.insert(0, loc)
-    api = __import__("api")
-    whispercpp.__dict__["api"] = api
-else:
-    from whispercpp import api
-    from whispercpp import Whisper
-    from whispercpp.utils import LazyLoader
+from whispercpp import api
+from whispercpp import Whisper
+from whispercpp.utils import LazyLoader
 
 if t.TYPE_CHECKING:
     import numpy as np

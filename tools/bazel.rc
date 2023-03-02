@@ -1,7 +1,5 @@
 test --test_output=errors
 
-test --action_env=__BAZEL_TEST__=1
-
 # Windows requires these for multi-python support:
 build --enable_runfiles
 startup --windows_enable_symlinks
