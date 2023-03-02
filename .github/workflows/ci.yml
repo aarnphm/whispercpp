@@ -56,8 +56,8 @@ jobs:
         id: setup-ffmpeg
       - name: Install development dependencies and bindings
         run: |
-          bazel run //requirements:pypi_${{ matrix.python-version[1] }}.update
+          ./tools/bazel run //requirements:pypi_${{ matrix.python-version[1] }}.update
           python -m pip install -r requirements/pypi.txt
           python -m pip install .
       - name: Run tests on python${{ matrix.python-version[0] }}
-        run: bazel test //tests/... //examples/...
+        run: ./tools/bazel test //tests/... //examples/...

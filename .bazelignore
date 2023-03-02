@@ -1,3 +1,5 @@
 vendor/
 nix/
 venv/
+extern/pybind11/
+extern/whispercpp/

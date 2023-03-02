@@ -85,7 +85,13 @@ jobs:
       - name: Set up Clang [Linux]
         if: runner.os == 'Linux'
         uses: egor-tensin/setup-clang@v1
+      - name: Running update requirements
+        run: ./tools/bazel run //requirements:pypi_${{ matrix.python[1] }}.update
+      - name: Building wheels
+        if: github.event_name == 'pull_request'
+        run: ./tools/bazel build //:whispercpp_wheel
       - name: Retrieving versions
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         id: get-info
         run: |
           VERSION=${{ github.ref_name }}
@@ -96,6 +102,4 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-
-          ./tools/bazel run //requirements:pypi_${{ matrix.python[1] }}.update
           ./tools/bazel run -c dbg --define=ci=true --stamp --embed_label=${{ steps.get-info.outputs.version }} -- //:whispercpp_wheel.publish --repository pypi --verbose

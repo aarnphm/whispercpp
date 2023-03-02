@@ -37,7 +37,7 @@ jobs:
         uses: ./.github/actions/setup-repo
       - name: Install development dependencies and bindings
         run: |
-          bazel run //requirements:pypi_310.update
+          ./tools/bazel run //requirements:pypi_310.update
           python -m pip install -r requirements/pypi.txt
       - name: Format check
         run: |
