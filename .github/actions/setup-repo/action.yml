@@ -29,6 +29,12 @@ runs:
       shell: bash
       run: |
         echo "prefix=${{ runner.os }}-${{ inputs.python-version }}" >> $GITHUB_OUTPUT
+    - name: Make directory
+      shell: bash
+      run: mkdir -p "$HOME/.local/share/whispercpp"
+    - name: Touch based requirements file
+      shell: bash
+      run: ./tools/bazel query :all
     - name: PyPI cache
       id: pypi-cache
       uses: actions/cache@v3
@@ -47,11 +53,3 @@ runs:
           tools/
         restore-keys: |
           ${{ steps.get-cache-key-prefix.outputs.prefix }}-bazel-
-    - name: Make directory
-      shell: bash
-      run: mkdir -p "$HOME/.local/share/whispercpp"
-    - name: Touch based requirements file
-      shell: bash
-      run: |
-        VERSION="${{ inputs.python-version }}"
-        touch "${{ github.workspace }}/requirements/bazel-pypi-${VERSION//./}.lock.txt"
