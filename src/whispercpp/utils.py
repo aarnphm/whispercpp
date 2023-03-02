@@ -35,8 +35,10 @@ MODELS_URL = {
 }
 
 
-def download_model(model_name: str) -> str:  # pragma: no cover
-    models_dirs = path.join(_data_home, "whispercpp")
+def download_model(model_name: str, basedir: str | None = None) -> str:
+    if basedir is None:
+        basedir = _data_home
+    models_dirs = path.join(basedir, "whispercpp")
     if not path.exists(models_dirs):
         makedirs(models_dirs, exist_ok=True)
 

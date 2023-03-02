@@ -47,6 +47,7 @@ pybind_extension(
     name = "api",
     srcs = [
         "//src/whispercpp:api_export.cc",
+        "//src/whispercpp:api_export.h",
         "//src/whispercpp:context.h",
         "@com_github_ggerganov_whisper//:examples/common.h",
         "@com_github_ggerganov_whisper//:whisper.h",

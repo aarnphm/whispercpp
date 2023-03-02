@@ -31,13 +31,13 @@ class Whisper:
         params: api.Params
 
     @staticmethod
-    def from_pretrained(model_name: str):
+    def from_pretrained(model_name: str, basedir: str | None = None):
         if model_name not in MODELS_URL:
             raise RuntimeError(
                 f"'{model_name}' is not a valid preconverted model. Choose one of {list(MODELS_URL)}"
             )
         _ref = object.__new__(Whisper)
-        context = api.Context.from_file(download_model(model_name))
+        context = api.Context.from_file(download_model(model_name, basedir=basedir))
         params = api.Params.from_sampling_strategy(
             api.SamplingStrategies.from_strategy_type(api.SAMPLING_GREEDY)
         )
@@ -57,7 +57,7 @@ class Whisper:
         )
 
     def transcribe_from_file(self, filename: str, num_proc: int = 1):
-        return self.transcribe(api.load_wav_file(filename), num_proc)
+        return self.transcribe(api.load_wav_file(filename).mono, num_proc)
 
 
 __all__ = ["Whisper", "api"]

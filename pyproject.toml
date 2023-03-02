@@ -39,7 +39,13 @@ include = ["whispercpp*"]
 whispercpp = ["py.typed", "*.so", "*.pyi"]
 
 [tool.pytest.ini_options]
-addopts = ["-rfEX", "-vvv", "--cov-report=term-missing", "--ignore=extern", "--ignore-glob=bazel-*"]
+addopts = [
+    "-rfEX",
+    "-vvv",
+    "--cov-report=term-missing",
+    "--ignore=extern",
+    "--ignore-glob=bazel-*",
+]
 python_files = ["test_*.py", "*_test.py"]
 testpaths = ["tests", "examples"]
 
@@ -71,7 +77,7 @@ exclude_lines = [
 line-length = 88
 # We ignore E501 (line too long) here because we keep user-visible strings on one line.
 ignore = ["E501"]
-exclude = [ "bazel-*/", "venv", "typings", "extern" ]
+exclude = ["bazel-*/", "venv", "typings", "extern"]
 target-version = "py311"
 
 [tool.ruff.pydocstyle]

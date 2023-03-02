@@ -5,8 +5,7 @@ from os import path
 from os import environ
 
 import bentoml
-from bentoml._internal.types import FileLike
-from bentoml._internal.utils import LazyLoader
+from whispercpp.utils import LazyLoader
 
 if t.TYPE_CHECKING:
     import numpy as np
@@ -19,24 +18,6 @@ else:
     np = LazyLoader("np", globals(), "numpy")
     w = LazyLoader("w", globals(), "whispercpp")
 
-SAMPLE_RATE = 16000
-
-
-def preprocess(
-    p: str | FileLike[t.Any], *, sample_rate: int = SAMPLE_RATE
-) -> NDArray[np.float32]:
-    if isinstance(path, str):
-        p = path.abspath(path.realpath(p))
-    try:
-        y, _ = (
-            ffmpeg.input(p, threads=0)
-            .output("-", format="s16le", acodec="pcm_s16le", ac=1, ar=sample_rate)
-            .run(cmd=["ffmpeg", "-nostdin"], capture_stdout=True, capture_stderr=True)
-        )
-    except ffmpeg.Error as e:
-        raise RuntimeError(f"Failed to load audio: {e.stderr.decode()}") from e
-    return np.frombuffer(y, np.int16).flatten().astype(np.float32) / 32768.0
-
 
 class WhisperCppRunnable(bentoml.Runnable):
     SUPPORTED_RESOURCES = ("mps", "nvidia.com/gpu", "cpu")
@@ -47,8 +28,15 @@ class WhisperCppRunnable(bentoml.Runnable):
         self.model = w.Whisper.from_pretrained(model_name)
 
     @bentoml.Runnable.method(batchable=True, batch_dim=(0, 0))
-    def transcribe(self, arr: NDArray[np.float32]):
+    def transcribe_array(self, arr: NDArray[np.float32]):
         return self.model.transcribe(arr)
+
+    @bentoml.Runnable.method(batchable=True, batch_dim=(0, 0))
+    def transcribe_file(self, p: str):
+        resolved = path.expanduser(path.abspath(p))
+        if not path.exists(resolved):
+            raise FileNotFoundError(resolved)
+        return self.model.transcribe_from_file(resolved)
 
 
 cpp_runner = bentoml.Runner(WhisperCppRunnable, max_batch_size=30)
@@ -60,5 +48,10 @@ svc = bentoml.Service("whispercpp_asr", runners=[cpp_runner])
     input=bentoml.io.Text.from_sample("./samples/jfk.wav"),
     output=bentoml.io.Text(),
 )
-async def transcribe(input_file: str):
-    return await cpp_runner.async_run(preprocess(input_file))
+async def transcribe_file(input_file: str):
+    return await cpp_runner.transcribe_file.async_run(input_file)
+
+
+@svc.api(input=bentoml.io.NumpyNdarray(), output=bentoml.io.Text())
+async def transcribe_ndarray(arr: NDArray[np.float32]):
+    return await cpp_runner.transcribe_array.async_run(arr)
