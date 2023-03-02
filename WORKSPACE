@@ -30,13 +30,27 @@ python_register_multi_toolchains(
     register_coverage_tool = True,
 )
 
-load("@rules_python//python:pip.bzl", "pip_parse")
-load("@python//3.10:defs.bzl", "interpreter")
+load("@python//:pip.bzl", "multi_pip_parse")
+load("@python//3.10:defs.bzl", interpreter_310 = "interpreter")
+load("@python//3.11:defs.bzl", interpreter_311 = "interpreter")
+load("@python//3.8:defs.bzl", interpreter_38 = "interpreter")
+load("@python//3.9:defs.bzl", interpreter_39 = "interpreter")
 
-pip_parse(
+multi_pip_parse(
     name = "pypi",
-    python_interpreter_target = interpreter,
-    requirements_lock = "//requirements:bazel-pypi-310.lock.txt",
+    default_version = default_python_version,
+    python_interpreter_target = {
+        "3.10": interpreter_310,
+        "3.11": interpreter_311,
+        "3.8": interpreter_38,
+        "3.9": interpreter_39,
+    },
+    requirements_lock = {
+        "3.10": "//requirements:bazel-pypi-310.lock.txt",
+        "3.11": "//requirements:bazel-pypi-311.lock.txt",
+        "3.8": "//requirements:bazel-pypi-38.lock.txt",
+        "3.9": "//requirements:bazel-pypi-39.lock.txt",
+    },
 )
 
 load("@pypi//:requirements.bzl", "install_deps")
