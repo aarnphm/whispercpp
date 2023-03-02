@@ -62,7 +62,7 @@ jobs:
         python: ["3.8", "3.9", "3.10", "3.11"]
         exclude:
           # Currently, there is a bug with bazel. Disable for offline investigation.
-          - python: ["3.11"]
+          - python: "3.11"
 
     steps:
       - name: Checkout
