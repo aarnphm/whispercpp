@@ -29,9 +29,15 @@ runs:
       shell: bash
       run: |
         echo "prefix=${{ runner.os }}-${{ inputs.python-version }}" >> $GITHUB_OUTPUT
+    - name: Make directory
+      shell: bash
+      run: mkdir -p "$HOME/.local/share/whispercpp"
+    - name: Touch based requirements file
+      shell: bash
+      run: ./tools/bazel query :all
     - name: PyPI cache
       id: pypi-cache
-      uses: actions/cache@v3.0.10
+      uses: actions/cache@v3
       with:
         key: ${{ steps.get-cache-key-prefix.outputs.prefix }}-pypi
         path: ${{ steps.pip-cache.outputs.directory }}
@@ -39,7 +45,7 @@ runs:
           ${{ steps.get-cache-key-prefix.outputs.prefix }}-pypi-
     - name: Bazel cache
       id: bazel-cache
-      uses: actions/cache@v3.0.10
+      uses: actions/cache@v3
       with:
         key: ${{ steps.get-cache-key-prefix.outputs.prefix }}-bazel
         path: |
@@ -47,6 +53,3 @@ runs:
           tools/
         restore-keys: |
           ${{ steps.get-cache-key-prefix.outputs.prefix }}-bazel-
-    - name: Make directory
-      shell: bash
-      run: mkdir -p "$HOME/.local/share/whispercpp"

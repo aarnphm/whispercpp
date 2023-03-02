@@ -47,6 +47,7 @@ in stdenv.mkDerivation rec {
       source venv/bin/activate
     fi
 
+    bazel run //requirements:pypi.update
     pip install -r ./requirements/bazel-pypi.lock.txt
   '';
 

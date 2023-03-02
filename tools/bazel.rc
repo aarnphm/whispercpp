@@ -4,6 +4,8 @@ test --test_output=errors
 build --enable_runfiles
 startup --windows_enable_symlinks
 
+build --incompatible_default_to_explicit_init_py
+
 # never strip debug
 build --strip=never
 build --client_env=CC=clang

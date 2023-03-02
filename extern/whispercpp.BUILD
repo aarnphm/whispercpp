@@ -46,7 +46,8 @@ cc_library(
     name = "common",
     srcs = ["examples/common.cpp"],
     hdrs = EXAMPLE_HEADERS,
-    copts = CXXFLAGS + selects.with_or({
+    copts = CXXFLAGS,
+    linkopts = selects.with_or({
         "//conditions:default": [],
         "@bazel_tools//src/conditions:darwin": [
             "-framework",
@@ -59,7 +60,8 @@ cc_library(
     name = "common-sdl",
     srcs = ["examples/common-sdl.cpp"],
     hdrs = EXAMPLE_HEADERS,
-    copts = CXXFLAGS + selects.with_or({
+    copts = CXXFLAGS,
+    linkopts = selects.with_or({
         "//conditions:default": [],
         "@bazel_tools//src/conditions:darwin": [
             "-framework",
@@ -72,9 +74,13 @@ cc_library(
     name = "ggml",
     srcs = ["ggml.c"],
     hdrs = HEADERS,
-    copts = CFLAGS + selects.with_or({
+    copts = CFLAGS,
+    linkopts = selects.with_or({
         "//conditions:default": [],
-        "@bazel_tools//src/conditions:darwin": ["-DGGML_USE_ACCELERATE"],
+        "@bazel_tools//src/conditions:darwin": [
+            "-framework",
+            "Accelerate",
+        ],
     }),
 )
 
@@ -82,7 +88,8 @@ cc_library(
     name = "whisper",
     srcs = ["whisper.cpp"],
     hdrs = HEADERS + EXAMPLE_HEADERS,
-    copts = CXXFLAGS + selects.with_or({
+    copts = CXXFLAGS,
+    linkopts = selects.with_or({
         "//conditions:default": [],
         "@bazel_tools//src/conditions:darwin": [
             "-framework",

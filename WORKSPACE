@@ -8,6 +8,14 @@ load("@com_github_bentoml_plugins//rules:deps.bzl", plugins_repositories = "inte
 
 plugins_repositories()
 
+load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_multi_toolchains")
+
+py_repositories()
+
+load("@rules_python//python/pip_install:repositories.bzl", "pip_install_dependencies")
+
+pip_install_dependencies()
+
 load("@rules_python//python:pip.bzl", "pip_parse")
 
 pip_parse(
