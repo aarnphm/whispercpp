@@ -47,8 +47,8 @@ in stdenv.mkDerivation rec {
       source venv/bin/activate
     fi
 
-    bazel run //requirements:pypi_310.update
-    pip install -r ./requirements/bazel-pypi-310.lock.txt
+    bazel run //requirements:pypi.update
+    pip install -r ./requirements/bazel-pypi.lock.txt
   '';
 
   LOCALE_ARCHIVE =

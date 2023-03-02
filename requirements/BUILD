@@ -19,6 +19,6 @@ compile_pip_requirements(
     name = "pypi",
     extra_args = extra_args,
     requirements_in = "//requirements:pypi.txt",
-    requirements_txt = "//requirements:bazel-pypi-310.lock.txt",
+    requirements_txt = "//requirements:bazel-pypi.lock.txt",
     visibility = ["//visibility:__pkg__"],
 )
