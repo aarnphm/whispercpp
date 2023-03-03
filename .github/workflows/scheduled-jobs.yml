@@ -1,0 +1,43 @@
+name: scheduled-jobs
+on:
+  schedule:
+    - cron: "30 01 * * *"
+  workflow_dispatch:
+defaults:
+  run:
+    shell: bash --noprofile --norc -exo pipefail {0}
+env:
+  BRANCH: main
+  GIT_AUTHOR_NAME: github-actions[bot]
+  GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
+jobs:
+  update-tasks:
+    if: github.repository_owner == 'aarnphm'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Setup git
+        run: |
+          git config user.name "${{ env.GIT_AUTHOR_NAME }}"
+          git config user.email "${{ env.GIT_AUTHOR_EMAIL }}"
+      - name: Running update submodules
+        run: |
+          git submodule update --remote
+          git add extern && git commit --signoff -m "cron: update submodules to latest commits [generated]"
+          git push origin ${{ env.BRANCH }}
+      - uses: cachix/install-nix-action@v16
+        name: Setup nix setup
+        with:
+          nix_path: 'nixpkgs=./nix'
+      - name: Install Cachix
+        uses: cachix/cachix-action@v10
+      - name: Running nix-shell for formatter
+        run: nix-shell && treefmt
+      - name: Pushing changed files
+        run: |
+          git add . && git commit --signoff -m "cron: Running formatting jobs [generated]"
+          git push origin ${{ env.BRANCH }}
