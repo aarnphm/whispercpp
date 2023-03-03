@@ -58,7 +58,7 @@ jobs:
           git_config_global: true
           git_user_signingkey: true
           git_commit_gpgsign: true
-      - uses: cachix/install-nix-action@v16
+      - uses: cachix/install-nix-action@v20
         name: Setup nix setup
         with:
           nix_path: nixpkgs=channel:nixos-unstable
