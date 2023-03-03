@@ -35,6 +35,8 @@ jobs:
           GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
         run: |
+          git config --global user.name "${{ steps.import-gpg.outputs.name }}"
+          git config --global user.email "${{ steps.import-gpg.outputs.email }}"
           git submodule update --init --recursive
           git pull --recurse-submodules
           git submodule update --remote
@@ -71,6 +73,8 @@ jobs:
           GIT_COMMITTER_NAME: ${{ steps.import-gpg.outputs.name }}
           GIT_COMMITTER_EMAIL: ${{ steps.import-gpg.outputs.email }}
         run: |
+          git config --global user.name "${{ steps.import-gpg.outputs.name }}"
+          git config --global user.email "${{ steps.import-gpg.outputs.email }}"
           nix-shell
           treefmt
           git add . && git commit -S --signoff -m "cron: Running formatting jobs [generated]"
