@@ -27,6 +27,7 @@ jobs:
       - name: Running update submodules
         run: |
           git submodule update --init --recursive
+          git pull --recurse-submodules
           git submodule update --remote
           git add extern && git commit --signoff -m "cron: update submodules to latest commits [generated]"
           git push origin ${{ env.BRANCH }}
