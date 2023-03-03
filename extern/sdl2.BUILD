@@ -205,6 +205,7 @@ SOURCES = [
 
 HEADERS = [
     "include/SDL.h",
+    "include/SDL_config_minimal.h",
     "include/SDL_assert.h",
     "include/SDL_atomic.h",
     "include/SDL_audio.h",

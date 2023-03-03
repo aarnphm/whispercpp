@@ -10,7 +10,7 @@ build --incompatible_default_to_explicit_init_py
 build --strip=never
 build --client_env=CC=clang
 build --client_env=LDFLAGS=-"-lm -lstdc++"
-build --cxxopt=-std=c++14 --host_cxxopt=-std=c++14
+build --cxxopt=-std=c++11 --host_cxxopt=-std=c++11
 build --define=use_fast_cpp_protos=true
 build:opt --compilation_mode=opt
 build:opt --copt=-Wframe-larger-than=16384
