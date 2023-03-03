@@ -1,5 +1,6 @@
-#include "helpers.h"
+#include "audio.h"
 #include "whisper.h"
+
 using namespace pybind11::literals;
 
 namespace whisper {

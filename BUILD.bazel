@@ -27,10 +27,10 @@ buildifier(
 )
 
 cc_library(
-    name = "helpers",
-    srcs = ["//src/whispercpp:helpers.cc"],
+    name = "audio",
+    srcs = ["//src/whispercpp:audio.cc"],
     hdrs = [
-        "//src/whispercpp:helpers.h",
+        "//src/whispercpp:audio.h",
         "@com_github_ggerganov_whisper//:examples/common.h",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
@@ -64,8 +64,8 @@ pybind_extension(
     srcs = [
         "//src/whispercpp:api_export.cc",
         "//src/whispercpp:api_export.h",
+        "//src/whispercpp:audio.h",
         "//src/whispercpp:context.h",
-        "//src/whispercpp:helpers.h",
         "@com_github_ggerganov_whisper//:examples/common.h",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
@@ -78,8 +78,8 @@ pybind_extension(
     ],
     defines = ["BAZEL_BUILD"],
     deps = [
+        ":audio",
         ":context",
-        ":helpers",
     ],
 )
 

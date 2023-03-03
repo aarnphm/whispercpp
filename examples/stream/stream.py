@@ -8,9 +8,11 @@ import asyncio
 import whispercpp as w
 
 
-async def main():
-    pass
+async def main(m: w.Whisper):
+    await m.capture_audio()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    m = w.Whisper.from_pretrained("tiny")
+    while True:
+        asyncio.run(main(m))

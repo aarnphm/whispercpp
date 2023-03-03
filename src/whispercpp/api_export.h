@@ -1,9 +1,5 @@
+#include "audio.h"
 #include "context.h"
-#ifdef BAZEL_BUILD
-#include "helpers.h"
-#else
-#include "helpers.h"
-#endif
 
 namespace py = pybind11;
 
