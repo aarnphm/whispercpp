@@ -231,6 +231,7 @@ HEADERS = [
     "include/SDL_locale.h",
     "include/SDL_log.h",
     "include/SDL_main.h",
+    "include/SDL_metal.h",
     "include/SDL_messagebox.h",
     "include/SDL_misc.h",
     "include/SDL_mouse.h",
