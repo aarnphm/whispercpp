@@ -41,12 +41,12 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
       - name: Install development dependencies and bindings
         run: nix-shell
-      - name: Format check
+      - name: format and lint check
         run: |
+          nix-shell --pure
           python -m black --check src
           python -m isort --check .
-      - name: Lint check
-        run: python -m ruff check src
+          python -m ruff check src
       - name: Setup node
         uses: actions/setup-node@v3
         with:
