@@ -28,6 +28,7 @@ namespace py = pybind11;
 namespace whisper {
 
 // std::make_unique for C++11
+// https://stackoverflow.com/a/17902439/8643197
 template <class T> struct _Unique_if {
   typedef std::unique_ptr<T> _Single_object;
 };
@@ -68,6 +69,7 @@ inline py::array_t<typename Sequence::value_type> as_pyarray(Sequence &&seq) {
   seq_ptr.release();
   return py::array(size, data, capsule);
 }
+
 class AudioCapture {
 public:
   AudioCapture(int len_ms) {
