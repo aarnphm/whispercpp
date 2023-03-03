@@ -2,9 +2,11 @@
 #ifdef BAZEL_BUILD
 #include "examples/common.h"
 #include <pybind11/numpy.h>
+#include <pybind11/functional.h>
 #else
 #include "common.h"
 #include <pybind11/numpy.h>
+#include <pybind11/functional.h>
 #endif
 
 namespace py = pybind11;

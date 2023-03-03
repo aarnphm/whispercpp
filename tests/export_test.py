@@ -65,3 +65,24 @@ def test_transcribe_from_wav():
     assert m.transcribe_from_file(
         ROOT.joinpath("samples", "jfk.wav").resolve().__fspath__()
     ) == m.transcribe(preprocess(ROOT / "samples" / "jfk.wav"))
+
+
+def test_callback():
+    def handleNewSegment(context, n_new, text):
+        segment = context.full_n_segments() - n_new
+        while segment < context.full_n_segments():
+            text.append(context.full_get_segment_text(segment))
+            print(text)
+            segment += 1
+
+    m = Whisper.from_pretrained("tiny.en")
+
+    text = []
+    m.params.on_new_segment(handleNewSegment, text)
+
+    correct = m.transcribe(preprocess(ROOT / "samples" / "jfk.wav"))
+    assert "".join(text) == correct
+
+
+if __name__ == "__main__":
+    test_callback()

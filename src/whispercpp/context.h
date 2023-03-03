@@ -46,8 +46,69 @@ struct SamplingStrategies {
   static SamplingStrategies from_strategy_type(StrategyType type);
 };
 
+class Context;
+
+template<typename CB>
+struct CallbackAndContext {
+  struct Container {
+    std::shared_ptr<CB> callback;
+    // this is null unless this Params was submitted to whisper_full{,_parallel}
+    // in this case Params is copied and given a pointer to the Context, to give
+    // the callbacks
+    Context * context;
+
+    Container() = default;
+    Container(Container const & other) = default;
+    Container & operator=(Container const & other) = default;
+    Container(Container && other) = delete;
+    Container & operator=(Container && other) = delete;
+  };
+
+  std::shared_ptr<Container> data;
+
+  CallbackAndContext() : data(std::make_shared<Container>()) {}
+
+  CallbackAndContext(CallbackAndContext const & other) :
+                         data(std::make_shared<Container>(*other.data)) {}
+
+  CallbackAndContext & operator=(CallbackAndContext const & other) {
+    data = std::make_shared<Container>(*other.data);
+    return *this;
+  }
+
+  CallbackAndContext(CallbackAndContext && other) : data(other.data) {};
+
+  CallbackAndContext & operator=(CallbackAndContext && other) {
+    data = other.data;
+    return *this;
+  }
+};
+
 class Params {
 public:
+  typedef std::function<void(Context &, int)> NewSegmentCallback;
+private:
+  CallbackAndContext<NewSegmentCallback> new_segment_callback;
+
+  friend class Context;
+
+  // this copies Params for submitting it to whisper_full{,_parallel}
+  // A single Params can be used for multiple whisper_full{,_parallel} calls,
+  // potentially in parallel.
+  // But the Context using this Params has to be stored for it to be passed
+  // as an argument to the callbacks.
+  // So create a copy of this Params whenever it is used by a whisper_full{,_parallel}
+  // and setup the copy with the correct Context.
+  Params copy_for_full(Context & context);
+public:
+  Params();
+
+  Params(Params const &);
+  Params & operator=(Params const &);
+
+  Params(Params &&) = default;
+  Params & operator=(Params &&) = default;
+
   whisper_full_params wfp;
 
   static Params from_sampling_strategy(SamplingStrategies sampling_strategies);
@@ -228,11 +289,8 @@ public:
   // called for every newly generated text segments
   // Do not use this function unless you know what you are doing.
   // Defaults to None.
-  void
-  set_new_segment_callback(whisper_new_segment_callback new_segment_callback);
-  // Set the user data to be passed to the new segment callback.
-  // Defaults to None. See set_new_segment_callback.
-  void set_new_segment_callback_user_data(void *user_data);
+  void set_new_segment_callback(NewSegmentCallback callback);
+
   // Set the callback for starting the encoder.
   // Do not use this function unless you know what you are doing.
   // Defaults to None.
