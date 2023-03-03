@@ -7,7 +7,7 @@ defaults:
   run:
     shell: bash --noprofile --norc -exo pipefail {0}
 env:
-  BRANCH: main
+  BRANCH: origin/main
 jobs:
   update-submodules:
     if: github.repository_owner == 'aarnphm'
@@ -64,8 +64,6 @@ jobs:
         name: Setup nix setup
         with:
           nix_path: 'nixpkgs=./nix'
-      - name: Install Cachix
-        uses: cachix/cachix-action@v10
       - name: Pushing changed files
         env:
           GIT_AUTHOR_NAME: ${{ steps.import-gpg.outputs.name }}
