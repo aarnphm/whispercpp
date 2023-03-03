@@ -260,6 +260,7 @@ HEADERS = [
     "include/SDL_video.h",
     "include/begin_code.h",
     "include/close_code.h",
+    "include/SDL_vulkan.h",
 ]
 
 DARWIN_HEADERS = [
