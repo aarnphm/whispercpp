@@ -1,5 +1,6 @@
 #include "context.h"
 #include <assert.h>
+#include <sstream>
 
 Context Context::from_file(const char *filename) {
   Context context;
@@ -317,6 +318,33 @@ float Context::full_get_token_prob(int segment, int token) {
 }
 
 void ExportContextApi(py::module &m) {
+  // whisper_token_data -> TokenData
+  py::class_<whisper_token_data>(m, "TokenData", "Data for the token")
+    .def_readonly("id", &whisper_token_data::id)
+    .def_readonly("tid", &whisper_token_data::tid)
+    .def_readonly("p", &whisper_token_data::p)
+    .def_readonly("plog", &whisper_token_data::plog)
+    .def_readonly("pt", &whisper_token_data::pt)
+    .def_readonly("ptsum", &whisper_token_data::ptsum)
+    .def_readonly("t0", &whisper_token_data::t0)
+    .def_readonly("t1", &whisper_token_data::t1)
+    .def_readonly("vlen", &whisper_token_data::vlen)
+    .def("__repr__", [](const whisper_token_data &t) {
+      std::stringstream s;
+      s << "("
+        << "id=" << t.id << ", "
+        << "tid=" << t.tid << ", "
+        << "p=" << t.p << ", "
+        << "plog=" << t.plog << ", "
+        << "pt=" << t.pt << ", "
+        << "ptsum=" << t.ptsum << ", "
+        << "t0=" << t.t0 << ", "
+        << "t1=" << t.t1 << ", "
+        << "vlen=" << t.vlen << ")";
+
+      return s.str();
+    });
+
   py::class_<Context>(m, "Context", "A light wrapper around whisper_context")
       .def_static("from_file", &Context::from_file, "filename"_a)
       .def_static("from_buffer", &Context::from_buffer, "buffer"_a)
