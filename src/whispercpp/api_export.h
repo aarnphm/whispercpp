@@ -1,5 +1,6 @@
+#pragma once
+
 #include "audio.h"
-#include "context.h"
 
 namespace py = pybind11;
 

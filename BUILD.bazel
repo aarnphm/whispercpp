@@ -31,11 +31,13 @@ cc_library(
     srcs = ["//src/whispercpp:audio.cc"],
     hdrs = [
         "//src/whispercpp:audio.h",
+        "//src/whispercpp:context.h",
         "@com_github_ggerganov_whisper//:examples/common.h",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
     defines = ["BAZEL_BUILD"],
     deps = [
+        ":context",
         "@com_github_ggerganov_whisper//:common",
         "@com_github_libsdl_sdl2//:SDL_lib",
         "@pybind11",

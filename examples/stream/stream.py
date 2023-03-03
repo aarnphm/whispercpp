@@ -3,16 +3,12 @@ Some streaming exploration.
 """
 from __future__ import annotations
 
-import asyncio
+import sys
 
 import whispercpp as w
 
-
-async def main(m: w.Whisper):
-    await m.capture_audio()
-
-
 if __name__ == "__main__":
-    m = w.Whisper.from_pretrained("tiny")
-    while True:
-        asyncio.run(main(m))
+    try:
+        w.Whisper.from_pretrained("tiny").stream_transcribe()
+    except KeyboardInterrupt:
+        sys.exit(0)

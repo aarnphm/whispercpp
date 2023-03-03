@@ -59,13 +59,17 @@ class Whisper:
     def transcribe_from_file(self, filename: str, num_proc: int = 1):
         return self.transcribe(api.load_wav_file(filename).mono, num_proc)
 
-    async def capture_audio(
-        self, device_id: int | None = None, sample_rate: int | None = None
-    ):
-        if device_id is None:
-            device_id = -1
-        if sample_rate is None:
-            sample_rate = api.SAMPLE_RATE
+    def stream_transcribe(self, length_ms: int = 10000):
+        is_running = True
+        while is_running:
+            is_running = api.sdl_poll_events()
+            if not is_running:
+                break
+            api.AudioCapture(length_ms).stream_transcribe(self.context, self.params)
+        else:
+            import sys
+
+            sys.exit(0)
 
 
 __all__ = ["Whisper", "api"]

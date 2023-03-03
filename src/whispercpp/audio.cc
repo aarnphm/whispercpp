@@ -1,5 +1,7 @@
 #include "audio.h"
-#include "whisper.h"
+#include <cstdio>
+#include <thread>
+#include <vector>
 
 using namespace pybind11::literals;
 
@@ -28,14 +30,17 @@ std::vector<int> AudioCapture::list_available_devices() {
   return device_ids;
 };
 
-bool AudioCapture::init(int capture_id, int sample_rate) {
-
+bool AudioCapture::init_device(int device_id, int sample_rate) {
   SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+
   if (SDL_Init(SDL_INIT_AUDIO) < 0) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
                  "Failed to initialized SDL: %s\n", SDL_GetError());
     return false;
   }
+
+  SDL_SetHintWithPriority(SDL_HINT_AUDIO_RESAMPLING_MODE, "medium",
+                          SDL_HINT_OVERRIDE);
 
   SDL_AudioSpec capture_spec_desired;
   SDL_AudioSpec capture_spec_obtained;
@@ -47,16 +52,17 @@ bool AudioCapture::init(int capture_id, int sample_rate) {
   capture_spec_desired.format = AUDIO_F32;
   capture_spec_desired.channels = 1;
   capture_spec_desired.samples = 1024;
+  capture_spec_desired.userdata = this;
   capture_spec_desired.callback = [](void *userdata, uint8_t *stream, int len) {
     AudioCapture *capture = (AudioCapture *)userdata;
     capture->sdl_callback(stream, len);
   };
-  capture_spec_desired.userdata = this;
 
-  if (capture_id >= 0) {
+  if (device_id >= 0) {
     // Using the given open device
-    fprintf(stderr, "Using device %d...\n", capture_id);
-    m_dev_id = SDL_OpenAudioDevice(nullptr, SDL_TRUE, &capture_spec_desired,
+    fprintf(stderr, "Using device %d...\n", device_id);
+    m_dev_id = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(device_id, SDL_TRUE),
+                                   SDL_TRUE, &capture_spec_desired,
                                    &capture_spec_obtained, 0);
   } else {
     // Using the default device set by system if capture_id == 0
@@ -82,7 +88,9 @@ bool AudioCapture::init(int capture_id, int sample_rate) {
   }
 
   m_sample_rate = capture_spec_obtained.freq;
-  m_audio.resize((m_sample_rate * m_len_ms) / 1000);
+
+  m_audio.resize((m_sample_rate * m_length_ms) / 1000);
+
   return true;
 };
 
@@ -129,7 +137,7 @@ bool AudioCapture::clear() {
 
   {
     std::lock_guard<std::mutex> lock(m_mutex);
-    // ??? Is this correct
+    // Reset current position
     m_audio_pos = 0;
     m_audio_len = 0;
   }
@@ -146,8 +154,8 @@ void AudioCapture::sdl_callback(uint8_t *stream, int len) {
 
   m_audio_new.resize(num_samples);
   memcpy(m_audio_new.data(), stream, num_samples * sizeof(float));
-  fprintf(stderr, "%zu samples, pos %zu, len %zu\n", num_samples, m_audio_pos,
-          m_audio_len);
+  // fprintf(stderr, "%zu samples, pos %zu, len %zu\n", num_samples,
+  // m_audio_pos, m_audio_len);
 
   // We want to cycle through the audio buffer, so create a mutex here
   {
@@ -155,12 +163,15 @@ void AudioCapture::sdl_callback(uint8_t *stream, int len) {
 
     if (m_audio_pos + num_samples > m_audio.size()) {
       const size_t n0 = m_audio.size() - m_audio_pos;
+
       memcpy(&m_audio[m_audio_pos], stream, n0 * sizeof(float));
       memcpy(&m_audio[0], &stream[n0], (num_samples - n0) * sizeof(float));
+
       m_audio_pos = (m_audio_pos + num_samples) % m_audio.size();
       m_audio_len = m_audio.size();
     } else {
       memcpy(&m_audio[m_audio_pos], stream, num_samples * sizeof(float));
+
       m_audio_pos = (m_audio_pos + num_samples) % m_audio.size();
       m_audio_len = std::min(m_audio_len + num_samples, m_audio.size());
     }
@@ -184,9 +195,11 @@ void AudioCapture::retrieve_audio(int ms, std::vector<float> &audio) {
 
   {
     std::lock_guard<std::mutex> mutex(m_mutex);
+
     if (ms <= 0) {
-      ms = m_len_ms;
+      ms = m_length_ms;
     }
+
     size_t num_samples = (m_sample_rate * ms) / 1000;
     if (num_samples > m_audio_len) {
       num_samples = m_audio_len;
@@ -201,6 +214,7 @@ void AudioCapture::retrieve_audio(int ms, std::vector<float> &audio) {
 
     if (s0 + num_samples > m_audio.size()) {
       const size_t n0 = m_audio.size() - s0;
+
       memcpy(audio.data(), &m_audio[s0], n0 * sizeof(float));
       memcpy(&audio[n0], &m_audio[0], (num_samples - n0) * sizeof(float));
     } else {
@@ -208,6 +222,202 @@ void AudioCapture::retrieve_audio(int ms, std::vector<float> &audio) {
     }
   }
 }
+
+int AudioCapture::stream_transcribe(Context *ctx, Params *params) {
+  // very experiemental
+
+  // START: DEFAULT PARAMS
+  int32_t step_ms = 3000; // TODO: configure this value
+
+  int32_t length_ms = 10000; // 10 sec
+  int32_t keep_ms = 200;
+  // int32_t audio_ctx = 0;
+  // int32_t max_tokens = 32;
+
+  float vad_thold = 0.6f;
+  float freq_thold = 100.0f;
+
+  bool no_context = true;
+  // bool speed_up = false;
+  // bool print_special = false;
+  // bool translate = false;
+  // bool no_timestamps = false;
+  // END: DEFAULT PARAMS
+
+  keep_ms = std::min(keep_ms, step_ms);
+  length_ms = std::max(length_ms, step_ms);
+
+  const int num_samples_step = (1e-3 * step_ms) * WHISPER_SAMPLE_RATE;
+  const int num_samples_length = (1e-3 * length_ms) * WHISPER_SAMPLE_RATE;
+  const int num_samples_keep = (1e-3 * keep_ms) * WHISPER_SAMPLE_RATE;
+  const int num_samples_30s = (1e-3 * 30000) * WHISPER_SAMPLE_RATE;
+
+  const bool use_vad = num_samples_step <= 0; // sliding window mode uses VAD
+
+  const int num_new_line = !use_vad ? std::max(1, length_ms / step_ms - 1)
+                                    : 1; // number of steps to print new line
+
+  no_context |= use_vad;
+
+  if (!this->init_device(-1, WHISPER_SAMPLE_RATE)) {
+    fprintf(stderr, "%s: audio.init() failed!\n", __func__);
+    return 1;
+  };
+
+  int32_t transcript_size = 1024; // allocate size for transcript array
+  m_transcript.resize(transcript_size);
+
+  this->resume();
+
+  std::vector<float> pcmf32(num_samples_30s, 0.0f);
+  std::vector<float> pcmf32_old;
+  std::vector<float> pcmf32_new(num_samples_30s, 0.0f);
+
+  std::vector<whisper_token> prompt_tokens;
+
+  int n_iter = 0;
+
+  bool is_running = true;
+
+  auto time_last = std::chrono::high_resolution_clock::now();
+  // const auto time_start = time_last;
+
+  while (is_running) {
+    is_running = sdl_poll_events();
+
+    if (!is_running) {
+      fprintf(stderr, "Exiting ...\n");
+      break;
+    }
+
+    // process new audio
+    if (!use_vad) {
+      while (true) {
+
+        this->retrieve_audio(step_ms, pcmf32_new);
+
+        if ((int)pcmf32_new.size() > 2 * num_samples_step) {
+          fprintf(stderr,
+                  "\n\n%s: WARNING: cannot process audio fast enough, dropping "
+                  "audio ...\n\n",
+                  __func__);
+          this->clear();
+          continue;
+        }
+
+        if ((int)pcmf32_new.size() >= num_samples_step) {
+          this->clear();
+          break;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
+
+      const int num_samples_new = pcmf32_new.size();
+
+      // take length_ms audio from prev iteration
+      const int num_samples_take = std::min(
+          (int)pcmf32_old.size(),
+          std::max(0, num_samples_keep + num_samples_length - num_samples_new));
+
+      // printf("processing: take = %d, new = %d, old = %d\n", num_samples_take,
+      //        num_samples_new, (int)pcmf32_old.size());
+
+      pcmf32.resize(num_samples_new + num_samples_take);
+
+      for (int i = 0; i < num_samples_take; i++) {
+        pcmf32[i] = pcmf32_old[pcmf32_old.size() - num_samples_take + i];
+      }
+
+      memcpy(pcmf32.data() + num_samples_take, pcmf32_new.data(),
+             num_samples_new * sizeof(float));
+
+      pcmf32_old = pcmf32_new;
+    } else {
+      printf("processing: vad\n");
+      const auto time_now = std::chrono::high_resolution_clock::now();
+      const auto time_diff =
+          std::chrono::duration_cast<std::chrono::milliseconds>(time_now -
+                                                                time_last)
+              .count();
+
+      if (time_diff < 2000) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        continue;
+      }
+
+      this->retrieve_audio(2000, pcmf32_new);
+
+      if (::vad_simple(pcmf32_new, WHISPER_SAMPLE_RATE, 1000, vad_thold,
+                       freq_thold, false)) {
+        this->retrieve_audio(length_ms, pcmf32);
+      } else {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        continue;
+      }
+
+      time_last = time_now;
+    }
+
+    // Running inference
+    {
+      params->set_print_progress(false);
+      params->set_print_realtime(false);
+      params->set_no_context(true);
+      params->set_single_segment(!use_vad);
+
+      // disable temperature fallback
+      params->set_temperature_inc(-1.0f);
+
+      params->set_prompt_tokens(no_context ? nullptr : prompt_tokens.data());
+      params->set_prompt_n_tokens(no_context ? 0 : prompt_tokens.size());
+
+      if (ctx->full(*params, pcmf32) != 0) {
+        fprintf(stderr, "%s: Failed to process audio!\n", __func__);
+        return 6;
+      }
+
+      {
+        const int num_segments = ctx->full_n_segments();
+        for (int i = 0; i < num_segments; ++i) {
+          const char *text = ctx->full_get_segment_text(i);
+          m_transcript.push_back(text);
+          printf("%s", text);
+          fflush(stdout);
+        }
+      }
+
+      ++n_iter;
+
+      if (!use_vad && (n_iter % num_new_line) == 0) {
+        // keep part of audio for next iteration.
+        pcmf32_old =
+            std::vector<float>(pcmf32.end() - num_samples_keep, pcmf32.end());
+
+        // add tokens of the last full length as promp
+        if (!no_context) {
+          prompt_tokens.clear();
+
+          const int num_segments = ctx->full_n_segments();
+          for (int i = 0; i < num_segments; ++i) {
+            const int token_count = ctx->full_n_tokens(i);
+            for (int j = 0; j < token_count; ++j) {
+              prompt_tokens.push_back(ctx->full_get_token_id(i, j));
+            }
+          }
+        }
+      }
+    }
+  }
+
+  this->pause();
+
+  ctx->print_timings();
+  ctx->free();
+
+  return 0;
+}
+} // namespace whisper
 
 bool sdl_poll_events() {
   SDL_Event event;
@@ -223,16 +433,24 @@ bool sdl_poll_events() {
   return true;
 }
 
-} // namespace whisper
-
-void ExportHelpersApi(py::module &m) {
-  m.def("sdl_poll_events", &whisper::sdl_poll_events, "Poll SDL events");
+void ExportCaptureApi(py::module &m) {
+  m.def("sdl_poll_events", &sdl_poll_events, "Poll SDL events");
   py::class_<whisper::AudioCapture>(m, "AudioCapture")
       .def(py::init<int>())
-      .def("init", &whisper::AudioCapture::init, "capture_id"_a = -1,
-           "sample_rate"_a = WHISPER_SAMPLE_RATE)
+      .def("init_device", &whisper::AudioCapture::init_device,
+           "device_id"_a = -1, "sample_rate"_a = WHISPER_SAMPLE_RATE)
       .def("list_available_devices",
            &whisper::AudioCapture::list_available_devices)
+      .def(
+          "stream_transcribe",
+          [](whisper::AudioCapture &self, Context context, Params params) {
+            if (self.stream_transcribe(&context, &params) != 0) {
+              throw std::runtime_error("Failed to transcribe audio!");
+            };
+            return py::make_iterator(self.m_transcript.begin(),
+                                     self.m_transcript.end());
+          },
+          py::keep_alive<0, 1>())
       .def("resume", &whisper::AudioCapture::resume)
       .def("pause", &whisper::AudioCapture::pause)
       .def("clear", &whisper::AudioCapture::clear)
