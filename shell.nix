@@ -9,12 +9,12 @@ let
   inherit (lib) optional optionals;
 
   basePackages = with pkgs; [
-      (python310.withPackages (ps: with ps; [ pynvim pip virtualenv ipython ]))
-      
+    (python310.withPackages (ps: with ps; [ pynvim pip virtualenv ipython ]))
+
     git
-      bazel_6
-      nixfmt
-      treefmt
+    bazel_6
+    nixfmt
+    treefmt
     which
 
     # Without this, we see a whole bunch of warnings about LANG, LC_ALL and locales in general.
