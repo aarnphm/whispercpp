@@ -501,13 +501,12 @@ cc_library(
     srcs = select({
         ":darwin": SOURCE_HEADERS,
         ":windows": SOURCES + WINDOWS_SOURCES + WINDOWS_INCLUDES + SOURCE_HEADERS,
+        "//conditions:default": SOURCES + SOURCE_HEADERS,
     }),
     hdrs = HEADERS,
     includes = ["include"],
     linkopts = select({
-        ":darwin": [
-            "-liconv",
-        ],
+        ":darwin": ["-liconv"],
         ":windows": [
             "/DEFAULTLIB:advapi32",
             "/DEFAULTLIB:dinput8",
