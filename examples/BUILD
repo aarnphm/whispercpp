@@ -4,8 +4,8 @@ load("@pypi//:requirements.bzl", "requirement")
 py_test(
     name = "explore",
     srcs = [
-        "explore.py",
-        "explore_test.py",
+        "bindings/explore.py",
+        "bindings/explore_test.py",
     ],
     data = ["//samples:jfk.wav"],
     deps = [
