@@ -43,10 +43,10 @@ jobs:
         run: nix-shell
       - name: Format check
         run: |
-          black --check src
-          isort --check .
+          python -m black --check src
+          python -m isort --check .
       - name: Lint check
-        run: ruff check src
+        run: python -m ruff check src
       - name: Setup node
         uses: actions/setup-node@v3
         with:
