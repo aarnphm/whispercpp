@@ -523,6 +523,7 @@ cc_library(
             "/DEFAULTLIB:winmm",
             "/DEFAULTLIB:d3d11",
         ],
+        "//conditions:default": [],
     }),
     textual_hdrs = [
         "src/thread/generic/SDL_syscond.c",
@@ -534,6 +535,7 @@ cc_library(
     deps = select({
         ":darwin": [":sdl2_objc"],
         ":windows": [],
+        "//conditions:default": [],
     }),
     alwayslink = 1,
 )
