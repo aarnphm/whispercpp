@@ -76,12 +76,16 @@ def internal_deps():
 
     # sdl2
     maybe(
-        new_git_repository,
+        http_archive,
         name = "com_github_libsdl_sdl2",
         build_file = Label("//extern:sdl2.BUILD"),
-        commit = "fd4bb4154b034727b0504921eab78b4c07f39db7",
-        shallow_since = "1677801662 +0300",
-        remote = "https://github.com/libsdl-org/SDL.git",
+        strip_prefix = "SDL2-2.0.14",
+        sha256 = "2c1e870d74e13dfdae870600bfcb6862a5eab4ea5b915144aff8d75a0f9bf046",
+        urls = ["https://www.libsdl.org/release/SDL2-2.0.14.zip"],
+        patch_args = ["-p1"],
+        patches = [
+            "//extern:sdl2_macosx_config.patch",
+        ],
     )
 
     # Override python rules defined under @com_github_bentoml_plugins

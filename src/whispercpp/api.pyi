@@ -96,8 +96,6 @@ class WavFile:
     mono: NDArray[np.float32]
     stereo: tuple[NDArray[np.float32], NDArray[np.float32]]
 
-def load_wav_file(filename: str) -> WavFile: ...
-
 class TokenData:
     id: int
     tid: int
@@ -108,3 +106,6 @@ class TokenData:
     t0: int
     t1: int
     vlen: float
+
+def load_wav_file(filename: str) -> WavFile: ...
+def sdl_poll_events() -> bool: ...

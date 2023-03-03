@@ -1,0 +1,29 @@
+diff --git a/include/SDL_config_macosx.h b/include/SDL_config_macosx.h
+index 4b45f165..e0b9b5a9 100644
+--- a/include/SDL_config_macosx.h
++++ b/include/SDL_config_macosx.h
+@@ -141,15 +141,17 @@
+ #define SDL_AUDIO_DRIVER_DUMMY  1
+ 
+ /* Enable various input drivers */
+-#define SDL_JOYSTICK_HIDAPI 1
+-#define SDL_JOYSTICK_IOKIT  1
+-#define SDL_JOYSTICK_VIRTUAL    1
+-#define SDL_HAPTIC_IOKIT    1
++// #define SDL_JOYSTICK_HIDAPI 1
++// #define SDL_JOYSTICK_IOKIT  1
++// #define SDL_JOYSTICK_VIRTUAL    1
++// #define SDL_HAPTIC_IOKIT    1
++#define SDL_HAPTIC_DISABLED 1
+ 
+ /* The MFI controller support requires ARC Objective C runtime */
+-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1080 && !defined(__i386__)
+-#define SDL_JOYSTICK_MFI 1
+-#endif
++// #if MAC_OS_X_VERSION_MIN_REQUIRED >= 1080 && !defined(__i386__)
++// #define SDL_JOYSTICK_MFI 1
++// #endif
++#define SDL_JOYSTICK_DISABLED 1
+ 
+ /* Enable the dummy sensor driver */
+ #define SDL_SENSOR_DUMMY  1

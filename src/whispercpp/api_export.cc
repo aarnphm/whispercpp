@@ -31,6 +31,9 @@ PYBIND11_MODULE(api, m) {
   // NOTE: export Context API
   ExportContextApi(m);
 
+  // NOTE: export AudioCapture API
+  ExportHelpersApi(m);
+
   m.def("load_wav_file", &WavFileWrapper::load_wav_file, "filename"_a,
         py::return_value_policy::reference);
 

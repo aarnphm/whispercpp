@@ -27,6 +27,22 @@ buildifier(
 )
 
 cc_library(
+    name = "helpers",
+    srcs = ["//src/whispercpp:helpers.cc"],
+    hdrs = [
+        "//src/whispercpp:helpers.h",
+        "@com_github_ggerganov_whisper//:examples/common.h",
+        "@com_github_ggerganov_whisper//:whisper.h",
+    ],
+    defines = ["BAZEL_BUILD"],
+    deps = [
+        "@com_github_ggerganov_whisper//:common",
+        "@com_github_libsdl_sdl2//:SDL_lib",
+        "@pybind11",
+    ],
+)
+
+cc_library(
     name = "context",
     srcs = [
         "//src/whispercpp:context.cc",
@@ -49,6 +65,7 @@ pybind_extension(
         "//src/whispercpp:api_export.cc",
         "//src/whispercpp:api_export.h",
         "//src/whispercpp:context.h",
+        "//src/whispercpp:helpers.h",
         "@com_github_ggerganov_whisper//:examples/common.h",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
@@ -62,7 +79,7 @@ pybind_extension(
     defines = ["BAZEL_BUILD"],
     deps = [
         ":context",
-        "@com_github_ggerganov_whisper//:common",
+        ":helpers",
     ],
 )
 
@@ -120,6 +137,7 @@ py_wheel(
         "Topic :: Software Development :: Libraries",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Programming Language :: Python",
+        "Programming Language :: C++",
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
