@@ -2,7 +2,7 @@ from pathlib import Path
 
 import explore as explore
 
-ROOT = Path(__file__).parent.parent
+ROOT = Path(__file__).parent.parent.parent
 
 
 def test_main():
