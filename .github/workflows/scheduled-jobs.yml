@@ -6,8 +6,6 @@ on:
 defaults:
   run:
     shell: bash --noprofile --norc -exo pipefail {0}
-env:
-  BRANCH: origin/main
 jobs:
   update-submodules:
     if: github.repository_owner == 'aarnphm'
@@ -39,8 +37,8 @@ jobs:
           git submodule update --init --recursive
           git pull --recurse-submodules
           git submodule update --remote
-          git add extern && git commit -S --signoff -m "cron: update submodules to latest commits [generated]" || true
-          git push origin ${{ env.BRANCH }}
+          git add extern && git commit -S -m "cron: update submodules to latest commits [generated]" || true
+          git push
 
   run-formatter:
     if: github.repository_owner == 'aarnphm'
@@ -74,5 +72,5 @@ jobs:
           git config --global user.name "${{ steps.import-gpg.outputs.name }}"
           git config --global user.email "${{ steps.import-gpg.outputs.email }}"
           nix-shell --command treefmt
-          git add . && git commit -S --signoff -m "cron: Running formatting jobs [generated]" || true
-          git push origin ${{ env.BRANCH }}
+          git add . && git commit -S -m "cron: Running formatting jobs [generated]" || true
+          git push
