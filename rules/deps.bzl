@@ -12,8 +12,8 @@ def internal_deps():
         git_repository,
         name = "com_github_bentoml_plugins",
         remote = "https://github.com/bentoml/plugins.git",
-        commit = "4f163511ac63e129527876621225f4be5679d160",
-        shallow_since = "1677462988 -0800",
+        commit = "1dd6bfec492410f79635d830e993647f93273f68",
+        shallow_since = "1677819517 -0800",
     )
 
     maybe(
@@ -67,10 +67,21 @@ def internal_deps():
         new_git_repository,
         name = "com_github_ggerganov_whisper",
         build_file = Label("//extern:whispercpp.BUILD"),
-        branch = "master",
         init_submodules = True,
         recursive_init_submodules = True,
         remote = "https://github.com/ggerganov/whisper.cpp.git",
+        commit = "72af0f56975bfea20ff340777b3c940b006bf42a",
+        shallow_since = "1677774736 +0200",
+    )
+
+    # sdl2
+    maybe(
+        new_git_repository,
+        name = "com_github_libsdl_sdl2",
+        build_file = Label("//extern:sdl2.BUILD"),
+        commit = "fd4bb4154b034727b0504921eab78b4c07f39db7",
+        shallow_since = "1677801662 +0300",
+        remote = "https://github.com/libsdl-org/SDL.git",
     )
 
     # Override python rules defined under @com_github_bentoml_plugins
