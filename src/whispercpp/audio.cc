@@ -1,5 +1,6 @@
 #include "audio.h"
 #include <cstdio>
+#include <cstring>
 #include <thread>
 #include <vector>
 
@@ -30,7 +31,7 @@ std::vector<int> AudioCapture::list_available_devices() {
   return device_ids;
 };
 
-bool AudioCapture::init_device(int device_id, int sample_rate) {
+bool AudioCapture::init_device(int capture_id, int sample_rate) {
   SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
 
   if (SDL_Init(SDL_INIT_AUDIO) < 0) {
@@ -52,39 +53,45 @@ bool AudioCapture::init_device(int device_id, int sample_rate) {
   capture_spec_desired.format = AUDIO_F32;
   capture_spec_desired.channels = 1;
   capture_spec_desired.samples = 1024;
-  capture_spec_desired.userdata = this;
   capture_spec_desired.callback = [](void *userdata, uint8_t *stream, int len) {
     AudioCapture *capture = (AudioCapture *)userdata;
     capture->sdl_callback(stream, len);
   };
+  capture_spec_desired.userdata = this;
 
-  if (device_id >= 0) {
+  if (capture_id >= 0) {
     // Using the given open device
-    fprintf(stderr, "Using device %d...\n", device_id);
-    m_dev_id = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(device_id, SDL_TRUE),
+    fprintf(stderr, "\n%s: Using device: '%s' ...\n", __func__,
+            SDL_GetAudioDeviceName(capture_id, SDL_TRUE));
+    m_dev_id = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(capture_id, SDL_TRUE),
                                    SDL_TRUE, &capture_spec_desired,
                                    &capture_spec_obtained, 0);
   } else {
     // Using the default device set by system if capture_id == 0
-    fprintf(stderr, "Using default device...\n");
+    fprintf(stderr, "\n:%s: Using default device...\n", __func__);
     m_dev_id = SDL_OpenAudioDevice(nullptr, SDL_TRUE, &capture_spec_desired,
                                    &capture_spec_obtained, 0);
   }
 
   if (!m_dev_id) {
     SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                 "Failed to open audio device: %s\n", SDL_GetError());
+                 "\n%s: Failed to open audio device: %s\n", __func__,
+                 SDL_GetError());
     m_dev_id = 0;
     return false;
   } else {
-    fprintf(stderr, "Opened audio device: (id=%d, name=%s)\n", m_dev_id,
-            SDL_GetAudioDeviceName(m_dev_id, SDL_TRUE));
-    fprintf(stderr, "- sample_rate: %d\n", capture_spec_obtained.freq);
-    fprintf(stderr, "- format: %d (required: %d)\n",
+    fprintf(stderr, "\nOpened audio device: (id=%d, name=%s)\n", m_dev_id,
+            SDL_GetAudioDeviceName(capture_id, SDL_TRUE));
+    fprintf(stderr, "  - sample_rate: %d\n", capture_spec_obtained.freq);
+    fprintf(stderr, "  - format: %d (required: %d)\n",
             capture_spec_obtained.format, capture_spec_desired.format);
-    fprintf(stderr, "- channels: %d (required: %d)\n",
+    fprintf(stderr, "  - channels: %d (required: %d)\n",
             capture_spec_obtained.channels, capture_spec_desired.channels);
-    fprintf(stderr, "- samples/frame: %d\n", capture_spec_obtained.samples);
+    fprintf(stderr, "  - samples per frame: %d\n\n",
+            capture_spec_obtained.samples);
+    printf("=====================================\n");
+    printf("=== Transcription starting now... ===\n");
+    printf("=====================================\n\n");
   }
 
   m_sample_rate = capture_spec_obtained.freq;
@@ -231,17 +238,11 @@ int AudioCapture::stream_transcribe(Context *ctx, Params *params) {
 
   int32_t length_ms = 10000; // 10 sec
   int32_t keep_ms = 200;
-  // int32_t audio_ctx = 0;
-  // int32_t max_tokens = 32;
 
   float vad_thold = 0.6f;
   float freq_thold = 100.0f;
 
   bool no_context = true;
-  // bool speed_up = false;
-  // bool print_special = false;
-  // bool translate = false;
-  // bool no_timestamps = false;
   // END: DEFAULT PARAMS
 
   keep_ms = std::min(keep_ms, step_ms);
@@ -259,14 +260,6 @@ int AudioCapture::stream_transcribe(Context *ctx, Params *params) {
 
   no_context |= use_vad;
 
-  if (!this->init_device(-1, WHISPER_SAMPLE_RATE)) {
-    fprintf(stderr, "%s: audio.init() failed!\n", __func__);
-    return 1;
-  };
-
-  int32_t transcript_size = 1024; // allocate size for transcript array
-  m_transcript.resize(transcript_size);
-
   this->resume();
 
   std::vector<float> pcmf32(num_samples_30s, 0.0f);
@@ -280,7 +273,6 @@ int AudioCapture::stream_transcribe(Context *ctx, Params *params) {
   bool is_running = true;
 
   auto time_last = std::chrono::high_resolution_clock::now();
-  // const auto time_start = time_last;
 
   while (is_running) {
     is_running = sdl_poll_events();
@@ -288,6 +280,15 @@ int AudioCapture::stream_transcribe(Context *ctx, Params *params) {
     if (!is_running) {
       fprintf(stderr, "Exiting ...\n");
       break;
+    }
+
+    if (PyErr_CheckSignals() != 0) {
+      fprintf(stderr, "\n\nCaught Ctrl-C. Exiting ...\n");
+      this->pause();
+      ctx->print_timings();
+      printf("\n");
+      ctx->free();
+      throw py::error_already_set();
     }
 
     // process new audio
@@ -334,7 +335,6 @@ int AudioCapture::stream_transcribe(Context *ctx, Params *params) {
 
       pcmf32_old = pcmf32_new;
     } else {
-      printf("processing: vad\n");
       const auto time_now = std::chrono::high_resolution_clock::now();
       const auto time_diff =
           std::chrono::duration_cast<std::chrono::milliseconds>(time_now -
@@ -381,9 +381,13 @@ int AudioCapture::stream_transcribe(Context *ctx, Params *params) {
         const int num_segments = ctx->full_n_segments();
         for (int i = 0; i < num_segments; ++i) {
           const char *text = ctx->full_get_segment_text(i);
-          m_transcript.push_back(text);
-          printf("%s", text);
-          fflush(stdout);
+          // NOTE: the first few segments are empty is probably due to our
+          // warmup phase.
+          if (!(text && !text[0]) || strcmp(text, "") != 0) {
+            // Only append when string is not null.
+            m_transcript.push_back(text);
+            fprintf(stderr, "%s", text);
+          }
         }
       }
 
@@ -411,8 +415,8 @@ int AudioCapture::stream_transcribe(Context *ctx, Params *params) {
   }
 
   this->pause();
-
   ctx->print_timings();
+  printf("\n");
   ctx->free();
 
   return 0;
@@ -439,21 +443,20 @@ void ExportCaptureApi(py::module &m) {
       .def(py::init<int>())
       .def("init_device", &whisper::AudioCapture::init_device,
            "device_id"_a = -1, "sample_rate"_a = WHISPER_SAMPLE_RATE)
-      .def("list_available_devices",
-           &whisper::AudioCapture::list_available_devices)
+      .def_static("list_available_devices",
+                  &whisper::AudioCapture::list_available_devices)
+      .def_property_readonly(
+          "transcript",
+          [](whisper::AudioCapture &self) { return self.m_transcript; })
       .def(
           "stream_transcribe",
           [](whisper::AudioCapture &self, Context context, Params params) {
-            if (self.stream_transcribe(&context, &params) != 0) {
-              throw std::runtime_error("Failed to transcribe audio!");
-            };
+            self.stream_transcribe(&context, &params);
             return py::make_iterator(self.m_transcript.begin(),
                                      self.m_transcript.end());
           },
           py::keep_alive<0, 1>())
       .def("resume", &whisper::AudioCapture::resume)
       .def("pause", &whisper::AudioCapture::pause)
-      .def("clear", &whisper::AudioCapture::clear)
-      .def("retrieve_audio", &whisper::AudioCapture::retrieve_audio, "ms"_a,
-           "audio"_a);
+      .def("clear", &whisper::AudioCapture::clear);
 };

@@ -9,6 +9,7 @@ import urllib.request as request
 from os import path
 from os import environ
 from os import makedirs
+from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 
@@ -111,3 +112,11 @@ class LazyLoader(types.ModuleType):
         if self._module is None:
             self._module = self._load()
         return dir(self._module)
+
+
+@lru_cache(maxsize=1)
+def available_audio_devices() -> list[int]:
+    """Returns a list of available audio devices on the system."""
+    from whispercpp import api
+
+    return api.AudioCapture.list_available_devices()

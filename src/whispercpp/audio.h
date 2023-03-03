@@ -78,7 +78,7 @@ public:
   };
   ~AudioCapture();
 
-  bool init_device(int device_id, int sample_rate);
+  bool init_device(int capture_id, int sample_rate);
 
   static std::vector<int> list_available_devices();
 

@@ -1,9 +1,15 @@
-from typing import overload
+from __future__ import annotations
 
-import numpy as np
-from numpy.typing import NDArray
+from typing import overload
+from typing import Generator
+from typing import TYPE_CHECKING
 
 from . import api as api
+from . import utils as utils
+
+if TYPE_CHECKING:jk
+    import numpy as np
+    from numpy.typing import NDArray
 
 class Whisper:
     context: api.Context
@@ -17,12 +23,14 @@ class Whisper:
     @overload
     def transcribe_from_file(self, filename: str, num_proc: int = ...) -> str: ...
     @overload
-    def stream_transcribe(self) -> None: ...
-    @overload
-    def stream_transcribe(self, device_id: int | None = ...) -> None: ...
+    def stream_transcribe(self) -> Generator[str, None, list[str]]: ...
     @overload
     def stream_transcribe(
-        self, device_id: int | None = ..., sample_rate: int | None = ...
-    ) -> None: ...
+        self,
+        *,
+        length_ms: int = ...,
+        device_id: int = ...,
+        sample_rate: int | None = ...,
+    ) -> Generator[str, None, list[str]]: ...
     @classmethod
     def from_pretrained(cls, model_name: str) -> Whisper: ...
