@@ -6,6 +6,8 @@ set -e
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 GIT_ROOT="$(git rev-parse --show-toplevel)"
 
+! [ -f "$GIT_ROOT/requirements/bazel-pypi.lock.txt" ] && touch "$GIT_ROOT/requirements/bazel-pypi.lock.txt"
+
 # DISABLE_BAZEL_WRAPPER can be set to eliminate the wrapper logic
 if [ "${DISABLE_BAZEL_WRAPPER}" != "" ] && [ "${OVERRIDE_BAZEL_VERSION}" == "" ]; then
     if [ "${BAZEL_REAL}" != "" ]; then
@@ -60,8 +62,6 @@ if [ ! -x "${filename_abs}" ]; then
     curl --fail -L --output "${filename_abs}" "${BASEURL_MIRROR}/${VERSION}/${filename}" || curl --fail -L --output "${filename_abs}" "${BASEURL}/${VERSION}/${filename}"
     chmod a+x "${filename_abs}"
 fi
-
-! [ -f "$GIT_ROOT/requirements/bazel-pypi.lock.txt" ] && touch "$GIT_ROOT/requirements/bazel-pypi.lock.txt"
 
 popd > /dev/null
 exec "${filename_abs}" "$@"
