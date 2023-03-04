@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from . import api as api
 from . import utils as utils
 
-if TYPE_CHECKING:jk
+if TYPE_CHECKING:
     import numpy as np
     from numpy.typing import NDArray
 
