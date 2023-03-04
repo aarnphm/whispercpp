@@ -153,6 +153,7 @@ SOURCES = [
     "src/libm/s_sin.c",
     "src/libm/s_tan.c",
     "src/locale/SDL_locale.c",
+    "src/timer/unix/SDL_systimer.c",
     "src/misc/SDL_url.c",
     "src/power/SDL_power.c",
     "src/render/SDL_render.c",
