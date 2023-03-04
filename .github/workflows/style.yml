@@ -43,8 +43,8 @@ jobs:
         run: nix-shell
       - name: format and lint check
         run: |
-          nix-shell --pure
-          source ./venv/lib/activate
+          bazel run pypi_update
+          pip install -r requirements/bazel-pypi.lock.txt
           python -m black --check src
           python -m isort --check .
           python -m ruff check src
