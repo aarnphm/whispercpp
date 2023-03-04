@@ -378,9 +378,9 @@ void ExportContextApi(py::module &m) {
       .def("print_timings", &Context::print_timings)
       .def("reset_timings", &Context::reset_timings)
       .def("sys_info", &Context::sys_info)
-      .def("full", &Context::full, "params"_a, "data"_a)
+      .def("full", &Context::full, "params"_a, "data"_a, py::call_guard<py::gil_scoped_release>())
       .def("full_parallel", &Context::full_parallel, "params"_a, "data"_a,
-           "num_processor"_a)
+           "num_processor"_a, py::call_guard<py::gil_scoped_release>())
       .def("full_n_segments", &Context::full_n_segments)
       .def("full_lang_id", &Context::full_lang_id)
       .def("full_get_segment_start", &Context::full_get_segment_t0, "segment"_a)
