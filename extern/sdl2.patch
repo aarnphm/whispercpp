@@ -27,3 +27,17 @@ index 4b45f165..e0b9b5a9 100644
  
  /* Enable the dummy sensor driver */
  #define SDL_SENSOR_DUMMY  1
+
+diff --git a/src/dynapi/SDL_dynapi.c b/src/dynapi/SDL_dynapi.c
+index aed9884..81a3c22 100644
+--- a/src/dynapi/SDL_dynapi.c
++++ b/src/dynapi/SDL_dynapi.c
+@@ -21,6 +21,8 @@
+ 
+ #include "SDL_config.h"
+ #include "SDL_dynapi.h"
++#include <stdio.h>
++#include <stdlib.h>
+ 
+ #if SDL_DYNAMIC_API
+ 

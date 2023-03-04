@@ -83,9 +83,7 @@ def internal_deps():
         sha256 = "2c1e870d74e13dfdae870600bfcb6862a5eab4ea5b915144aff8d75a0f9bf046",
         urls = ["https://www.libsdl.org/release/SDL2-2.0.14.zip"],
         patch_args = ["-p1"],
-        patches = [
-            "//extern:sdl2_macosx_config.patch",
-        ],
+        patches = ["//extern:sdl2.patch"],
     )
 
     # Override python rules defined under @com_github_bentoml_plugins
