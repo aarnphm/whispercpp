@@ -4,6 +4,9 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 
+BAZEL_TOOLCHAIN_TAG = "0.8.2"
+BAZEL_TOOLCHAIN_SHA = "0fc3a2b0c9c929920f4bed8f2b446a8274cad41f5ee823fd3faa0d7641f20db0"
+
 def internal_deps():
     """Load internal dependencies that are used within the BentoML projects."""
 
@@ -60,7 +63,15 @@ def internal_deps():
         ],
     )
 
-    # Use main for maximum on the edge, not hermetic.
+    # llvm toolchain
+    maybe(
+        http_archive,
+        name = "com_grail_bazel_toolchain",
+        sha256 = BAZEL_TOOLCHAIN_SHA,
+        strip_prefix = "bazel-toolchain-{tag}".format(tag = BAZEL_TOOLCHAIN_TAG),
+        canonical_id = BAZEL_TOOLCHAIN_TAG,
+        url = "https://github.com/grailbio/bazel-toolchain/archive/refs/tags/{tag}.tar.gz".format(tag = BAZEL_TOOLCHAIN_TAG),
+    )
 
     # whisper.cpp
     maybe(

@@ -46,12 +46,18 @@ cc_library(
     name = "common",
     srcs = ["examples/common.cpp"],
     hdrs = EXAMPLE_HEADERS,
-    copts = CXXFLAGS,
-    linkopts = selects.with_or({
+    copts = CXXFLAGS + selects.with_or({
         "//conditions:default": [],
         "@bazel_tools//src/conditions:darwin": [
             "-framework",
             "Accelerate",
+        ],
+        "@bazel_tools//src/conditions:linux_x86_64": [
+            "-mavx",
+            "-mavx2",
+            "-mfma",
+            "-mf16c",
+            "-msse3",
         ],
     }),
 )
@@ -60,12 +66,19 @@ cc_library(
     name = "common-sdl",
     srcs = ["examples/common-sdl.cpp"],
     hdrs = EXAMPLE_HEADERS,
-    copts = CXXFLAGS,
-    linkopts = selects.with_or({
+	deps = ["@com_github_libsdl_sdl2//:SDL_lib"],
+    copts = CXXFLAGS + selects.with_or({
         "//conditions:default": [],
         "@bazel_tools//src/conditions:darwin": [
             "-framework",
             "Accelerate",
+        ],
+        "@bazel_tools//src/conditions:linux_x86_64": [
+            "-mavx",
+            "-mavx2",
+            "-mfma",
+            "-mf16c",
+            "-msse3",
         ],
     }),
 )
@@ -74,12 +87,18 @@ cc_library(
     name = "ggml",
     srcs = ["ggml.c"],
     hdrs = HEADERS,
-    copts = CFLAGS,
-    linkopts = selects.with_or({
+    copts = CFLAGS + selects.with_or({
         "//conditions:default": [],
         "@bazel_tools//src/conditions:darwin": [
             "-framework",
             "Accelerate",
+        ],
+        "@bazel_tools//src/conditions:linux_x86_64": [
+            "-mavx",
+            "-mavx2",
+            "-mfma",
+            "-mf16c",
+            "-msse3",
         ],
     }),
 )
@@ -88,12 +107,18 @@ cc_library(
     name = "whisper",
     srcs = ["whisper.cpp"],
     hdrs = HEADERS + EXAMPLE_HEADERS,
-    copts = CXXFLAGS,
-    linkopts = selects.with_or({
+    copts = CXXFLAGS + selects.with_or({
         "//conditions:default": [],
         "@bazel_tools//src/conditions:darwin": [
             "-framework",
             "Accelerate",
+        ],
+        "@bazel_tools//src/conditions:linux_x86_64": [
+            "-mavx",
+            "-mavx2",
+            "-mfma",
+            "-mf16c",
+            "-msse3",
         ],
     }),
     deps = [":ggml"],

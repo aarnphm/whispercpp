@@ -3,6 +3,7 @@ load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier")
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_python//python:packaging.bzl", "py_wheel")
 load("@com_github_bentoml_plugins//rules/py:packaging.bzl", "py_package")
 load("@python_abi//:abi.bzl", "python_abi")
@@ -74,10 +75,24 @@ pybind_extension(
     copts = [
         "-O3",
         "-pthread",
-        "-std=c++11",
+        "-std=c++17",
         "-fPIC",
         "-Wall",
     ],
+	linkopts = selects.with_or({
+        "//conditions:default": [],
+        "@bazel_tools//src/conditions:linux_x86_64": [
+            "-mavx",
+            "-mavx2",
+            "-mfma",
+            "-mf16c",
+            "-msse3",
+        ],
+        "@bazel_tools//src/conditions:darwin": [
+            "-lm",
+            "-lstdc++",
+        ],
+    }),
     defines = ["BAZEL_BUILD"],
     deps = [
         ":audio",

@@ -95,11 +95,17 @@ SOURCE_HEADERS = [
     "src/video/yuv2rgb/yuv_rgb.h",
     "src/video/yuv2rgb/yuv_rgb_sse_func.h",
     "src/video/yuv2rgb/yuv_rgb_std_func.h",
+    "src/core/unix/SDL_poll.h",
+    "src/core/linux/SDL_dbus.h",
+    "src/thread/pthread/SDL_sysmutex_c.h",
+    "src/thread/pthread/SDL_systhread_c.h",
+    "src/video/khronos/vulkan/vulkan_macos.h",
+    "src/video/khronos/vulkan/vulkan_metal.h",
 ]
 
 SOURCES = [
-    "src/SDL.c",
     "src/SDL_assert.c",
+    "src/SDL.c",
     "src/SDL_dataqueue.c",
     "src/SDL_error.c",
     "src/SDL_hints.c",
@@ -134,6 +140,7 @@ SOURCES = [
     "src/joystick/SDL_joystick.c",
     "src/joystick/dummy/SDL_sysjoystick.c",
     "src/libm/e_atan2.c",
+    "src/libm/e_exp.c",
     "src/libm/e_fmod.c",
     "src/libm/e_log.c",
     "src/libm/e_log10.c",
@@ -153,7 +160,9 @@ SOURCES = [
     "src/libm/s_sin.c",
     "src/libm/s_tan.c",
     "src/locale/SDL_locale.c",
+    "src/locale/unix/SDL_syslocale.c",
     "src/timer/unix/SDL_systimer.c",
+    "src/timer/dummy/SDL_systimer.c",
     "src/misc/SDL_url.c",
     "src/power/SDL_power.c",
     "src/render/SDL_render.c",
@@ -171,8 +180,8 @@ SOURCES = [
     "src/stdlib/SDL_iconv.c",
     "src/stdlib/SDL_malloc.c",
     "src/stdlib/SDL_qsort.c",
-    "src/stdlib/SDL_crc32.c",
     "src/stdlib/SDL_strtokr.c",
+    "src/stdlib/SDL_crc32.c",
     "src/stdlib/SDL_stdlib.c",
     "src/stdlib/SDL_string.c",
     "src/thread/SDL_thread.c",
@@ -202,6 +211,17 @@ SOURCES = [
     "src/video/dummy/SDL_nullframebuffer.c",
     "src/video/dummy/SDL_nullvideo.c",
     "src/video/yuv2rgb/yuv_rgb.c",
+    "src/misc/unix/SDL_sysurl.c",
+    "src/core/unix/SDL_poll.c",
+    "src/core/linux/SDL_threadprio.c",
+    "src/thread/pthread/SDL_syscond.c",
+    "src/thread/pthread/SDL_sysmutex.c",
+    "src/thread/pthread/SDL_syssem.c",
+    "src/thread/pthread/SDL_systhread.c",
+    "src/thread/pthread/SDL_systls.c",
+    "src/loadso/dummy/SDL_sysloadso.c",
+    "src/filesystem/unix/SDL_sysfilesystem.c",
+    "src/filesystem/dummy/SDL_sysfilesystem.c",
 ]
 
 HEADERS = [
@@ -333,13 +353,10 @@ DARWIN_NON_ARC_SOURCES = [
 
 DARWIN_SOURCE_HEADERS = [
     "src/audio/coreaudio/SDL_coreaudio.h",
-    "src/core/unix/SDL_poll.h",
     "src/events/scancodes_darwin.h",
     "src/file/cocoa/SDL_rwopsbundlesupport.h",
     "src/haptic/darwin/SDL_syshaptic_c.h",
     "src/render/metal/SDL_shaders_metal_osx.h",
-    "src/thread/pthread/SDL_sysmutex_c.h",
-    "src/thread/pthread/SDL_systhread_c.h",
     "src/video/cocoa/SDL_cocoaclipboard.h",
     "src/video/cocoa/SDL_cocoaevents.h",
     "src/video/cocoa/SDL_cocoakeyboard.h",
@@ -354,21 +371,12 @@ DARWIN_SOURCE_HEADERS = [
     "src/video/cocoa/SDL_cocoaopengl.h",
     "src/video/cocoa/SDL_cocoaopengles.h",
     "src/video/cocoa/SDL_cocoavulkan.h",
-    "src/video/khronos/vulkan/vulkan_macos.h",
-    "src/video/khronos/vulkan/vulkan_metal.h",
 ]
 
 DARWIN_SOURCES = [
-    "src/core/unix/SDL_poll.c",
     "src/haptic/darwin/SDL_syshaptic.c",
     "src/loadso/dlopen/SDL_sysloadso.c",
     "src/power/macosx/SDL_syspower.c",
-    "src/thread/pthread/SDL_syscond.c",
-    "src/thread/pthread/SDL_sysmutex.c",
-    "src/thread/pthread/SDL_syssem.c",
-    "src/thread/pthread/SDL_systhread.c",
-    "src/thread/pthread/SDL_systls.c",
-    "src/timer/unix/SDL_systimer.c",
 ]
 
 WINDOWS_INCLUDES = [
@@ -407,6 +415,7 @@ WINDOWS_SOURCES = [
     "src/power/windows/SDL_syspower.c",
     "src/render/SDL_d3dmath.c",
     "src/render/SDL_d3dmath.h",
+    "src/locale/windows/SDL_syslocale.c",
     "src/render/direct3d/SDL_render_d3d.c",
     "src/render/direct3d/SDL_shaders_d3d.c",
     "src/render/direct3d/SDL_shaders_d3d.h",
