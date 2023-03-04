@@ -44,6 +44,7 @@ jobs:
       - name: format and lint check
         run: |
           nix-shell --pure
+          source ./venv/lib/activate
           python -m black --check src
           python -m isort --check .
           python -m ruff check src
