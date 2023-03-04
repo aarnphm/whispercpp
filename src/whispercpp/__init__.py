@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 import typing as t
 from dataclasses import dataclass
 
@@ -71,7 +70,12 @@ class Whisper:
 
         Args:
             length_ms (int, optional): Length of audio to transcribe in milliseconds. Defaults to 10000.
-            device_id (int, optional): Device ID of the microphone. Defaults to 0. Use ``
+            device_id (int, optional): Device ID of the microphone. Defaults to 0. Use
+                                       ``whispercpp.utils.available_audio_devices()`` to list all available devices.
+            sample_rate: (int, optional): Sample rate to be passed to Whisper.
+
+        Returns:
+            A generator of all transcripted text from given audio device.
         """
         is_running = True
 

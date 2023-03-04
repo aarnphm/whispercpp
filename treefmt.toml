@@ -8,6 +8,7 @@ options = [
 """
 black .
 isort .
+ruff --fix .
 """,
 "--"
 ]
