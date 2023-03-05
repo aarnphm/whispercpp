@@ -22,16 +22,28 @@ COPTS = [
 configure_make(
     name = "SDL",
     configure_in_place = True,
-    configure_options = ["--enable-shared=yes"],
     copts = COPTS,
     env = select({
-        "@platforms//os:macos": {"AR": ""},
+        "@bazel_tools//src/conditions:darwin": {
+            "AR": "",
+            "OSX_DEPLOYMENT_TARGET": "10.14",
+        },
         "//conditions:default": {},
     }),
+    lib_name = "libSDL2",
     lib_source = ":all_srcs",
     out_shared_libs = select({
-        "@platforms//os:macos": ["libSDL2.dylib"],
+        "@bazel_tools//src/conditions:darwin": ["libSDL2.dylib"],
+        "@bazel_tools//src/conditions:windows": ["libSDL2.dll"],
         "//conditions:default": ["libSDL2.so"],
     }),
+    out_static_libs = select({
+        "@bazel_tools//src/conditions:windows": ["libSDL2.lib"],
+        "//conditions:default": ["libSDL2.a"],
+    }),
+    targets = [
+        "all",
+        "install",
+    ],
     alwayslink = True,
 )

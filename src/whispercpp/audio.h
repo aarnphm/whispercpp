@@ -1,19 +1,19 @@
 #pragma once
 
 #ifdef BAZEL_BUILD
+#include "SDL.h"
+#include "SDL_audio.h"
 #include "context.h"
 #include "examples/common.h"
+#include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
-#include <SDL.h>
-#include <SDL_audio.h>
-#include <pybind11/numpy.h>
 #else
+#include "SDL.h"
+#include "SDL_audio.h"
 #include "common.h"
 #include "context.h"
+#include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
-#include <SDL.h>
-#include <SDL_audio.h>
-#include <pybind11/numpy.h>
 #endif
 
 #include <atomic>
@@ -118,4 +118,4 @@ private:
 // Return false if need to quit
 bool sdl_poll_events();
 
-void ExportCaptureApi(py::module &m);
+void ExportAudioApi(py::module &m);

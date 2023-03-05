@@ -381,36 +381,32 @@ int AudioCapture::stream_transcribe(Context *ctx, Params *params) {
         const int num_segments = ctx->full_n_segments();
         for (int i = 0; i < num_segments; ++i) {
           const char *text = ctx->full_get_segment_text(i);
-          // NOTE: the first few segments are empty is probably due to our
-          // warmup phase.
-          if (!(text && !text[0]) || strcmp(text, "") != 0) {
-            // Only append when string is not null.
-            m_transcript.push_back(text);
-            fprintf(stderr, "%s", text);
-          }
+          m_transcript.push_back(text);
+          fprintf(stderr, "%s", text);
         }
       }
 
       ++n_iter;
 
-      if (!use_vad && (n_iter % num_new_line) == 0) {
-        // keep part of audio for next iteration.
-        pcmf32_old =
-            std::vector<float>(pcmf32.end() - num_samples_keep, pcmf32.end());
-
-        // add tokens of the last full length as promp
-        if (!no_context) {
-          prompt_tokens.clear();
-
-          const int num_segments = ctx->full_n_segments();
-          for (int i = 0; i < num_segments; ++i) {
-            const int token_count = ctx->full_n_tokens(i);
-            for (int j = 0; j < token_count; ++j) {
-              prompt_tokens.push_back(ctx->full_get_token_id(i, j));
-            }
-          }
-        }
-      }
+      // if (!use_vad && (n_iter % num_new_line) == 0) {
+      //   // keep part of audio for next iteration.
+      //   pcmf32_old =
+      //       std::vector<float>(pcmf32.end() - num_samples_keep,
+      //       pcmf32.end());
+      //
+      //   // add tokens of the last full length as promp
+      //   if (!no_context) {
+      //     prompt_tokens.clear();
+      //
+      //     const int num_segments = ctx->full_n_segments();
+      //     for (int i = 0; i < num_segments; ++i) {
+      //       const int token_count = ctx->full_n_tokens(i);
+      //       for (int j = 0; j < token_count; ++j) {
+      //         prompt_tokens.push_back(ctx->full_get_token_id(i, j));
+      //       }
+      //     }
+      //   }
+      // }
     }
   }
 
@@ -437,7 +433,7 @@ bool sdl_poll_events() {
   return true;
 }
 
-void ExportCaptureApi(py::module &m) {
+void ExportAudioApi(py::module &m) {
   m.def("sdl_poll_events", &sdl_poll_events, "Poll SDL events");
   py::class_<whisper::AudioCapture>(m, "AudioCapture")
       .def(py::init<int>())

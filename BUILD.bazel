@@ -92,13 +92,6 @@ pybind_extension(
     ],
     copts = COPTS,
     defines = ["BAZEL_BUILD"],
-    linkopts = selects.with_or({
-        "//conditions:default": [],
-        "@bazel_tools//src/conditions:darwin": [
-            "-lm",
-            "-lstdc++",
-        ],
-    }),
     deps = [
         ":audio",
         ":context",
@@ -189,5 +182,8 @@ py_wheel(
         ":ci": "{BUILD_EMBED_LABEL}",
     }),
     visibility = ["//:__subpackages__"],
-    deps = [":whispercpp_pkg"],
+    deps = [
+        ":api.so",
+        ":whispercpp_pkg",
+    ],
 )
