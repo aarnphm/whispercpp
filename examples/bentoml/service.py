@@ -9,12 +9,10 @@ from whispercpp.utils import LazyLoader
 
 if t.TYPE_CHECKING:
     import numpy as np
-    import ffmpeg
     from numpy.typing import NDArray
 
     import whispercpp as w
 else:
-    ffmpeg = LazyLoader("ffmpeg", globals(), "ffmpeg")
     np = LazyLoader("np", globals(), "numpy")
     w = LazyLoader("w", globals(), "whispercpp")
 
