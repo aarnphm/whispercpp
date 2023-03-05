@@ -4,6 +4,7 @@ Demonstrate how to use the C++ binding directly.
 from __future__ import annotations
 
 import sys
+import shutil as s
 import typing as t
 import functools as f
 from pathlib import Path
@@ -44,10 +45,16 @@ def get_model() -> w.Whisper:
 
 
 def main(argv: list[str]) -> int:
+    if not s.which("ffmpeg"):
+        sys.stderr.write("Please install ffmpeg")
+        sys.stderr.flush()
+        return 1
+
     if len(argv) < 1:
         sys.stderr.write("Usage: explore.py <audio file>")
         sys.stderr.flush()
         return 1
+
     path = argv.pop(0)
     assert Path(path).exists()
     params = get_model().params

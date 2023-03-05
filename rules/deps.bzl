@@ -85,15 +85,12 @@ def internal_deps():
         shallow_since = "1677774736 +0200",
     )
 
-    maybe(
-        new_git_repository,
+    http_archive(
         name = "com_github_libsdl_sdl2",
-        remote = "https://github.com/libsdl-org/SDL.git",
-        commit = "6c495a92f0bbc5637d565b5339afa943a78108f7",
-        shallow_since = "1677883278 +0100",
         build_file = Label("//extern:sdl2.BUILD"),
-        init_submodules = True,
-        recursive_init_submodules = True,
+        sha256 = "03ab539ff65f6f544969eb3fed138a3fd7224496aa8404eda5e8355877b6dca1",
+        strip_prefix = "SDL-6c495a92f0bbc5637d565b5339afa943a78108f7",
+        urls = ["https://github.com/libsdl-org/SDL/archive/6c495a92f0bbc5637d565b5339afa943a78108f7.zip"],
     )
 
     git_repository(

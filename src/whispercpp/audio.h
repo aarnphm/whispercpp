@@ -88,12 +88,12 @@ public:
   bool clear();
 
   // implement a SDL callback
-  void sdl_callback(uint8_t *stream, int len);
+  void callback(uint8_t *stream, int len);
 
   // retrieve audio data from the buffer
   void retrieve_audio(int ms, std::vector<float> &audio);
 
-  int stream_transcribe(Context *ctx, Params *params);
+  int stream_transcribe(Context *ctx, Params *params, int32_t step_ms);
 
   std::vector<std::string> m_transcript;
 

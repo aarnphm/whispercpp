@@ -55,7 +55,7 @@ bool AudioCapture::init_device(int capture_id, int sample_rate) {
   capture_spec_desired.samples = 1024;
   capture_spec_desired.callback = [](void *userdata, uint8_t *stream, int len) {
     AudioCapture *capture = (AudioCapture *)userdata;
-    capture->sdl_callback(stream, len);
+    capture->callback(stream, len);
   };
   capture_spec_desired.userdata = this;
 
@@ -152,7 +152,7 @@ bool AudioCapture::clear() {
   return true;
 };
 
-void AudioCapture::sdl_callback(uint8_t *stream, int len) {
+void AudioCapture::callback(uint8_t *stream, int len) {
   if (!m_running) {
     return;
   }
@@ -230,11 +230,14 @@ void AudioCapture::retrieve_audio(int ms, std::vector<float> &audio) {
   }
 }
 
-int AudioCapture::stream_transcribe(Context *ctx, Params *params) {
+int AudioCapture::stream_transcribe(Context *ctx, Params *params,
+                                    int32_t step_ms) {
   // very experiemental
 
   // START: DEFAULT PARAMS
-  int32_t step_ms = 3000; // TODO: configure this value
+  if (!step_ms) {
+    step_ms = 3000;
+  }
 
   int32_t length_ms = 10000; // 10 sec
   int32_t keep_ms = 200;
@@ -255,20 +258,11 @@ int AudioCapture::stream_transcribe(Context *ctx, Params *params) {
 
   const bool use_vad = num_samples_step <= 0; // sliding window mode uses VAD
 
-  const int num_new_line = !use_vad ? std::max(1, length_ms / step_ms - 1)
-                                    : 1; // number of steps to print new line
-
-  no_context |= use_vad;
-
   this->resume();
 
   std::vector<float> pcmf32(num_samples_30s, 0.0f);
   std::vector<float> pcmf32_old;
   std::vector<float> pcmf32_new(num_samples_30s, 0.0f);
-
-  std::vector<whisper_token> prompt_tokens;
-
-  int n_iter = 0;
 
   bool is_running = true;
 
@@ -363,14 +357,11 @@ int AudioCapture::stream_transcribe(Context *ctx, Params *params) {
     {
       params->set_print_progress(false);
       params->set_print_realtime(false);
-      params->set_no_context(true);
+      params->set_no_context(no_context);
       params->set_single_segment(!use_vad);
 
       // disable temperature fallback
       params->set_temperature_inc(-1.0f);
-
-      params->set_prompt_tokens(no_context ? nullptr : prompt_tokens.data());
-      params->set_prompt_n_tokens(no_context ? 0 : prompt_tokens.size());
 
       if (ctx->full(*params, pcmf32) != 0) {
         fprintf(stderr, "%s: Failed to process audio!\n", __func__);
@@ -385,28 +376,6 @@ int AudioCapture::stream_transcribe(Context *ctx, Params *params) {
           fprintf(stderr, "%s", text);
         }
       }
-
-      ++n_iter;
-
-      // if (!use_vad && (n_iter % num_new_line) == 0) {
-      //   // keep part of audio for next iteration.
-      //   pcmf32_old =
-      //       std::vector<float>(pcmf32.end() - num_samples_keep,
-      //       pcmf32.end());
-      //
-      //   // add tokens of the last full length as promp
-      //   if (!no_context) {
-      //     prompt_tokens.clear();
-      //
-      //     const int num_segments = ctx->full_n_segments();
-      //     for (int i = 0; i < num_segments; ++i) {
-      //       const int token_count = ctx->full_n_tokens(i);
-      //       for (int j = 0; j < token_count; ++j) {
-      //         prompt_tokens.push_back(ctx->full_get_token_id(i, j));
-      //       }
-      //     }
-      //   }
-      // }
     }
   }
 
@@ -446,8 +415,9 @@ void ExportAudioApi(py::module &m) {
           [](whisper::AudioCapture &self) { return self.m_transcript; })
       .def(
           "stream_transcribe",
-          [](whisper::AudioCapture &self, Context context, Params params) {
-            self.stream_transcribe(&context, &params);
+          [](whisper::AudioCapture &self, Context context, Params params,
+             int32_t step_ms) {
+            self.stream_transcribe(&context, &params, step_ms);
             return py::make_iterator(self.m_transcript.begin(),
                                      self.m_transcript.end());
           },
