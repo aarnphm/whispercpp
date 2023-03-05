@@ -40,7 +40,7 @@ def download_model(model_name: str, basedir: str | None = None) -> str:
     if basedir is None:
         basedir = _data_home
     models_dirs = path.join(basedir, "whispercpp")
-    if not path.exists(models_dirs):
+    if not path.exists(models_dirs):  # pragma: no cover
         makedirs(models_dirs, exist_ok=True)
 
     model_path = path.join(models_dirs, f"ggml-{model_name}.bin")
