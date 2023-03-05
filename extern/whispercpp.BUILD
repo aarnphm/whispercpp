@@ -10,7 +10,6 @@ exports_files(
         "whisper.h",
         "whisper.cpp",
     ] + glob(["examples/*.cpp"]) + glob(["examples/*.h"]),
-    visibility = ["//visibility:public"],
 )
 
 HEADERS = [
@@ -26,7 +25,7 @@ EXAMPLE_HEADERS = [
 
 CFLAGS = [
     "-fexceptions",
-    "-Wunused-function",
+    "-Wall",
     "-O3",
     "-std=c11",
     "-fPIC",
@@ -35,7 +34,7 @@ CFLAGS = [
 
 CXXFLAGS = [
     "-fexceptions",
-    "-Wunused-function",
+    "-Wall",
     "-O3",
     "-std=c++11",
     "-fPIC",
@@ -46,7 +45,16 @@ cc_library(
     name = "common",
     srcs = ["examples/common.cpp"],
     hdrs = EXAMPLE_HEADERS,
-    copts = CXXFLAGS,
+    copts = CXXFLAGS + selects.with_or({
+        "//conditions:default": [],
+        "@bazel_tools//src/conditions:linux_x86_64": [
+            "-mavx",
+            "-mavx2",
+            "-mfma",
+            "-mf16c",
+            "-msse3",
+        ],
+    }),
     linkopts = selects.with_or({
         "//conditions:default": [],
         "@bazel_tools//src/conditions:darwin": [
@@ -60,7 +68,16 @@ cc_library(
     name = "common-sdl",
     srcs = ["examples/common-sdl.cpp"],
     hdrs = EXAMPLE_HEADERS,
-    copts = CXXFLAGS,
+    copts = CXXFLAGS + selects.with_or({
+        "//conditions:default": [],
+        "@bazel_tools//src/conditions:linux_x86_64": [
+            "-mavx",
+            "-mavx2",
+            "-mfma",
+            "-mf16c",
+            "-msse3",
+        ],
+    }),
     linkopts = selects.with_or({
         "//conditions:default": [],
         "@bazel_tools//src/conditions:darwin": [
@@ -68,13 +85,23 @@ cc_library(
             "Accelerate",
         ],
     }),
+    deps = ["@com_github_libsdl_sdl2//:SDL_lib"],
 )
 
 cc_library(
     name = "ggml",
     srcs = ["ggml.c"],
     hdrs = HEADERS,
-    copts = CFLAGS,
+    copts = CFLAGS + selects.with_or({
+        "//conditions:default": [],
+        "@bazel_tools//src/conditions:linux_x86_64": [
+            "-mavx",
+            "-mavx2",
+            "-mfma",
+            "-mf16c",
+            "-msse3",
+        ],
+    }),
     linkopts = selects.with_or({
         "//conditions:default": [],
         "@bazel_tools//src/conditions:darwin": [
@@ -88,7 +115,16 @@ cc_library(
     name = "whisper",
     srcs = ["whisper.cpp"],
     hdrs = HEADERS + EXAMPLE_HEADERS,
-    copts = CXXFLAGS,
+    copts = CXXFLAGS + selects.with_or({
+        "//conditions:default": [],
+        "@bazel_tools//src/conditions:linux_x86_64": [
+            "-mavx",
+            "-mavx2",
+            "-mfma",
+            "-mf16c",
+            "-msse3",
+        ],
+    }),
     linkopts = selects.with_or({
         "//conditions:default": [],
         "@bazel_tools//src/conditions:darwin": [

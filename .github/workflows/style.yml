@@ -27,7 +27,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     if: "!github.event.repository.fork" # Don't run on fork repository
-    timeout-minutes: 20
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v3

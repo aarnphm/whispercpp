@@ -3,13 +3,12 @@ load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier")
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_python//python:packaging.bzl", "py_wheel")
 load("@com_github_bentoml_plugins//rules/py:packaging.bzl", "py_package")
 load("@python_abi//:abi.bzl", "python_abi")
 
 package(default_visibility = ["//visibility:public"])
-
-gen_python_config_settings()
 
 filegroup(
     name = "pyproject",
@@ -26,6 +25,50 @@ buildifier(
     name = "buildifier",
 )
 
+COPTS = [
+    "-O3",
+    "-pthread",
+    "-std=c++11",
+    "-fPIC",
+    "-Wall",
+] + selects.with_or({
+    "//conditions:default": [],
+    "@bazel_tools//src/conditions:linux_x86_64": [
+        "-mavx",
+        "-mavx2",
+        "-mfma",
+        "-mf16c",
+        "-msse3",
+    ],
+})
+
+cc_library(
+    name = "audio",
+    srcs = ["//src/whispercpp:audio.cc"],
+    hdrs = [
+        "//src/whispercpp:audio.h",
+        "//src/whispercpp:context.h",
+        "@com_github_ggerganov_whisper//:examples/common.h",
+        "@com_github_ggerganov_whisper//:whisper.h",
+    ],
+    copts = COPTS,
+    defines = ["BAZEL_BUILD"],
+    linkopts = selects.with_or({
+        "//conditions:default": [],
+        "@bazel_tools//src/conditions:darwin": [
+            "-framework",
+            "AudioToolbox",
+        ],
+    }),
+    deps = [
+        ":context",
+        "@com_github_ggerganov_whisper//:common",
+        "@com_github_libsdl_sdl2//:SDL",
+        "@com_github_libsdl_sdl2//:include",
+        "@pybind11",
+    ],
+)
+
 cc_library(
     name = "context",
     srcs = [
@@ -36,6 +79,7 @@ cc_library(
         "//src/whispercpp:context.h",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
+    copts = COPTS,
     defines = ["BAZEL_BUILD"],
     deps = [
         "@com_github_ggerganov_whisper//:whisper",
@@ -48,21 +92,16 @@ pybind_extension(
     srcs = [
         "//src/whispercpp:api_export.cc",
         "//src/whispercpp:api_export.h",
+        "//src/whispercpp:audio.h",
         "//src/whispercpp:context.h",
         "@com_github_ggerganov_whisper//:examples/common.h",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
-    copts = [
-        "-O3",
-        "-pthread",
-        "-std=c++11",
-        "-fPIC",
-        "-Wall",
-    ],
+    copts = COPTS,
     defines = ["BAZEL_BUILD"],
     deps = [
+        ":audio",
         ":context",
-        "@com_github_ggerganov_whisper//:common",
     ],
 )
 
@@ -103,6 +142,8 @@ config_setting(
     },
 )
 
+gen_python_config_settings()
+
 py_wheel(
     name = "whispercpp_wheel",
     abi = python_abi(),
@@ -120,6 +161,7 @@ py_wheel(
         "Topic :: Software Development :: Libraries",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Programming Language :: Python",
+        "Programming Language :: C++",
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
@@ -147,5 +189,8 @@ py_wheel(
         ":ci": "{BUILD_EMBED_LABEL}",
     }),
     visibility = ["//:__subpackages__"],
-    deps = [":whispercpp_pkg"],
+    deps = [
+        ":api.so",
+        ":whispercpp_pkg",
+    ],
 )

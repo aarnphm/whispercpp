@@ -118,8 +118,8 @@ std::vector<whisper_token> Context::tokenize(std::string *text,
 size_t Context::lang_max_id() { return whisper_lang_max_id(); }
 
 // Returns id of a given language, raise exception if not found
-int Context::lang_str_to_id(std::string *lang) {
-  int id = whisper_lang_id(lang->c_str());
+int Context::lang_str_to_id(const char *lang) {
+  int id = whisper_lang_id(lang);
   if (id == -1) {
     throw std::runtime_error("invalid language");
   } else {
@@ -129,12 +129,12 @@ int Context::lang_str_to_id(std::string *lang) {
 
 // Returns short string of specified language id, raise exception if nullptr
 // is returned
-std::string Context::lang_id_to_str(size_t id) {
+const char *Context::lang_id_to_str(size_t id) {
   const char *lang = whisper_lang_str(id);
   if (lang == nullptr) {
     throw std::runtime_error("invalid language id");
   } else {
-    return std::string(lang);
+    return lang;
   }
 }
 
@@ -555,16 +555,20 @@ void Params::set_tokens(std::vector<int> &tokens) {
   wfp.prompt_tokens = reinterpret_cast<whisper_token *>(&tokens);
   wfp.prompt_n_tokens = tokens.size();
 }
+void Params::set_prompt_tokens(const whisper_token *tokens) {
+  wfp.prompt_tokens = tokens;
+}
+void Params::set_prompt_n_tokens(size_t n_tokens) {
+  wfp.prompt_n_tokens = n_tokens;
+}
 const whisper_token *Params::get_prompt_tokens() { return wfp.prompt_tokens; }
 size_t Params::get_prompt_n_tokens() { return wfp.prompt_n_tokens; }
 
 // Set target language.
 // For auto-detection, set this either to 'auto' or nullptr.
 // defaults to 'en'.
-void Params::set_language(std::string *language) {
-  wfp.language = language->c_str();
-}
-std::string Params::get_language() { return std::string(wfp.language); }
+void Params::set_language(const char *language) { wfp.language = language; }
+const char *Params::get_language() { return wfp.language; }
 
 // Set suppress_blank. See
 // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/decoding.py#L89

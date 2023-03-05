@@ -26,7 +26,7 @@ jobs:
   build-sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 90
     if: github.repository_owner == 'aarnphm' # Don't run on fork repository
     steps:
       - name: Checkout
