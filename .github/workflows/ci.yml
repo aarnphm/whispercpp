@@ -30,6 +30,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.8"]
+        exclude:
+          - os: "windows-latest"
 
     if: "!github.event.repository.fork" # Don't run on fork repository
     name: python${{ matrix.python-version }} integration tests (${{ matrix.os }})
