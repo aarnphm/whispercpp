@@ -25,6 +25,12 @@ buildifier(
     name = "buildifier",
 )
 
+alias(
+    name = "pypi_update",
+    actual = "//requirements:pypi.update",
+    visibility = ["//visibility:public"],
+)
+
 COPTS = [
     "-O3",
     "-pthread",
