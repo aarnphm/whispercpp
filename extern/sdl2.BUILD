@@ -41,9 +41,5 @@ configure_make(
         "@bazel_tools//src/conditions:windows": ["libSDL2.lib"],
         "//conditions:default": ["libSDL2.a"],
     }),
-    targets = [
-        "all",
-        "install",
-    ],
-    alwayslink = True,
+    alwayslink = False,
 )

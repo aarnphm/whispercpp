@@ -9,6 +9,9 @@ build --incompatible_default_to_explicit_init_py
 # never strip debug
 build --strip=never
 
+# not needed once https://github.com/bazelbuild/bazel/issues/7260  is closed
+build --incompatible_enable_cc_toolchain_resolution
+
 # Using clang as the compiler
 build --repo_env=CC=clang
 
