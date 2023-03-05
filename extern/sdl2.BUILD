@@ -1,4 +1,4 @@
-load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake", "configure_make")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -19,27 +19,44 @@ COPTS = [
     "-O3",
 ]
 
-configure_make(
+cmake(
     name = "SDL",
-    configure_in_place = True,
+    cache_entries = {
+        "CMAKE_C_FLAGS": "-fPIC",
+        "CMAKE_OSX_ARCHITECTURES": "x86_64;arm64",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "10.14",
+        "CMAKE_POSITION_INDEPENDENT_CODE": "ON",
+        "SDL_SHARED": "OFF",
+        "SDL_JOYSTICK": "OFF",
+        "SDL_HAPTIC": "OFF",
+        "SDL_COCOA": "OFF",
+        "SDL_METAL": "OFF",
+        "SDL_TEST": "OFF",
+        "SDL_RENDER": "OFF",
+        "SDL_VIDEO": "OFF",
+    },
     copts = COPTS,
-    env = select({
-        "@bazel_tools//src/conditions:darwin": {
-            "AR": "",
-            "OSX_DEPLOYMENT_TARGET": "10.14",
-        },
-        "//conditions:default": {},
-    }),
-    lib_name = "libSDL2",
     lib_source = ":all_srcs",
-    out_shared_libs = select({
-        "@bazel_tools//src/conditions:darwin": ["libSDL2.dylib"],
-        "@bazel_tools//src/conditions:windows": ["libSDL2.dll"],
-        "//conditions:default": ["libSDL2.so"],
+    linkopts = select({
+        "//conditions:default": [],
+        "@bazel_tools//src/conditions:darwin": [
+            "-Wl",
+            "-framework",
+            "CoreAudio,AudioToolbox",
+        ],
     }),
     out_static_libs = select({
-        "@bazel_tools//src/conditions:windows": ["libSDL2.lib"],
-        "//conditions:default": ["libSDL2.a"],
+        "@bazel_tools//src/conditions:windows": [
+            "libSDL2main.lib",
+            "libSDL2.lib",
+        ],
+        "//conditions:default": [
+            "libSDL2main.a",
+            "libSDL2.a",
+        ],
     }),
-    alwayslink = False,
+    targets = [
+        "preinstall",
+        "install",
+    ],
 )

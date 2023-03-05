@@ -53,6 +53,13 @@ cc_library(
     ],
     copts = COPTS,
     defines = ["BAZEL_BUILD"],
+    linkopts = selects.with_or({
+        "//conditions:default": [],
+        "@bazel_tools//src/conditions:darwin": [
+            "-framework",
+            "AudioToolbox",
+        ],
+    }),
     deps = [
         ":context",
         "@com_github_ggerganov_whisper//:common",
