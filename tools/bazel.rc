@@ -6,32 +6,29 @@ startup --windows_enable_symlinks
 
 build --incompatible_default_to_explicit_init_py
 
-# once https://github.com/bazelbuild/bazel/issues/7260 is resolved
-# no need for below options
-build --incompatible_enable_cc_toolchain_resolution
-
 # never strip debug
 build --strip=never
+
+# Using clang as the compiler
 build --repo_env=CC=clang
+
+# whisper.cpp use C++11, hence compiling with C++11
 build --cxxopt=-std=c++11 --host_cxxopt=-std=c++11
+
 # Build errors are not a helpful way to enforce deprecation in-repo and it is
 # not the point of the Bazel build to catch usage of deprecated APIs.
 build --copt=-Wno-deprecated --host_copt=-Wno-deprecated
 
-# lld links faster than other linkers. Assume that anybody using clang also has
-# lld available.
-build --linkopt=-fuse-ld=lld --host_linkopt=-fuse-ld=lld
+# Address https://github.com/bazelbuild/rules_swift/issues/776
+build --host_swiftcopt=-wmo --swiftcopt=-wmo
 
-
+# Uses fast_cpp_protos for fast protobuf features
 build --define=use_fast_cpp_protos=true
+
+# using opt config
 build:opt --compilation_mode=opt
 build:opt --copt=-Wframe-larger-than=16384
 
+# using dbg config
 build:dbg --compilation_mode=dbg
 build:dbg --copt=-Werror=return-stack-address
-
-# Address https://github.com/bazelbuild/rules_swift/issues/776
-build --host_swiftcopt=-wmo --swiftcopt=-wmo
-# Dynamic link cause issues like: `dyld: malformed mach-o: load commands size (59272) > 32768`
-# https://github.com/bazelbuild/bazel/issues/9190
-build:macos --dynamic_mode=off

@@ -10,8 +10,6 @@ load("@python_abi//:abi.bzl", "python_abi")
 
 package(default_visibility = ["//visibility:public"])
 
-gen_python_config_settings()
-
 filegroup(
     name = "pyproject",
     srcs = ["pyproject.toml"],
@@ -27,6 +25,23 @@ buildifier(
     name = "buildifier",
 )
 
+COPTS = [
+    "-O3",
+    "-pthread",
+    "-std=c++11",
+    "-fPIC",
+    "-Wall",
+] + selects.with_or({
+    "//conditions:default": [],
+    "@bazel_tools//src/conditions:linux_x86_64": [
+        "-mavx",
+        "-mavx2",
+        "-mfma",
+        "-mf16c",
+        "-msse3",
+    ],
+})
+
 cc_library(
     name = "audio",
     srcs = ["//src/whispercpp:audio.cc"],
@@ -36,11 +51,13 @@ cc_library(
         "@com_github_ggerganov_whisper//:examples/common.h",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
+    copts = COPTS,
     defines = ["BAZEL_BUILD"],
     deps = [
         ":context",
         "@com_github_ggerganov_whisper//:common",
-        "@com_github_libsdl_sdl2//:SDL_lib",
+        "@com_github_libsdl_sdl2//:SDL",
+        "@com_github_libsdl_sdl2//:include",
         "@pybind11",
     ],
 )
@@ -55,6 +72,7 @@ cc_library(
         "//src/whispercpp:context.h",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
+    copts = COPTS,
     defines = ["BAZEL_BUILD"],
     deps = [
         "@com_github_ggerganov_whisper//:whisper",
@@ -72,28 +90,15 @@ pybind_extension(
         "@com_github_ggerganov_whisper//:examples/common.h",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
-    copts = [
-        "-O3",
-        "-pthread",
-        "-std=c++17",
-        "-fPIC",
-        "-Wall",
-    ],
-	linkopts = selects.with_or({
+    copts = COPTS,
+    defines = ["BAZEL_BUILD"],
+    linkopts = selects.with_or({
         "//conditions:default": [],
-        "@bazel_tools//src/conditions:linux_x86_64": [
-            "-mavx",
-            "-mavx2",
-            "-mfma",
-            "-mf16c",
-            "-msse3",
-        ],
         "@bazel_tools//src/conditions:darwin": [
             "-lm",
             "-lstdc++",
         ],
     }),
-    defines = ["BAZEL_BUILD"],
     deps = [
         ":audio",
         ":context",
@@ -136,6 +141,8 @@ config_setting(
         "compilation_mode": "dbg",
     },
 )
+
+gen_python_config_settings()
 
 py_wheel(
     name = "whispercpp_wheel",

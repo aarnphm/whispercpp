@@ -85,16 +85,22 @@ def internal_deps():
         shallow_since = "1677774736 +0200",
     )
 
-    # sdl2
     maybe(
-        http_archive,
+        new_git_repository,
         name = "com_github_libsdl_sdl2",
-        build_file = Label("//extern:sdl2.BUILD"),
-        strip_prefix = "SDL2-2.0.14",
-        sha256 = "2c1e870d74e13dfdae870600bfcb6862a5eab4ea5b915144aff8d75a0f9bf046",
-        urls = ["https://www.libsdl.org/release/SDL2-2.0.14.zip"],
-        patch_args = ["-p1"],
-        patches = ["//extern:sdl2.patch"],
+        remote = "https://github.com/libsdl-org/SDL.git",
+        commit = "6c495a92f0bbc5637d565b5339afa943a78108f7",
+        shallow_since = "1677883278 +0100",
+        build_file = Label("//extern:SDL2.BUILD"),
+        init_submodules = True,
+        recursive_init_submodules = True,
+    )
+
+    git_repository(
+        name = "rules_foreign_cc",
+        remote = "https://github.com/bazelbuild/rules_foreign_cc",
+        commit = "d33d862abb4ce3ba178547ef58c9fcb24cec38ca",
+        shallow_since = "1677931962 +0000",
     )
 
     # Override python rules defined under @com_github_bentoml_plugins
