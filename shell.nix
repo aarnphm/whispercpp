@@ -12,7 +12,10 @@ let
     (python310.withPackages (ps: with ps; [ pynvim pip virtualenv ipython ]))
 
     git
+    # NOTE: keep this in sync with the version in .bazelversion
     bazel_6
+    llvmPackages_15.llvm
+
     nixfmt
     treefmt
     which
@@ -55,6 +58,9 @@ in stdenv.mkDerivation rec {
 
   LOCALE_ARCHIVE =
     if stdenv.isLinux then "${glibcLocales}/lib/locale/locale-archive" else "";
+
+  # NOTE: using bazel setup by nixpkgs, and hence disable the wrapper
+  DISABLE_BAZEL_WRAPPER = 1;
 
   nobuild = ''
     echo Do not run this derivation with nix-build, it can only be used with nix-shell
