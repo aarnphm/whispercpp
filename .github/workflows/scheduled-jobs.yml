@@ -45,6 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    needs: [update-submodules]
     steps:
       - uses: actions/checkout@v3
         with:
