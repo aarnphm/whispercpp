@@ -146,6 +146,7 @@ enableTypeIgnoreComments = true
 test-requires = "pytest"
 test-command = "pytest {project}/tests"
 build-verbosity = "3"
+environment = { CC = "g++", CXX = "clang++" }
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
