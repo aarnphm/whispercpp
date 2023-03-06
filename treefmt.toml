@@ -13,9 +13,16 @@ ruff --fix .
 "--"
 ]
 includes = [ "*.py" ]
+excludes = ["extern"]
 
 [formatter.nix]
 # Formatter to run
 command = "nixfmt"
 includes = [ "*.nix" ]
-excludes = ["nix/sources.nix"]
+excludes = ["nix/sources.nix", "extern"]
+
+[formatter.clang-format]
+command = "clang-format"
+options = [ "-i", "--style=LLVM" ]
+includes = [ "*.c", "*.cpp", "*.cc", "*.h", "*.hpp" ]
+excludes = ["extern/*"]
