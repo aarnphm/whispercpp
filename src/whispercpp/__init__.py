@@ -19,6 +19,7 @@ The binding provides a ``Whisper`` class:
 
 from __future__ import annotations
 
+import os as _os
 import typing as t
 from dataclasses import dataclass
 
@@ -40,6 +41,14 @@ else:
         "whispercpp.audio_cpp2py_export",
         exc_msg="Failed to import 'audio' extensions. Try to install whispercpp from source.",
     )
+
+try:
+    with open(_os.path.join(_os.path.dirname(__file__), "__about__.py")) as f:
+        exec(f.read())
+except FileNotFoundError:
+    # Fallback for when __about__.py is not available.
+    __version__ = "0.0.0"
+    __version_tuple__ = (0, 0, 0, "dev0")
 
 
 @dataclass

@@ -4,6 +4,38 @@ load("//rules:deps.bzl", "internal_deps")
 
 internal_deps()
 
+load("@com_github_bentoml_plugins//rules:deps.bzl", "plugins_dependencies")
+
+plugins_dependencies()
+
+load("@build_bazel_rules_nodejs//:repositories.bzl", "build_bazel_rules_nodejs_dependencies")
+
+build_bazel_rules_nodejs_dependencies()
+
+load("@rules_nodejs//nodejs:repositories.bzl", "nodejs_register_toolchains")
+load("@rules_nodejs//nodejs:yarn_repositories.bzl", "yarn_repositories")
+load("@build_bazel_rules_nodejs//:index.bzl", "yarn_install")
+
+nodejs_register_toolchains(
+    name = "nodejs",
+    node_version = "16.16.0",
+)
+
+yarn_repositories(
+    name = "yarn",
+    node_repository = "nodejs",
+)
+
+yarn_install(
+    name = "npm",
+    exports_directories_only = False,  # Required for ts_library
+    frozen_lockfile = True,
+    package_json = "//:package.json",
+    package_path = "/",
+    yarn = "@yarn//:bin/yarn",
+    yarn_lock = "//:yarn.lock",
+)
+
 load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
 
 rules_foreign_cc_dependencies()

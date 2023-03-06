@@ -12,6 +12,9 @@ if TYPE_CHECKING:
     import numpy as np
     from numpy.typing import NDArray
 
+__version__: str = ...
+__version_tuple__: tuple[int, int, int, str] = ...
+
 class Whisper:
     context: api.Context
     params: api.Params
