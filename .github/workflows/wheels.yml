@@ -38,6 +38,12 @@ jobs:
           pip install build
 
           python -m build --sdist
+      - name: Test built sdist
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install dist/*.tar.gz && python -m "import whispercpp as w;print(dir(w.api)); print(dir(w.audio));"
       - name: Upload to PyPI
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         env:
@@ -49,7 +55,7 @@ jobs:
   build-arm-wheels:
     name: Build ARM wheels for ${{ matrix.python[1] }}-${{ matrix.platform[0] }}
     runs-on: ${{ matrix.platform[1] }}
-    if: ${{ failure() }} # Don't run on fork repository
+    if: ${{ failure() }} # Disable this for now. We will tackle this later.
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -117,6 +123,12 @@ jobs:
       - name: Building wheels
         if: github.event_name == 'pull_request'
         run: bazel build whispercpp_wheel
+      - name: Test built wheel
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install $(bazel info bazel-bin)/*.whl && python -m "import whispercpp as w;print(dir(w.api)); print(dir(w.audio));"
       - name: Retrieving versions
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         id: get-info
