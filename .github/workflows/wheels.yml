@@ -53,8 +53,8 @@ jobs:
           twine upload dist/* --repository pypi --verbose
 
   build-arm-wheels:
-    name: Build ARM-based wheels for ${{ matrix.python[1] }}-${{ matrix.platform }}
-    runs-on: ubuntu-latest
+    name: Build ARM-based wheels for ${{ matrix.python[1] }}-${{ matrix.platform[0] }}
+    runs-on: ${{ matrix.platform[1] }}
     if: "!github.event.repository.fork" # Don't run on fork repository
     timeout-minutes: 90
     strategy:
@@ -65,9 +65,9 @@ jobs:
           - ["cp39", "3.9"]
           - ["cp310", "3.10"]
           - ["cp311", "3.11"]
-        platform: [manylinux_aarch64, macosx_arm64]
-    env:
-      CIBW_BUILD: ${{ matrix.python[1] }}-${{ matrix.platform }}
+        platform:
+          - [manylinux_aarch64, ubuntu-latest]
+          - [macosx_arm64, macos-latest]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -78,14 +78,17 @@ jobs:
         with:
           python-version: ${{ matrix.python[1] }}
       - name: Set up QEMU
+        if: runner.os == 'Linux'
         uses: docker/setup-qemu-action@v2
         with:
           platforms: all
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.12.0
+        env:
+          CIBW_BUILD: ${{ matrix.python[0] }}-${{ matrix.platform[0] }}
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.python[0] }}-${{ startsWith(matrix.platform, 'macosx') && 'macosx' || matrix.platform }}
+          name: ${{ matrix.python[0] }}-${{ startsWith(matrix.platform[0], 'macosx') && 'macosx' || matrix.platform[0] }}
           path: ./wheelhouse/*.whl
 
   build-wheel:
@@ -116,9 +119,6 @@ jobs:
         uses: docker/setup-qemu-action@v2
         with:
           platforms: all
-      - name: Set up Clang [Linux]
-        if: runner.os == 'Linux'
-        uses: egor-tensin/setup-clang@v1
       - name: Running update requirements
         run: bazel run pypi_update
       - name: Building wheels
