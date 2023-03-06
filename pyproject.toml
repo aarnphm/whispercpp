@@ -136,6 +136,7 @@ enableTypeIgnoreComments = true
 
 [tool.cibuildwheel]
 test-requires = "pytest"
+before-all = "pip install clang"
 test-command = "pytest {project}/tests"
 build-verbosity = "3"
 
