@@ -15,8 +15,8 @@ def internal_deps():
         git_repository,
         name = "com_github_bentoml_plugins",
         remote = "https://github.com/bentoml/plugins.git",
-        commit = "1dd6bfec492410f79635d830e993647f93273f68",
-        shallow_since = "1677819517 -0800",
+        commit = "9da166c0d5af5543f6084bf3ae5223ea19f0e7ea",
+        shallow_since = "1678069830 -0800",
     )
 
     maybe(

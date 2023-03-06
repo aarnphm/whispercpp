@@ -4,9 +4,23 @@ load("//rules:deps.bzl", "internal_deps")
 
 internal_deps()
 
-load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
+load("@com_github_bentoml_plugins//rules:deps.bzl", "plugins_dependencies")
 
-rules_foreign_cc_dependencies()
+plugins_dependencies()
+
+# NOTE: external users wish to use BentoML workspace setup
+# should always be loaded in this order.
+load("@com_github_bentoml_plugins//rules:workspace0.bzl", "workspace0")
+
+workspace0()
+
+load("@com_github_bentoml_plugins//rules:workspace1.bzl", "workspace1")
+
+workspace1()
+
+load("@com_github_bentoml_plugins//rules:workspace2.bzl", "workspace2")
+
+workspace2()
 
 load("@com_grail_bazel_toolchain//toolchain:deps.bzl", "bazel_toolchain_dependencies")
 
@@ -43,14 +57,6 @@ llvm_toolchain(
 load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")
 
 llvm_register_toolchains()
-
-load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_multi_toolchains")
-
-py_repositories()
-
-load("@rules_python//python/pip_install:repositories.bzl", "pip_install_dependencies")
-
-pip_install_dependencies()
 
 load("@rules_python//python:pip.bzl", "pip_parse")
 
