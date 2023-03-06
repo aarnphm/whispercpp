@@ -1,5 +1,6 @@
 #include "context.h"
 #include <assert.h>
+#include <sstream>
 
 Context Context::from_file(const char *filename) {
   Context context;
@@ -117,8 +118,8 @@ std::vector<whisper_token> Context::tokenize(std::string *text,
 size_t Context::lang_max_id() { return whisper_lang_max_id(); }
 
 // Returns id of a given language, raise exception if not found
-int Context::lang_str_to_id(std::string *lang) {
-  int id = whisper_lang_id(lang->c_str());
+int Context::lang_str_to_id(const char *lang) {
+  int id = whisper_lang_id(lang);
   if (id == -1) {
     throw std::runtime_error("invalid language");
   } else {
@@ -128,12 +129,12 @@ int Context::lang_str_to_id(std::string *lang) {
 
 // Returns short string of specified language id, raise exception if nullptr
 // is returned
-std::string Context::lang_id_to_str(size_t id) {
+const char *Context::lang_id_to_str(size_t id) {
   const char *lang = whisper_lang_str(id);
   if (lang == nullptr) {
     throw std::runtime_error("invalid language id");
   } else {
-    return std::string(lang);
+    return lang;
   }
 }
 
@@ -319,6 +320,33 @@ float Context::full_get_token_prob(int segment, int token) {
 }
 
 void ExportContextApi(py::module &m) {
+  // whisper_token_data -> TokenData
+  py::class_<whisper_token_data>(m, "TokenData", "Data for the token")
+      .def_readonly("id", &whisper_token_data::id)
+      .def_readonly("tid", &whisper_token_data::tid)
+      .def_readonly("p", &whisper_token_data::p)
+      .def_readonly("plog", &whisper_token_data::plog)
+      .def_readonly("pt", &whisper_token_data::pt)
+      .def_readonly("ptsum", &whisper_token_data::ptsum)
+      .def_readonly("t0", &whisper_token_data::t0)
+      .def_readonly("t1", &whisper_token_data::t1)
+      .def_readonly("vlen", &whisper_token_data::vlen)
+      .def("__repr__", [](const whisper_token_data &t) {
+        std::stringstream s;
+        s << "("
+          << "id=" << t.id << ", "
+          << "tid=" << t.tid << ", "
+          << "p=" << t.p << ", "
+          << "plog=" << t.plog << ", "
+          << "pt=" << t.pt << ", "
+          << "ptsum=" << t.ptsum << ", "
+          << "t0=" << t.t0 << ", "
+          << "t1=" << t.t1 << ", "
+          << "vlen=" << t.vlen << ")";
+
+        return s.str();
+      });
+
   py::class_<Context>(m, "Context", "A light wrapper around whisper_context")
       .def_static("from_file", &Context::from_file, "filename"_a)
       .def_static("from_buffer", &Context::from_buffer, "buffer"_a)
@@ -352,9 +380,10 @@ void ExportContextApi(py::module &m) {
       .def("print_timings", &Context::print_timings)
       .def("reset_timings", &Context::reset_timings)
       .def("sys_info", &Context::sys_info)
-      .def("full", &Context::full, "params"_a, "data"_a)
+      .def("full", &Context::full, "params"_a, "data"_a,
+           py::call_guard<py::gil_scoped_release>())
       .def("full_parallel", &Context::full_parallel, "params"_a, "data"_a,
-           "num_processor"_a)
+           "num_processor"_a, py::call_guard<py::gil_scoped_release>())
       .def("full_n_segments", &Context::full_n_segments)
       .def("full_lang_id", &Context::full_lang_id)
       .def("full_get_segment_start", &Context::full_get_segment_t0, "segment"_a)
@@ -570,16 +599,20 @@ void Params::set_tokens(std::vector<int> &tokens) {
   wfp.prompt_tokens = reinterpret_cast<whisper_token *>(&tokens);
   wfp.prompt_n_tokens = tokens.size();
 }
+void Params::set_prompt_tokens(const whisper_token *tokens) {
+  wfp.prompt_tokens = tokens;
+}
+void Params::set_prompt_n_tokens(size_t n_tokens) {
+  wfp.prompt_n_tokens = n_tokens;
+}
 const whisper_token *Params::get_prompt_tokens() { return wfp.prompt_tokens; }
 size_t Params::get_prompt_n_tokens() { return wfp.prompt_n_tokens; }
 
 // Set target language.
 // For auto-detection, set this either to 'auto' or nullptr.
 // defaults to 'en'.
-void Params::set_language(std::string *language) {
-  wfp.language = language->c_str();
-}
-std::string Params::get_language() { return std::string(wfp.language); }
+void Params::set_language(const char *language) { wfp.language = language; }
+const char *Params::get_language() { return wfp.language; }
 
 // Set suppress_blank. See
 // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/decoding.py#L89

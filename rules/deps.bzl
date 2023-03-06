@@ -4,6 +4,9 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 
+LLVM_TOOLCHAIN_TAG = "0.8.2"
+LLVM_TOOLCHAIN_SHA = "0fc3a2b0c9c929920f4bed8f2b446a8274cad41f5ee823fd3faa0d7641f20db0"
+
 def internal_deps():
     """Load internal dependencies that are used within the BentoML projects."""
 
@@ -12,8 +15,8 @@ def internal_deps():
         git_repository,
         name = "com_github_bentoml_plugins",
         remote = "https://github.com/bentoml/plugins.git",
-        commit = "4f163511ac63e129527876621225f4be5679d160",
-        shallow_since = "1677462988 -0800",
+        commit = "1dd6bfec492410f79635d830e993647f93273f68",
+        shallow_since = "1677819517 -0800",
     )
 
     maybe(
@@ -60,17 +63,41 @@ def internal_deps():
         ],
     )
 
-    # Use main for maximum on the edge, not hermetic.
+    # llvm toolchain
+    maybe(
+        http_archive,
+        name = "com_grail_bazel_toolchain",
+        sha256 = LLVM_TOOLCHAIN_SHA,
+        strip_prefix = "bazel-toolchain-{tag}".format(tag = LLVM_TOOLCHAIN_TAG),
+        canonical_id = LLVM_TOOLCHAIN_TAG,
+        url = "https://github.com/grailbio/bazel-toolchain/archive/refs/tags/{tag}.tar.gz".format(tag = LLVM_TOOLCHAIN_TAG),
+    )
 
     # whisper.cpp
     maybe(
         new_git_repository,
         name = "com_github_ggerganov_whisper",
         build_file = Label("//extern:whispercpp.BUILD"),
-        branch = "master",
         init_submodules = True,
         recursive_init_submodules = True,
         remote = "https://github.com/ggerganov/whisper.cpp.git",
+        commit = "72af0f56975bfea20ff340777b3c940b006bf42a",
+        shallow_since = "1677774736 +0200",
+    )
+
+    http_archive(
+        name = "com_github_libsdl_sdl2",
+        build_file = Label("//extern:sdl2.BUILD"),
+        sha256 = "03ab539ff65f6f544969eb3fed138a3fd7224496aa8404eda5e8355877b6dca1",
+        strip_prefix = "SDL-6c495a92f0bbc5637d565b5339afa943a78108f7",
+        urls = ["https://github.com/libsdl-org/SDL/archive/6c495a92f0bbc5637d565b5339afa943a78108f7.zip"],
+    )
+
+    git_repository(
+        name = "rules_foreign_cc",
+        remote = "https://github.com/bazelbuild/rules_foreign_cc",
+        commit = "d33d862abb4ce3ba178547ef58c9fcb24cec38ca",
+        shallow_since = "1677931962 +0000",
     )
 
     # Override python rules defined under @com_github_bentoml_plugins

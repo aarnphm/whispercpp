@@ -24,3 +24,12 @@ def test_lazy_warning(caplog: LogCaptureFixture):
     assert "test_warning" in caplog.text
 
     assert "Whisper" in dir(w)
+
+
+def test_available_audio_devices():
+    # Right now, this function will always return a list
+    # even there are no audio devices available.
+    # we probably should just raise an error if there are no devices.
+    from whispercpp import utils
+
+    utils.available_audio_devices()

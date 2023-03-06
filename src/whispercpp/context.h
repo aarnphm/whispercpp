@@ -1,3 +1,5 @@
+#pragma once
+
 #ifdef BAZEL_BUILD
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
@@ -218,14 +220,16 @@ public:
   // Calling this more than once will overwrite the previous tokens.
   // Defaults to an empty vector.
   void set_tokens(std::vector<int> &tokens);
+  void set_prompt_tokens(const whisper_token *tokens);
+  void set_prompt_n_tokens(size_t n_tokens);
   const whisper_token *get_prompt_tokens();
   size_t get_prompt_n_tokens();
 
   // Set target language.
   // For auto-detection, set this either to 'auto' or nullptr.
   // defaults to 'en'.
-  void set_language(std::string *language);
-  std::string get_language();
+  void set_language(const char *language);
+  const char *get_language();
 
   // Set suppress_blank. See
   // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/decoding.py#L89
@@ -326,8 +330,8 @@ public:
   std::vector<whisper_token> tokenize(std::string *text, size_t max_tokens);
   size_t lang_max_id();
 
-  int lang_str_to_id(std::string *lang);
-  std::string lang_id_to_str(size_t id);
+  int lang_str_to_id(const char *lang);
+  const char *lang_id_to_str(size_t id);
   std::vector<float> lang_detect(size_t offset_ms, size_t threads);
 
   size_t n_len();

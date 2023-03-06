@@ -21,6 +21,8 @@ let
     # The solution is from: https://github.com/NixOS/nix/issues/318#issuecomment-52986702
     glibcLocales
     coreutils
+
+    ffmpeg
   ];
 
   env = buildEnv {

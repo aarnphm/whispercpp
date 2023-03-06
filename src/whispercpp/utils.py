@@ -9,6 +9,7 @@ import urllib.request as request
 from os import path
 from os import environ
 from os import makedirs
+from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ def download_model(model_name: str, basedir: str | None = None) -> str:
     if basedir is None:
         basedir = _data_home
     models_dirs = path.join(basedir, "whispercpp")
-    if not path.exists(models_dirs):
+    if not path.exists(models_dirs):  # pragma: no cover
         makedirs(models_dirs, exist_ok=True)
 
     model_path = path.join(models_dirs, f"ggml-{model_name}.bin")
@@ -111,3 +112,11 @@ class LazyLoader(types.ModuleType):
         if self._module is None:
             self._module = self._load()
         return dir(self._module)
+
+
+@lru_cache(maxsize=1)
+def available_audio_devices() -> list[int]:
+    """Returns a list of available audio devices on the system."""
+    from whispercpp import api
+
+    return api.AudioCapture.list_available_devices()

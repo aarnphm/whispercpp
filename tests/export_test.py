@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import shutil as s
 import typing as t
 from pathlib import Path
 
-import pytest
+import pytest as p
 
 from whispercpp import api
 from whispercpp import Whisper
@@ -21,6 +22,8 @@ ROOT = Path(__file__).parent.parent
 
 
 def preprocess(file: Path, sample_rate: int = 16000) -> NDArray[np.float32]:
+    if not s.which("ffmpeg"):
+        p.skip("ffmpeg not found, skipping this test.")
     try:
         y, _ = (
             ffmpeg.input(file.__fspath__(), threads=0)
@@ -34,23 +37,25 @@ def preprocess(file: Path, sample_rate: int = 16000) -> NDArray[np.float32]:
 
 
 def test_invalid_models():
-    with pytest.raises(RuntimeError):
+    with p.raises(RuntimeError):
         Whisper.from_pretrained("whisper_v0.1")
 
 
 def test_forbid_init():
-    with pytest.raises(RuntimeError):
+    with p.raises(RuntimeError):
         Whisper()
 
 
+_EXPECTED = " And so my fellow Americans ask not what your country can do for you ask what you can do for your country"
+
+
+@p.mark.skipIf(not s.which("ffmpeg"), reason="ffmpeg not found, skipping this test.")
 def test_from_pretrained():
     m = Whisper.from_pretrained("tiny.en")
-    assert (
-        " And so my fellow Americans ask not what your country can do for you ask what you can do for your country"
-        == m.transcribe(preprocess(ROOT / "samples" / "jfk.wav"))
-    )
+    assert _EXPECTED == m.transcribe(preprocess(ROOT / "samples" / "jfk.wav"))
 
 
+@p.mark.skipIf(not s.which("ffmpeg"), reason="ffmpeg not found, skipping this test.")
 def test_load_wav_file():
     np.testing.assert_almost_equal(
         preprocess(ROOT / "samples" / "jfk.wav"),
@@ -62,9 +67,12 @@ def test_load_wav_file():
 
 def test_transcribe_from_wav():
     m = Whisper.from_pretrained("tiny.en")
-    assert m.transcribe_from_file(
-        ROOT.joinpath("samples", "jfk.wav").resolve().__fspath__()
-    ) == m.transcribe(preprocess(ROOT / "samples" / "jfk.wav"))
+    assert (
+        m.transcribe_from_file(
+            ROOT.joinpath("samples", "jfk.wav").resolve().__fspath__()
+        )
+        == _EXPECTED
+    )
 
 
 def test_callback():
@@ -82,7 +90,3 @@ def test_callback():
 
     correct = m.transcribe(preprocess(ROOT / "samples" / "jfk.wav"))
     assert "".join(text) == correct
-
-
-if __name__ == "__main__":
-    test_callback()

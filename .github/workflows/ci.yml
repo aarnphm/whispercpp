@@ -28,16 +28,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.8"]
         exclude:
-          # Currently, there is a bug with bazel. Disable for offline investigation.
-          - python-version: "3.11"
+          - os: "windows-latest"
 
     if: "!github.event.repository.fork" # Don't run on fork repository
     name: python${{ matrix.python-version }} integration tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 90
 
     steps:
       - name: Checkout
@@ -52,8 +51,8 @@ jobs:
         id: setup-ffmpeg
       - name: Install development dependencies and bindings
         run: |
-          ./tools/bazel run //requirements:pypi.update
+          bazel run pypi_update
           python -m pip install -r requirements/pypi.txt
           python -m pip install .
       - name: Run tests on python${{ matrix.python-version }}
-        run: ./tools/bazel test //tests/... //examples/...
+        run: bazel test tests/... examples/...

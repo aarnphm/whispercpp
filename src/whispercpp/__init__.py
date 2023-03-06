@@ -3,9 +3,7 @@ from __future__ import annotations
 import typing as t
 from dataclasses import dataclass
 
-from .utils import LazyLoader
-from .utils import MODELS_URL
-from .utils import download_model
+from . import utils
 
 if t.TYPE_CHECKING:
     import numpy as np
@@ -13,8 +11,7 @@ if t.TYPE_CHECKING:
 
     from . import api
 else:
-    api = LazyLoader("api", globals(), "whispercpp.api")
-    del LazyLoader
+    api = utils.LazyLoader("api", globals(), "whispercpp.api")
 
 
 @dataclass
@@ -32,12 +29,14 @@ class Whisper:
 
     @staticmethod
     def from_pretrained(model_name: str, basedir: str | None = None):
-        if model_name not in MODELS_URL:
+        if model_name not in utils.MODELS_URL:
             raise RuntimeError(
-                f"'{model_name}' is not a valid preconverted model. Choose one of {list(MODELS_URL)}"
+                f"'{model_name}' is not a valid preconverted model. Choose one of {list(utils.MODELS_URL)}"
             )
         _ref = object.__new__(Whisper)
-        context = api.Context.from_file(download_model(model_name, basedir=basedir))
+        context = api.Context.from_file(
+            utils.download_model(model_name, basedir=basedir)
+        )
         params = api.Params.from_sampling_strategy(
             api.SamplingStrategies.from_strategy_type(api.SAMPLING_GREEDY)
         )
@@ -59,5 +58,46 @@ class Whisper:
     def transcribe_from_file(self, filename: str, num_proc: int = 1):
         return self.transcribe(api.load_wav_file(filename).mono, num_proc)
 
+    def stream_transcribe(
+        self,
+        *,
+        length_ms: int = 10000,
+        device_id: int = 0,
+        sample_rate: int | None = None,
+    ) -> t.Generator[str, None, list[str]]:
+        """
+        Streaming transcription from microphone. Note that this function is blocking.
 
-__all__ = ["Whisper", "api"]
+        Args:
+            length_ms (int, optional): Length of audio to transcribe in milliseconds. Defaults to 10000.
+            device_id (int, optional): Device ID of the microphone. Defaults to 0. Use
+                                       ``whispercpp.utils.available_audio_devices()`` to list all available devices.
+            sample_rate: (int, optional): Sample rate to be passed to Whisper.
+
+        Returns:
+            A generator of all transcripted text from given audio device.
+        """
+        is_running = True
+
+        if sample_rate is None:
+            sample_rate = api.SAMPLE_RATE
+
+        ac = api.AudioCapture(length_ms)
+        if not ac.init_device(device_id, sample_rate):
+            raise RuntimeError("Failed to initialize audio capture device.")
+
+        try:
+            while is_running:
+                is_running = api.sdl_poll_events()
+                if not is_running:
+                    break
+                ac.stream_transcribe(self.context, self.params)
+        except KeyboardInterrupt:
+            # handled from C++
+            pass
+        finally:
+            yield from ac.transcript
+            return ac.transcript
+
+
+__all__ = ["Whisper", "api", "utils"]
