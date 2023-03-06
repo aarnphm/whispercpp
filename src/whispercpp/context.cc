@@ -230,7 +230,8 @@ std::string Context::sys_info() {
 // Uses the specified decoding strategy to obtain the text. This is
 // usually the only function you need to call as an end user.
 int Context::full(Params params, std::vector<float> data) {
-  int ret = whisper_full(ctx, params.wfp, data.data(), data.size());
+  Params copy = params.copy_for_full(*this);
+  int ret = whisper_full(ctx, copy.wfp, data.data(), data.size());
   if (ret == -1) {
     throw std::runtime_error("unable to calculate spectrogram");
   } else if (ret == 7) {
@@ -248,7 +249,8 @@ int Context::full(Params params, std::vector<float> data) {
 // Transcription accuracy can be worse at the beggining and end of the chunks.
 int Context::full_parallel(Params params, std::vector<float> data,
                            int num_processor) {
-  int ret = whisper_full_parallel(ctx, params.wfp, data.data(), data.size(),
+  Params copy = params.copy_for_full(*this);
+  int ret = whisper_full_parallel(ctx, copy.wfp, data.data(), data.size(),
                                   num_processor);
   if (ret == -1) {
     throw std::runtime_error("unable to calculate spectrogram");
@@ -399,6 +401,14 @@ void ExportContextApi(py::module &m) {
            "token"_a);
 }
 
+void new_segment_callback_handler(whisper_context * ctx, int n_new, void * user_data) {
+  auto new_segment_callback = (CallbackAndContext<Params::NewSegmentCallback>::Container *) user_data;
+  auto callback = new_segment_callback->callback;
+  if (callback != nullptr) {
+    (*callback)(*new_segment_callback->context, n_new);
+  }
+}
+
 Params Params::from_sampling_strategy(SamplingStrategies sampling_strategies) {
 
   Params rt;
@@ -416,6 +426,9 @@ Params Params::from_sampling_strategy(SamplingStrategies sampling_strategies) {
   }
   whisper_full_params fp = whisper_full_default_params(ss);
 
+  fp.new_segment_callback = new_segment_callback_handler;
+  fp.new_segment_callback_user_data = rt.new_segment_callback.data.get();
+
   switch (sampling_strategies.type) {
   case SamplingStrategies::GREEDY:
     fp.greedy.best_of = sampling_strategies.greedy.best_of;
@@ -429,6 +442,36 @@ Params Params::from_sampling_strategy(SamplingStrategies sampling_strategies) {
   rt.wfp = fp;
   return rt;
 };
+
+Params::Params() {
+  wfp.new_segment_callback = new_segment_callback_handler;
+  wfp.new_segment_callback_user_data = new_segment_callback.data.get();
+}
+
+
+Params::Params(Params const & other) :
+  new_segment_callback(other.new_segment_callback),
+  wfp(other.wfp)
+{
+  wfp.new_segment_callback = new_segment_callback_handler;
+  wfp.new_segment_callback_user_data = new_segment_callback.data.get();
+}
+
+Params & Params::operator=(Params const & other) {
+  new_segment_callback = other.new_segment_callback;
+  wfp = other.wfp;
+  wfp.new_segment_callback = new_segment_callback_handler;
+  wfp.new_segment_callback_user_data = new_segment_callback.data.get();
+  return *this;
+}
+
+Params Params::copy_for_full(Context & context) {
+  Params params(*this);
+  if (params.new_segment_callback.data) {
+    params.new_segment_callback.data->context = &context;
+  }
+  return params;
+}
 
 // Set the number of threads to use for decoding.
 // Defaults to min(4, std::thread::hardware_concurrency()).
@@ -654,13 +697,8 @@ float Params::get_no_speech_thold() { return wfp.no_speech_thold; }
 // Do not use this function unless you know what you are doing.
 // Defaults to None.
 void Params::set_new_segment_callback(
-    whisper_new_segment_callback new_segment_callback) {
-  wfp.new_segment_callback = new_segment_callback;
-}
-// Set the user data to be passed to the new segment callback.
-// Defaults to None. See set_new_segment_callback.
-void Params::set_new_segment_callback_user_data(void *user_data) {
-  wfp.new_segment_callback_user_data = user_data;
+  NewSegmentCallback callback) {
+  (*new_segment_callback.data).callback = std::make_shared<NewSegmentCallback>(callback);
 }
 
 // Set the callback for starting the encoder.

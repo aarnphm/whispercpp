@@ -16,6 +16,8 @@ WavFileWrapper WavFileWrapper::load_wav_file(const char *filename) {
 namespace py = pybind11;
 using namespace pybind11::literals;
 
+typedef std::function<void(Context &, int, py::object &)> NewSegmentCallback;
+
 namespace whisper {
 
 PYBIND11_MODULE(api, m) {
@@ -151,10 +153,18 @@ PYBIND11_MODULE(api, m) {
       .def_property("logprob_threshold", &Params::get_logprob_thold,
                     &Params::set_logprob_thold)
       .def_property("no_speech_threshold", &Params::get_no_speech_thold,
-                    &Params::set_no_speech_thold);
-  // TODO: idk what to do with setting all the callbacks for Params. API are
-  // there, but need more time investingating conversion from Python callback to
-  // C++ callback
-  // Callback has to be pure here. Otherwise this won't work.
+                    &Params::set_no_speech_thold)
+      .def("on_new_segment",
+           [](Params &self, NewSegmentCallback & callback, py::object & user_data) {
+             using namespace std::placeholders;
+             self.set_new_segment_callback(
+               std::bind([](NewSegmentCallback & callback, py::object & user_data,
+                            Context & ctx, int n_new) mutable {
+                   (callback)(ctx, n_new, user_data);
+             }, std::move(callback), std::move(user_data), _1, _2));
+           },
+           "callback"_a, "user_data"_a = py::none(),
+           py::keep_alive<1, 2>(), py::keep_alive<1, 3>());
+  // TODO: encoder_begin_callback and logits_filter_callback are still missing
 }
 }; // namespace whisper
