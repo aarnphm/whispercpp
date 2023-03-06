@@ -15,7 +15,7 @@ def update_submodules(directory: str):
 
 def compile_ext():
     wd = path.dirname(path.abspath(__file__))
-    if not path.exists(path.join(wd, "src", "whispercpp", "api.so")):
+    if not path.exists(path.join(wd, "src", "whispercpp", "api_cpp2py_export.so")):
         update_submodules(wd)
         print("Building pybind11 extension...")
         bazel_script = Path(wd) / "tools" / "bazel"

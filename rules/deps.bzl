@@ -18,6 +18,12 @@ def internal_deps():
         commit = "9da166c0d5af5543f6084bf3ae5223ea19f0e7ea",
         shallow_since = "1678069830 -0800",
     )
+    # NOTE: uncomment the below line for debugging rules
+    # change the path to absolute path
+    # native.local_repository(
+    #     name = "com_github_bentoml_plugins",
+    #     path = "/Users/aarnphm/workspace/bentoml/ecosystem/",
+    # )
 
     maybe(
         http_archive,

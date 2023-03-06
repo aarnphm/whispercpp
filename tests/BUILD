@@ -5,7 +5,7 @@ py_test(
     name = "export",
     srcs = ["export_test.py"],
     data = [
-        "//:api.so",
+        "//:api_cpp2py_export.so",
         "//samples:jfk.wav",
     ],
     deps = [
@@ -19,7 +19,7 @@ py_test(
 py_test(
     name = "utils",
     srcs = ["utils_test.py"],
-    data = ["//:api.so"],
+    data = ["//:api_cpp2py_export.so"],
     deps = [
         "//src/whispercpp:whispercpp_lib",
         requirement("bazel-runfiles"),

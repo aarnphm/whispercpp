@@ -9,9 +9,18 @@ if t.TYPE_CHECKING:
     import numpy as np
     from numpy.typing import NDArray
 
-    from . import api
+    # NOTE: We can safely ignore the following imports
+    # because they are only used for type checking.
+    from . import api  # type: ignore
+    from . import audio  # type: ignore
 else:
-    api = utils.LazyLoader("api", globals(), "whispercpp.api")
+    api = utils.LazyLoader("api", globals(), "whispercpp.api_cpp2py_export")
+    audio = utils.LazyLoader(
+        "audio",
+        globals(),
+        "whispercpp.audio_cpp2py_export",
+        exc_msg="Failed to import 'audio' extensions. Install with 'pip install whispercpp[audio]'.",
+    )
 
 
 @dataclass
@@ -82,7 +91,7 @@ class Whisper:
         if sample_rate is None:
             sample_rate = api.SAMPLE_RATE
 
-        ac = api.AudioCapture(length_ms)
+        ac = audio.AudioCapture(length_ms)
         if not ac.init_device(device_id, sample_rate):
             raise RuntimeError("Failed to initialize audio capture device.")
 
@@ -100,4 +109,4 @@ class Whisper:
             return ac.transcript
 
 
-__all__ = ["Whisper", "api", "utils"]
+__all__ = ["Whisper", "api", "utils", "audio"]

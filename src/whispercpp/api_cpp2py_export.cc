@@ -1,4 +1,4 @@
-#include "api_export.h"
+#include "api_cpp2py_export.h"
 #include <algorithm>
 #include <functional>
 #include <numeric>
@@ -20,7 +20,7 @@ typedef std::function<void(Context &, int, py::object &)> NewSegmentCallback;
 
 namespace whisper {
 
-PYBIND11_MODULE(api, m) {
+PYBIND11_MODULE(api_cpp2py_export, m) {
   m.doc() = "Python interface for whisper.cpp";
 
   // NOTE: default attributes
@@ -32,9 +32,6 @@ PYBIND11_MODULE(api, m) {
 
   // NOTE: export Context API
   ExportContextApi(m);
-
-  // NOTE: export AudioCapture API
-  ExportAudioApi(m);
 
   m.def("load_wav_file", &WavFileWrapper::load_wav_file, "filename"_a,
         py::return_value_policy::reference);

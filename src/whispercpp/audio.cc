@@ -7,6 +7,11 @@
 using namespace pybind11::literals;
 
 namespace whisper {
+PYBIND11_MODULE(audio_cpp2py_export, m) {
+  m.doc() = "Experimental: Audio capture API";
+  ExportAudioApi(m);
+}
+
 AudioCapture::~AudioCapture() {
   if (m_dev_id) {
     SDL_CloseAudioDevice(m_dev_id);
