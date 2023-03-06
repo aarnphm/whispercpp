@@ -5,12 +5,18 @@
 Context Context::from_file(const char *filename) {
   Context context;
   context.ctx = whisper_init_from_file(filename);
+  if (context.ctx == nullptr) {
+    throw std::runtime_error("whisper_init_from_file failed");
+  }
   return context;
 }
 
 Context Context::from_buffer(std::vector<char> *buffer) {
   Context context;
   context.ctx = whisper_init_from_buffer(buffer->data(), buffer->size());
+  if (context.ctx == nullptr) {
+    throw std::runtime_error("whisper_init_from_file failed");
+  }
   return context;
 }
 
