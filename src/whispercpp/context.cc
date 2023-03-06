@@ -5,12 +5,18 @@
 Context Context::from_file(const char *filename) {
   Context context;
   context.ctx = whisper_init_from_file(filename);
+  if (context.ctx == nullptr) {
+    throw std::runtime_error("whisper_init_from_file failed");
+  }
   return context;
 }
 
 Context Context::from_buffer(std::vector<char> *buffer) {
   Context context;
   context.ctx = whisper_init_from_buffer(buffer->data(), buffer->size());
+  if (context.ctx == nullptr) {
+    throw std::runtime_error("whisper_init_from_file failed");
+  }
   return context;
 }
 
@@ -611,7 +617,7 @@ size_t Params::get_prompt_n_tokens() { return wfp.prompt_n_tokens; }
 // For auto-detection, set this either to 'auto' or nullptr.
 // defaults to 'en'.
 void Params::set_language(const char *language) { wfp.language = language; }
-const char *Params::get_language() { return wfp.language; }
+const *char Params::get_language() { return wfp.language; }
 
 // Set suppress_blank. See
 // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/decoding.py#L89

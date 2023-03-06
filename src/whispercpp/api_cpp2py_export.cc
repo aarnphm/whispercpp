@@ -131,7 +131,11 @@ PYBIND11_MODULE(api_cpp2py_export, m) {
       .def("set_tokens", &Params::set_tokens, "tokens"_a)
       .def_property_readonly("prompt_tokens", &Params::get_prompt_tokens)
       .def_property_readonly("prompt_num_tokens", &Params::get_prompt_n_tokens)
-      .def_property("language", &Params::get_language, &Params::set_language)
+      .def_property(
+          "language",
+          [](Params &self) { return std::string(self.get_language()); },
+          [](Params &self, const char *s) { self.set_language(std::move(s)); },
+          py::return_value_policy::copy)
       .def_property("suppress_blank", &Params::get_suppress_blank,
                     &Params::set_suppress_blank)
       .def_property("suppress_none_speech_tokens",
