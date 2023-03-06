@@ -49,7 +49,7 @@ jobs:
   build-arm-wheels:
     name: Build ARM wheels for ${{ matrix.python[1] }}-${{ matrix.platform[0] }}
     runs-on: ${{ matrix.platform[1] }}
-    if: "!github.event.repository.fork" # Don't run on fork repository
+    if: ${{ failure() }} # Don't run on fork repository
     timeout-minutes: 90
     strategy:
       fail-fast: false
