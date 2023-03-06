@@ -52,7 +52,7 @@ COPTS = [
     "-fPIC",
     "-Wall",
 ] + selects.with_or({
-    "//conditions:default": "0.0.10.dev0",
+    "//conditions:default": [],
     "@bazel_tools//src/conditions:linux_x86_64": [
         "-mavx",
         "-mavx2",
@@ -74,7 +74,7 @@ cc_library(
     copts = COPTS,
     defines = ["BAZEL_BUILD"],
     linkopts = selects.with_or({
-        "//conditions:default": "0.0.10.dev0",
+        "//conditions:default": [],
         "@bazel_tools//src/conditions:darwin": [
             "-framework",
             "AudioToolbox",
