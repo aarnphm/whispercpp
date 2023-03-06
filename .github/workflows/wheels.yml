@@ -43,7 +43,7 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-          pip install dist/*.tar.gz && python -m "import whispercpp as w;print(dir(w.api)); print(dir(w.audio));"
+          pip install dist/*.tar.gz && python -c "import whispercpp as w;print(dir(w.api)); print(dir(w.audio));"
       - name: Upload to PyPI
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         env:
@@ -128,7 +128,7 @@ jobs:
         run: |
           python -m venv venv
           source venv/bin/activate
-          pip install $(bazel info bazel-bin)/*.whl && python -m "import whispercpp as w;print(dir(w.api)); print(dir(w.audio));"
+          pip install $(bazel info bazel-bin)/*.whl && python -c "import whispercpp as w;print(dir(w.api)); print(dir(w.audio));"
       - name: Retrieving versions
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         id: get-info
