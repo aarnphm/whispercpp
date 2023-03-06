@@ -141,4 +141,4 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          ./tools/bazel run -c dbg --define=ci=true --stamp --embed_label=${{ steps.get-info.outputs.version }} -- //:whispercpp_wheel.publish --repository pypi --verbose
+          ./tools/bazel run --define=ci=true --stamp --embed_label=${{ steps.get-info.outputs.version }} -- //:whispercpp_wheel.publish --repository pypi --verbose

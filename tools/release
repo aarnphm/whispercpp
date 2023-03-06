@@ -43,9 +43,3 @@ else
 
     git push origin "$tag_name"
 fi
-
-MINOR="$((${VERSION##*.} + 1))"
-DEV_VERSION="${VERSION%.*}.${MINOR}.dev0"
-sed -i.bak "s/\"\/\/conditions:default\": \".*/\"\/\/conditions:default\": \"$DEV_VERSION\",/g" BUILD.bazel && rm BUILD.bazel.bak
-git add . && git commit --signoff -S -sv -m "chore: bump development version [generated]"
-git push origin main
