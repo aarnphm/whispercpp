@@ -49,13 +49,13 @@ def test_forbid_init():
 _EXPECTED = " And so my fellow Americans ask not what your country can do for you ask what you can do for your country"
 
 
-@p.mark.skipIf(not s.which("ffmpeg"), reason="ffmpeg not found, skipping this test.")
+@p.mark.skipif(not s.which("ffmpeg"), reason="ffmpeg not found, skipping this test.")
 def test_from_pretrained():
     m = Whisper.from_pretrained("tiny.en")
     assert _EXPECTED == m.transcribe(preprocess(ROOT / "samples" / "jfk.wav"))
 
 
-@p.mark.skipIf(not s.which("ffmpeg"), reason="ffmpeg not found, skipping this test.")
+@p.mark.skipif(not s.which("ffmpeg"), reason="ffmpeg not found, skipping this test.")
 def test_load_wav_file():
     np.testing.assert_almost_equal(
         preprocess(ROOT / "samples" / "jfk.wav"),
@@ -76,7 +76,7 @@ def test_transcribe_from_wav():
 
 
 def test_callback():
-    def handleNewSegment(context, n_new, text):
+    def handleNewSegment(context: api.Context, n_new: int, text: list[str]):
         segment = context.full_n_segments() - n_new
         while segment < context.full_n_segments():
             text.append(context.full_get_segment_text(segment))
