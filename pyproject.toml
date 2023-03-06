@@ -129,7 +129,29 @@ skip_glob = [
 
 [tool.pyright]
 pythonVersion = "3.11"
-exclude = ["bazel-*", "extern", "venv"]
+exclude = [
+    "bazel-*",
+    "extern",
+    "venv",
+    "node_modules",
+    "nix",
+    "setup.py",
+    "examples/bentoml/locustfile.py",
+]
 typeCheckingMode = "strict"
 analysis.useLibraryCodeForTypes = true
 enableTypeIgnoreComments = true
+
+[tool.cibuildwheel]
+test-requires = "pytest"
+test-command = "pytest {project}/tests"
+build-verbosity = "3"
+environment = { CC = "g++", CXX = "clang++" }
+
+[tool.cibuildwheel.macos]
+archs = ["x86_64", "arm64"]
+environment = { RUNNER_OS = "MacOS" }
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64", "aarch64"]
+environment = { RUNNER_OS = "Linux" }

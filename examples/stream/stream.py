@@ -53,7 +53,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.list_audio_devices:
-        w.api.AudioCapture.list_available_devices()
+        w.utils.available_audio_devices()
         sys.exit(0)
 
     main(**vars(args))

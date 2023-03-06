@@ -117,6 +117,6 @@ class LazyLoader(types.ModuleType):
 @lru_cache(maxsize=1)
 def available_audio_devices() -> list[int]:
     """Returns a list of available audio devices on the system."""
-    from whispercpp import api
+    from whispercpp import audio  # type: ignore
 
-    return api.AudioCapture.list_available_devices()
+    return audio.AudioCapture.list_available_devices()

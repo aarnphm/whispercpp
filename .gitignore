@@ -130,3 +130,6 @@ dmypy.json
 
 # bazel generated files
 bazel-*
+
+# bun lock file
+bun.lockb

@@ -4,7 +4,6 @@ on:
   schedule:
     # run this every day at 12:00AM UTC
     - cron: "0 0 1/7 * *"
-
 jobs:
   niv-updater:
     name: "Create PR for niv-managed dependencies"

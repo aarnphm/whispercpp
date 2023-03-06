@@ -5,6 +5,7 @@ from typing import Generator
 from typing import TYPE_CHECKING
 
 from . import api as api
+from . import audio as audio
 from . import utils as utils
 
 if TYPE_CHECKING:

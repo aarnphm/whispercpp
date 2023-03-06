@@ -36,6 +36,10 @@ class WhisperCppRunnable(bentoml.Runnable):
             raise FileNotFoundError(resolved)
         return self.model.transcribe_from_file(resolved)
 
+    @bentoml.Runnable.method(batchable=False)
+    def stream(self):
+        self.model.stream_transcribe()
+
 
 cpp_runner = bentoml.Runner(WhisperCppRunnable, max_batch_size=30)
 

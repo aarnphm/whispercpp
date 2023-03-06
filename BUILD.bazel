@@ -1,5 +1,5 @@
 load("@rules_python//python:versions.bzl", "gen_python_config_settings")
-load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier")
+load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier", "buildifier_test")
 load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
@@ -19,10 +19,24 @@ exports_files([
     "LICENSE",
     "README.md",
     "README.rst",
+    "yarn.lock",
 ])
 
 buildifier(
-    name = "buildifier",
+    name = "buildfmt",
+)
+
+buildifier_test(
+    name = "buildcheck",
+    srcs = glob([
+        "**/*.bzl",
+        "**/*.bazel",
+    ]),
+)
+
+alias(
+    name = "pyright",
+    actual = "@npm//:node_modules/pyright/index.js",
 )
 
 alias(
@@ -49,7 +63,7 @@ COPTS = [
 })
 
 cc_library(
-    name = "audio",
+    name = "audio_lib",
     srcs = ["//src/whispercpp:audio.cc"],
     hdrs = [
         "//src/whispercpp:audio.h",
@@ -67,7 +81,7 @@ cc_library(
         ],
     }),
     deps = [
-        ":context",
+        ":context_lib",
         "@com_github_ggerganov_whisper//:common",
         "@com_github_libsdl_sdl2//:SDL",
         "@com_github_libsdl_sdl2//:include",
@@ -76,7 +90,7 @@ cc_library(
 )
 
 cc_library(
-    name = "context",
+    name = "context_lib",
     srcs = [
         "//src/whispercpp:context.cc",
         "//src/whispercpp:context.h",
@@ -88,27 +102,40 @@ cc_library(
     copts = COPTS,
     defines = ["BAZEL_BUILD"],
     deps = [
+        "@com_github_ggerganov_whisper//:common",
         "@com_github_ggerganov_whisper//:whisper",
         "@pybind11",
     ],
 )
 
 pybind_extension(
-    name = "api",
+    name = "audio_cpp2py_export",
     srcs = [
-        "//src/whispercpp:api_export.cc",
-        "//src/whispercpp:api_export.h",
+        "//src/whispercpp:audio.cc",
         "//src/whispercpp:audio.h",
+        "//src/whispercpp:context.h",
+        "@com_github_ggerganov_whisper//:whisper.h",
+    ],
+    copts = COPTS,
+    defines = ["BAZEL_BUILD"],
+    deps = [
+        ":audio_lib",
+        ":context_lib",
+    ],
+)
+
+pybind_extension(
+    name = "api_cpp2py_export",
+    srcs = [
+        "//src/whispercpp:api_cpp2py_export.cc",
+        "//src/whispercpp:api_cpp2py_export.h",
         "//src/whispercpp:context.h",
         "@com_github_ggerganov_whisper//:examples/common.h",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
     copts = COPTS,
     defines = ["BAZEL_BUILD"],
-    deps = [
-        ":audio",
-        ":context",
-    ],
+    deps = [":context_lib"],
 )
 
 write_file(
@@ -117,14 +144,18 @@ write_file(
     content = [
         "#!/usr/bin/env bash",
         "cd $BUILD_WORKSPACE_DIRECTORY",
-        "cp -fv bazel-bin/api.so src/whispercpp/api.so",
+        "cp -fv bazel-bin/api_cpp2py_export.so src/whispercpp/api_cpp2py_export.so",
+        "cp -fv bazel-bin/audio_cpp2py_export.so src/whispercpp/audio_cpp2py_export.so",
     ],
 )
 
 sh_binary(
     name = "extensions",
     srcs = [":gen_extensions"],
-    data = [":api.so"],
+    data = [
+        ":api_cpp2py_export.so",
+        ":audio_cpp2py_export.so",
+    ],
 )
 
 # public exports
@@ -195,8 +226,5 @@ py_wheel(
         ":ci": "{BUILD_EMBED_LABEL}",
     }),
     visibility = ["//:__subpackages__"],
-    deps = [
-        ":api.so",
-        ":whispercpp_pkg",
-    ],
+    deps = [":whispercpp_pkg"],
 )

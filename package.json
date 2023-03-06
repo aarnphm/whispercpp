@@ -1,0 +1,10 @@
+{
+  "name": "whispercpp-node-tools",
+  "version": "0.0.0",
+  "description": "JS tooling for whispercpp",
+  "author": "Aaron Pham",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "pyright": "^1.1.296"
+  }
+}

@@ -1,5 +1,4 @@
 name: CI
-
 on:
   push:
     branches:
@@ -9,20 +8,16 @@ on:
       - main
   schedule:
     - cron: "0 6 * * 1/2" # Every other day 6AM UTC
-
 concurrency:
   group: ci-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
-
 env:
   LINES: 200
   COLUMNS: 200
-
 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#defaultsrun
 defaults:
   run:
     shell: bash --noprofile --norc -exo pipefail {0}
-
 jobs:
   unit-tests:
     strategy:
@@ -32,12 +27,10 @@ jobs:
         python-version: ["3.8"]
         exclude:
           - os: "windows-latest"
-
     if: "!github.event.repository.fork" # Don't run on fork repository
     name: python${{ matrix.python-version }} integration tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3

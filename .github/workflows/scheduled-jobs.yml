@@ -39,7 +39,6 @@ jobs:
           git submodule update --remote
           git add extern && git commit -S -m "cron: update submodules to latest commits [generated]" || true
           git push
-
   run-formatter:
     if: github.repository_owner == 'aarnphm'
     runs-on: ubuntu-latest
