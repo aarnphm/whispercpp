@@ -1,5 +1,20 @@
 { sources ? import ./nix/sources.nix, pkgs ? import sources.nixpkgs {
-  overlays = [ ];
+  overlays = [
+    (self: super: {
+      # https://github.com/nmattia/niv/issues/332#issuecomment-958449218
+      # TODO: remove this when upstream is fixed.
+      niv = self.haskell.lib.compose.overrideCabal
+        (drv: { enableSeparateBinOutput = false; }) super.haskellPackages.niv;
+      python-overlay = super.buildEnv {
+        name = "python-overlay";
+        paths = [
+          # A Python 3 interpreter with some packages
+          (self.python310.withPackages
+            (ps: with ps; [ pynvim pip virtualenv pipx ipython ]))
+        ];
+      };
+    })
+  ];
   config = { };
 } }:
 
@@ -9,16 +24,16 @@ let
   inherit (lib) optional optionals;
 
   basePackages = with pkgs; [
-    (python310.withPackages (ps: with ps; [ pynvim pip virtualenv ipython ]))
-
-    git
     # NOTE: keep this in sync with the version in .bazelversion
     bazel_6
     llvmPackages_15.llvm
 
+    git
+    niv
     nixfmt
     treefmt
     which
+    python-overlay
 
     # Without this, we see a whole bunch of warnings about LANG, LC_ALL and locales in general.
     # The solution is from: https://github.com/NixOS/nix/issues/318#issuecomment-52986702
@@ -36,7 +51,7 @@ let
   };
 
 in stdenv.mkDerivation rec {
-  name = "python-environment";
+  name = "dev-environment";
 
   phases = [ "nobuild" ];
 
