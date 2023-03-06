@@ -35,11 +35,3 @@ build --dynamic_mode=off
 
 # Uses fast_cpp_protos for fast protobuf features
 build --define=use_fast_cpp_protos=true
-
-# using opt config
-build:opt --compilation_mode=opt
-build:opt --copt=-Wframe-larger-than=16384
-
-# using dbg config
-build:dbg --compilation_mode=dbg
-build:dbg --copt=-Werror=return-stack-address

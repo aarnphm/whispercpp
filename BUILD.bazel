@@ -173,10 +173,7 @@ py_package(
 
 config_setting(
     name = "ci",
-    values = {
-        "define": "ci=true",
-        "compilation_mode": "dbg",
-    },
+    values = {"define": "ci=true"},
 )
 
 gen_python_config_settings()
@@ -218,6 +215,7 @@ py_wheel(
         "//:x86_64-unknown-linux-gnu": "manylinux2014_x86_64",
     }),
     python_tag = python_abi(),
+    stamp = 1,
     strip_path_prefixes = ["src"],
     twine = "@pypi_twine//:pkg",
     # NOTE: This can be replaced by building with --stamp --embed_label=1.2.3
