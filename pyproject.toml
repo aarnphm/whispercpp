@@ -152,10 +152,16 @@ enableTypeIgnoreComments = true
 test-requires = "pytest"
 test-command = "pytest {project}/tests"
 build-verbosity = "3"
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-i686-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+manylinux-ppc64le-image = "manylinux_2_28"
+manylinux-s390x-image = "manylinux_2_28"
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
-environment = { RUNNER_OS = "MacOS", CC = "gcc" }
+# NOTE: 10.9 for C++11 support
+environment = { RUNNER_OS = "MacOS", CC = "gcc", MACOSX_DEPLOYMENT_TARGET = "10.9" }
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
