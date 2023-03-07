@@ -152,12 +152,11 @@ enableTypeIgnoreComments = true
 test-requires = "pytest"
 test-command = "pytest {project}/tests"
 build-verbosity = "3"
-before-test = "CC=gcc CXX=g++"
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
-environment = { RUNNER_OS = "MacOS" }
+environment = { RUNNER_OS = "MacOS", CC = "gcc" }
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
-environment = { RUNNER_OS = "Linux" }
+environment = { RUNNER_OS = "Linux" , CC = "gcc"}
