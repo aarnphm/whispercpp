@@ -45,7 +45,7 @@ jobs:
         with:
           path: dist/*.tar.gz
   build-arm-musl-wheels:
-    name: Build ARM wheels for ${{ matrix.python[1] }}-${{ matrix.platform[0] }}
+    name: Build wheels for ${{ matrix.python[1] }}-${{ matrix.platform[0] }}
     runs-on: ${{ matrix.platform[1] }}
     if: github.repository_owner == 'aarnphm' # Don't run on fork repository
     timeout-minutes: 90
@@ -58,7 +58,7 @@ jobs:
           - ["cp310", "3.10"]
           - ["cp311", "3.11"]
         platform:
-          - [manylinux_2_28_aarch64, ubuntu-latest]
+          - [manylinux_aarch64, ubuntu-latest]
           - [musllinux_x86_64, ubuntu-latest]
           - [macosx_arm64, macos-latest]
     steps:
