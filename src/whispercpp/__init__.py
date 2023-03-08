@@ -148,6 +148,7 @@ class Whisper:
         length_ms: int = 10000,
         device_id: int = 0,
         sample_rate: int | None = None,
+        step_ms: int = 3000,
     ) -> t.Generator[str, None, list[str]]:
         """
         Streaming transcription from microphone. Note that this function is blocking.
@@ -172,10 +173,10 @@ class Whisper:
 
         try:
             while is_running:
-                is_running = api.sdl_poll_events()
+                is_running = audio.sdl_poll_events()
                 if not is_running:
                     break
-                ac.stream_transcribe(self.context, self.params)
+                ac.stream_transcribe(self.context, self.params, step_ms)
         except KeyboardInterrupt:
             # handled from C++
             pass

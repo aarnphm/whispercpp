@@ -1,3 +1,12 @@
+"""Utility functions and classes.
+
+.. code-block:: python
+
+    from whispercpp import utils
+
+    print(utils.download_model("tiny.en"))
+
+"""
 from __future__ import annotations
 
 import sys
@@ -37,6 +46,17 @@ MODELS_URL = {
 
 
 def download_model(model_name: str, basedir: str | None = None) -> str:
+    """Download a preconverted model from a given model name.
+
+    Currently it doesn't support custom preconverted models yet. PRs are welcome.
+
+    Args:
+        model_name (str): Name of the preconverted model.
+        basedir (str, optional): Base directory to store the model. Defaults to XDG_DATA_HOME/whispercpp
+
+    Returns:
+        The path to the downloaded model.
+    """
     if basedir is None:
         basedir = _data_home
     models_dirs = path.join(basedir, "whispercpp")
@@ -51,15 +71,14 @@ def download_model(model_name: str, basedir: str | None = None) -> str:
 
 
 class LazyLoader(types.ModuleType):
-    """
-    LazyLoader module borrowed from Tensorflow
-     https://github.com/tensorflow/tensorflow/blob/v2.2.0/tensorflow/python/util/lazy_loader.py
-     with a addition of "module caching". This will throw an
-     exception if module cannot be imported.
+    """LazyLoader module borrowed from Tensorflow https://github.com/tensorflow/tensorflow/blob/v2.2.0/tensorflow/python/util/lazy_loader.py.
+
+    This class adds "module caching".
+    This will throw an exception if module cannot be imported.
 
     Lazily import a module, mainly to avoid pulling in large dependencies.
-     `contrib`, and `ffmpeg` are examples of modules that are large and not always
-     needed, and this allows them to only be loaded when they are used.
+    `contrib`, and `ffmpeg` are examples of modules that are large and not always
+    needed, and this allows them to only be loaded when they are used.
     """
 
     def __init__(
@@ -71,6 +90,19 @@ class LazyLoader(types.ModuleType):
         exc_msg: str | None = None,
         exc: type[Exception] = ImportError,
     ):
+        """Create a lazy loaded module.
+
+        Args:
+            local_name (str): The name of the module in the parent's globals.
+            parent_module_globals (dict[str, t.Any]): The parent's globals.
+            name (str): The name of the module to be imported.
+            warning (str, optional): A warning to be emitted when the module is loaded. Defaults to None.
+            exc_msg (str, optional): An exception message to be raised when the module is loaded. Defaults to None.
+            exc (type[Exception], optional): The exception to be raised when the module is loaded. Defaults to ImportError.
+
+        Returns:
+            LazyLoader: A lazy loaded module.
+        """
         self._local_name = local_name
         self._parent_module_globals = parent_module_globals
         self._warning = warning
@@ -104,11 +136,13 @@ class LazyLoader(types.ModuleType):
         return module
 
     def __getattr__(self, item: t.Any) -> t.Any:  # pragma: no cover
+        """Lazy load the module on first access."""
         if self._module is None:
             self._module = self._load()
         return getattr(self._module, item)
 
     def __dir__(self) -> list[str]:
+        """Return all module attributes. Lazy load the module on first access."""
         if self._module is None:
             self._module = self._load()
         return dir(self._module)
