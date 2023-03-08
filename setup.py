@@ -20,7 +20,16 @@ def compile_ext():
         update_submodules(wd)
         print("Building pybind11 extension...")
         bazel_script = Path(wd) / "tools" / "bazel"
-        check_output([bazel_script.__fspath__(), "run", "//:extensions"], cwd=wd)
+        check_output(
+            [
+                bazel_script.__fspath__(),
+                "run",
+                "--verbose_failures",
+                "--sandbox_debug",
+                "//:extensions",
+            ],
+            cwd=wd,
+        )
 
 
 class BdistWheel(bdist_wheel):
