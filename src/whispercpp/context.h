@@ -90,9 +90,6 @@ public:
     this->sampling_strategy_ = strategy;
   }
 
-  // TODO: copy stuff here.
-  SamplingStrategies *with_sampling_strategy(SamplingType *st);
-
   whisper_sampling_strategy to_enum() { return sampling_strategy_->to_enum(); }
 
   static SamplingStrategies from_enum(whisper_sampling_strategy *enum_);

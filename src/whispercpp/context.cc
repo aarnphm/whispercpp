@@ -683,12 +683,7 @@ void ExportSamplingStrategiesApi(py::module &m) {
                          1);
             self.set_strategy(std::make_shared<SamplingGreedy>(greedy));
           }),
-          py::return_value_policy::reference)
-      // FIXME: with_strategy
-      // .def("with_strategy",
-      // &SamplingStrategies::with_sampling_strategy,
-      //      "strategy"_a);
-      ;
+          py::return_value_policy::reference);
 }
 
 void ExportParamsApi(py::module &m) {

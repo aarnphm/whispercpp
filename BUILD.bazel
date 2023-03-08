@@ -146,7 +146,9 @@ write_file(
     content = [
         "#!/usr/bin/env bash",
         "cd $BUILD_WORKSPACE_DIRECTORY",
+        "[[ -f src/whispercpp/api_cpp2py_export.so ]] && rm -fv src/whispercpp/api_cpp2py_export.so",
         "cp -fv bazel-bin/api_cpp2py_export.so src/whispercpp/api_cpp2py_export.so",
+        "[[ -f src/whispercpp/audio_cpp2py_export.so ]] && rm -fv src/whispercpp/audio_cpp2py_export.so",
         "cp -fv bazel-bin/audio_cpp2py_export.so src/whispercpp/audio_cpp2py_export.so",
     ],
 )
