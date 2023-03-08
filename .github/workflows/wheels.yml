@@ -59,8 +59,10 @@ jobs:
           - ["cp311", "3.11"]
         platform:
           - [manylinux_aarch64, ubuntu-latest]
-          - [musllinux_x86_64, ubuntu-latest]
           - [macosx_arm64, macos-latest]
+        exclude:
+          # TODO: disable manylinux_aarch64 for now
+          - platform: [manylinux_aarch64, ubuntu-latest]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
