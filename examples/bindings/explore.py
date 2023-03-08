@@ -19,7 +19,7 @@ else:
 
 _model: w.Whisper | None = None
 
-_MODEL_NAME = environ.get("GGML_MODEL", "tiny.en")
+_MODEL_NAME = environ.get("GGML_MODEL", "tiny")
 
 
 @f.lru_cache(maxsize=1)

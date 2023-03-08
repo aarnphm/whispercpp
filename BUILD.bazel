@@ -94,7 +94,6 @@ cc_library(
     srcs = [
         "//src/whispercpp:context.cc",
         "//src/whispercpp:context.h",
-        "//src/whispercpp:params.cc",
     ],
     hdrs = [
         "//src/whispercpp:context.h",
@@ -114,6 +113,7 @@ pybind_extension(
     srcs = [
         "//src/whispercpp:audio.cc",
         "//src/whispercpp:audio.h",
+        "//src/whispercpp:context.cc",
         "//src/whispercpp:context.h",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
@@ -130,6 +130,7 @@ pybind_extension(
     srcs = [
         "//src/whispercpp:api_cpp2py_export.cc",
         "//src/whispercpp:api_cpp2py_export.h",
+        "//src/whispercpp:context.cc",
         "//src/whispercpp:context.h",
         "@com_github_ggerganov_whisper//:examples/common.h",
         "@com_github_ggerganov_whisper//:whisper.h",
