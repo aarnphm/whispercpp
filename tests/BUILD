@@ -25,3 +25,15 @@ py_test(
         requirement("bazel-runfiles"),
     ],
 )
+
+py_test(
+    name = "params",
+    srcs = ["params_export_test.py"],
+    data = ["//:api_cpp2py_export.so"],
+    deps = [
+        "//src/whispercpp:whispercpp_lib",
+        requirement("bazel-runfiles"),
+        requirement("numpy"),
+        requirement("ffmpeg-python"),
+    ],
+)

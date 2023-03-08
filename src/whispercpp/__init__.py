@@ -94,14 +94,15 @@ class Whisper:
                 f"'{model_name}' is not a valid preconverted model. Choose one of {list(utils.MODELS_URL)}"
             )
         _ref = object.__new__(Whisper)
+        params = (
+            api.Params.from_enum(api.SAMPLING_GREEDY)
+            .with_print_progress(False)
+            .with_print_realtime(False)
+            .build()
+        )
         context = api.Context.from_file(
             utils.download_model(model_name, basedir=basedir)
         )
-        params = api.Params.from_sampling_strategy(
-            api.SamplingStrategies.from_strategy_type(api.SAMPLING_GREEDY)
-        )
-        params.print_progress = False
-        params.print_realtime = False
         context.reset_timings()
         _ref.__dict__.update(locals())
         return _ref

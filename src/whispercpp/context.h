@@ -1,16 +1,23 @@
 #pragma once
 
 #ifdef BAZEL_BUILD
+#include "pybind11/functional.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 #include "whisper.h"
 #else
+#include "pybind11/functional.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 #include "whisper.h"
 #endif
+#include <algorithm>
 #include <cstddef>
+#include <functional>
+#include <iostream>
 #include <memory>
+#include <numeric>
+#include <sstream>
 #include <stdio.h>
 #include <string>
 #include <type_traits>
@@ -20,32 +27,76 @@
 namespace py = pybind11;
 using namespace pybind11::literals;
 
-struct SamplingGreedy {
+struct SamplingType {
+  virtual ~SamplingType() = default;
+  virtual whisper_sampling_strategy to_enum() = 0;
+
+  SamplingType *build() { return this; };
+};
+
+struct SamplingGreedy : public SamplingType {
+public:
   int best_of; // ref:
                // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/transcribe.py#L264
+  SamplingGreedy() : best_of(1) {}
+  SamplingGreedy(int best_of) : best_of(best_of) {}
+
+  SamplingGreedy *with_best_of(int best_of) {
+    this->best_of = best_of;
+    return this;
+  }
+
+  whisper_sampling_strategy to_enum() override {
+    return WHISPER_SAMPLING_GREEDY;
+  }
 };
-struct SamplingBeamSearch {
+
+struct SamplingBeamSearch : public SamplingType {
+public:
   int beam_size; // ref:
                  // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/transcribe.py#L265
   float patience; // NOTE: upstream not implemented, ref:
                   // https://arxiv.org/pdf/2204.05424.pdf
+  SamplingBeamSearch() : beam_size(-1), patience(-1.0f) {}
+
+  SamplingBeamSearch(int beam_size, float patience)
+      : beam_size(beam_size), patience(patience) {}
+
+  SamplingBeamSearch *with_beam_size(int beam_size) {
+    this->beam_size = beam_size;
+    return this;
+  }
+  SamplingBeamSearch *with_patience(float patience) {
+    this->patience = patience;
+    return this;
+  }
+
+  whisper_sampling_strategy to_enum() override {
+    return WHISPER_SAMPLING_BEAM_SEARCH;
+  }
 };
 
 struct SamplingStrategies {
-  enum StrategyType { GREEDY, BEAM_SEARCH } type;
-  union {
-    struct SamplingGreedy greedy;
-    struct SamplingBeamSearch beam_search;
-  };
+private:
+  std::shared_ptr<SamplingType> sampling_strategy_;
 
-  SamplingStrategies(SamplingGreedy greedy) : type(GREEDY) {
-    this->greedy = greedy;
-  };
-  SamplingStrategies(SamplingBeamSearch beam_search) : type(BEAM_SEARCH) {
-    this->beam_search = beam_search;
-  };
+public:
+  SamplingStrategies(std::shared_ptr<SamplingType> &&sampling_strategy = {})
+      : sampling_strategy_(sampling_strategy) {}
 
-  static SamplingStrategies from_strategy_type(StrategyType type);
+  SamplingType *build() { return sampling_strategy_.get()->build(); }
+
+  void set_strategy(std::shared_ptr<SamplingType> &&strategy) {
+    this->sampling_strategy_ = strategy;
+  }
+
+  // TODO: copy stuff here.
+  SamplingStrategies *with_sampling_strategy(SamplingType *st);
+
+  whisper_sampling_strategy to_enum() { return sampling_strategy_->to_enum(); }
+
+  static SamplingStrategies from_enum(whisper_sampling_strategy *enum_);
+  static SamplingStrategies from_sampling_strategy(SamplingType *st);
 };
 
 class Context;
@@ -85,11 +136,13 @@ template <typename CB> struct CallbackAndContext {
   }
 };
 
-class Params {
+struct Params {
 public:
   typedef std::function<void(Context &, int)> NewSegmentCallback;
 
 private:
+  std::shared_ptr<whisper_full_params> fp;
+
   CallbackAndContext<NewSegmentCallback> new_segment_callback;
 
   friend class Context;
@@ -106,116 +159,167 @@ private:
 public:
   Params();
 
+  Params(std::shared_ptr<whisper_full_params> &&fp,
+         CallbackAndContext<NewSegmentCallback> new_segment_callback)
+      : fp(fp), new_segment_callback(new_segment_callback){};
+
   Params(Params const &);
   Params &operator=(Params const &);
 
   Params(Params &&) = default;
   Params &operator=(Params &&) = default;
 
-  whisper_full_params wfp;
+  static Params from_sampling_strategy(SamplingStrategies *sampling_strategies);
+  static Params from_enum(whisper_sampling_strategy *enum_);
 
-  static Params from_sampling_strategy(SamplingStrategies sampling_strategies);
+  whisper_full_params *get() { return fp.get(); }
+
+  Params *build() { return this; }
+
+  std::string to_string() {
+    std::ostringstream ss;
+    ss << &(*this);
+    return ss.str();
+  };
 
   // Set the number of threads to use for decoding.
   // Defaults to min(4, std::thread::hardware_concurrency()).
-  void set_n_threads(size_t threads);
-  size_t get_n_threads();
+  Params *with_n_threads(size_t threads) {
+    fp->n_threads = threads;
+    return this;
+  }
 
   // Set max tokens from past text as prompt for decoder.
   // defaults to 16384
-  void set_n_max_text_ctx(size_t max_text_ctx);
-  size_t get_n_max_text_ctx();
+  Params *with_n_max_text_ctx(size_t max_text_ctx) {
+    fp->n_max_text_ctx = max_text_ctx;
+    return this;
+  }
 
   // Set offset in milliseconds to start decoding from.
   // defaults to 0
-  void set_offset_ms(size_t offset);
-  size_t get_offset_ms();
+  Params *with_offset_ms(size_t offset) {
+    fp->offset_ms = offset;
+    return this;
+  }
 
   // Set audio duration in milliseconds to decode.
   // defaults to 0 (decode until end of audio)
-  void set_duration_ms(size_t duration);
-  size_t get_duration_ms();
+  Params *with_duration_ms(size_t duration) {
+    fp->duration_ms = duration;
+    return this;
+  }
 
   // Whether to translate to output to language specified under `language`
   // parameter. Defaults to false.
-  void set_translate(bool translate);
-  bool get_translate();
+  Params *with_translate(bool translate) {
+    fp->translate = translate;
+    return this;
+  }
 
   // Do not use past translation (if any) as initial prompt for the decoder.
   // Defaults to false.
-  void set_no_context(bool no_context);
-  bool get_no_context();
+  Params *with_no_context(bool no_context) {
+    fp->no_context = no_context;
+    return this;
+  }
 
   // Force single segment output. This may be useful for streaming.
   // Defaults to false
-  void set_single_segment(bool single_segment);
-  bool get_single_segment();
+  Params *with_single_segment(bool single_segment) {
+    fp->single_segment = single_segment;
+    return this;
+  }
 
   // Whether to print special tokens (<SOT>, <EOT>, <BEG>)
   // Defaults to false
-  void set_print_special(bool print_special);
-  bool get_print_special();
+  Params *with_print_special(bool print_special) {
+    fp->print_special = print_special;
+    return this;
+  }
 
   // Whether to print progress information
   // Defaults to false
-  void set_print_progress(bool print_progress);
-  bool get_print_progress();
+  Params *with_print_progress(bool print_progress) {
+    fp->print_progress = print_progress;
+    return this;
+  }
 
   // Print results from within whisper.cpp.
   // Try to use the callback methods instead:
   // [set_new_segment_callback](FullParams::set_new_segment_callback),
   // [set_new_segment_callback_user_data](FullParams::set_new_segment_callback_user_data).
   // Defaults to false
-  void set_print_realtime(bool print_realtime);
-  bool get_print_realtime();
+  Params *with_print_realtime(bool print_realtime) {
+    fp->print_realtime = print_realtime;
+    return this;
+  }
 
   // Whether to print timestamps for each text segment when printing realtime
   // Only has an effect if
   // [set_print_realtime](FullParams::set_print_realtime) is set to true.
   // Defaults to true.
-  void set_print_timestamps(bool print_timestamps);
-  bool get_print_timestamps();
+  Params *with_print_timestamps(bool print_timestamps) {
+    fp->print_timestamps = print_timestamps;
+    return this;
+  }
 
   // [EXPERIMENTAL] token-level timestamps
   // default to false
-  void set_token_timestamps(bool token_timestamps);
-  bool get_token_timestamps();
+  Params *with_token_timestamps(bool token_timestamps) {
+    fp->token_timestamps = token_timestamps;
+    return this;
+  }
 
   // [EXPERIMENTAL] Set timestamp token probability threshold.
   // Defaults to 0.01
-  void set_thold_pt(float thold_pt);
-  float get_thold_pt();
+  Params *with_thold_pt(float thold_pt) {
+    fp->thold_pt = thold_pt;
+    return this;
+  }
 
   // [EXPERIMENTAL] Set timestamp token sum probability threshold.
   // Defaults to 0.01
-  void set_thold_ptsum(float thold_ptsum);
-  float get_thold_ptsum();
+  Params *with_thold_ptsum(float thold_ptsum) {
+    fp->thold_ptsum = thold_ptsum;
+    return this;
+  }
 
   // [EXPERIMENTAL] max segment length in characters
   // defaults to 0 (no limit)
-  void set_max_len(size_t max_len);
-  size_t get_max_len();
+  Params *with_max_len(size_t max_len) {
+    fp->max_len = max_len;
+    return this;
+  }
 
   // [EXPERIMENTAL] split on word rather on token (in conjunction with
   // max_len) defaults to false
-  void set_split_on_word(bool split_on_word);
-  bool get_split_on_word();
+  Params *with_split_on_word(bool split_on_word) {
+    fp->split_on_word = split_on_word;
+    return this;
+  }
 
   // [EXPERIMENTAL] Set the maximum tokens per segment. Default to 0 (no
   // limit).
-  void set_max_tokens(size_t max_tokens);
-  size_t get_max_tokens();
+  Params *with_max_tokens(size_t max_tokens) {
+    fp->max_tokens = max_tokens;
+    return this;
+  }
 
   // [EXPERIMENTAL] Speed-up techniques (can reduce the quality of output)
   // Speed-up the audio by 2x using Phase Vocoder
   // defaults to false
-  void set_speed_up(bool speed_up);
-  bool get_speed_up();
+  Params *with_speed_up(bool speed_up) {
+    fp->speed_up = speed_up;
+    return this;
+  }
 
   // [EXPERIMENTAL] Speed-up techniques (can reduce the quality of output)
   // Overwrite the audio context size. Default to 0 to use the default value
-  void set_audio_ctx(size_t audio_ctx);
-  size_t get_audio_ctx();
+  Params *with_audio_ctx(size_t audio_ctx) {
+    fp->audio_ctx = audio_ctx;
+    return this;
+  }
 
   // Set tokens to provide the model as initial input.
   // These tokens are prepended to any existing text content from a previous
@@ -223,75 +327,99 @@ public:
   // Calling this more than once will overwrite the previous tokens.
   // Defaults to an empty vector.
   void set_tokens(std::vector<int> &tokens);
-  void set_prompt_tokens(const whisper_token *tokens);
-  void set_prompt_n_tokens(size_t n_tokens);
-  const whisper_token *get_prompt_tokens();
-  size_t get_prompt_n_tokens();
+  Params *with_prompt_tokens(const whisper_token *tokens) {
+    fp->prompt_tokens = tokens;
+    return this;
+  }
+  Params *with_prompt_n_tokens(size_t size) {
+    fp->prompt_n_tokens = size;
+    return this;
+  }
 
   // Set target language.
   // For auto-detection, set this either to 'auto' or nullptr.
   // defaults to 'en'.
-  void set_language(const char *language);
-  const char *get_language();
+  Params *with_language(const char *language) {
+    fp->language = language;
+    return this;
+  }
 
   // Set suppress_blank. See
   // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/decoding.py#L89
   // for more information.
   // Defaults to true.
-  void set_suppress_blank(bool suppress_blank);
-  bool get_suppress_blank();
+  Params *with_suppress_blank(bool suppress_blank) {
+    fp->suppress_blank = suppress_blank;
+    return this;
+  }
 
   // Set suppress none speech tokens. See
   // https://github.com/openai/whisper/blob/7858aa9c08d98f75575035ecd6481f462d66ca27/whisper/tokenizer.py#L224-L253
   // for more information.
   // Defaults to true.
-  void set_suppress_none_speech_tokens(bool suppress_non_speech_tokens);
-  bool get_suppress_none_speech_tokens();
+  Params *with_suppress_non_speech_tokens(bool suppress_non_speech_tokens) {
+    fp->suppress_non_speech_tokens = suppress_non_speech_tokens;
+    return this;
+  }
 
   // Set initial decoding temperature. Defaults to 1.0.
   // See https://ai.stackexchange.com/a/32478
-  void set_temperature(float temperature);
-  float get_temperature();
+  Params *with_temperature(float temperature) {
+    fp->temperature = temperature;
+    return this;
+  }
 
   // Set max intial timestamps. See
   // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/decoding.py#L97
   // for more information.
   // Defaults to 1.0
-  void set_max_intial_ts(size_t max_intial_ts);
-  size_t get_max_intial_ts();
+  Params *with_max_initial_ts(size_t max_initial_ts) {
+    fp->max_initial_ts = max_initial_ts;
+    return this;
+  }
 
   // Set length penalty. See
   // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/transcribe.py#L267
   // for more information.
   // Defaults to -1.0.
-  void set_length_penalty(float length_penalty);
-  float get_length_penalty();
+  Params *with_length_penalty(float length_penalty) {
+    fp->length_penalty = length_penalty;
+    return this;
+  }
 
   // Set temperatur increase. See
   // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/transcribe.py#L274-L278
   // Defaults to 0.2
-  void set_temperature_inc(float temperature_inc);
-  float get_temperature_inc();
+  Params *with_temperature_inc(float temperature_inc) {
+    fp->temperature_inc = temperature_inc;
+    return this;
+  }
 
   // Set entropy threshold, similar to OpenAI's compression ratio threshold.
   // See
   // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/transcribe.py#L274-L278
   // for more information.
   // Defaults to 2.4.
-  void set_entropy_thold(float entropy_thold);
-  float get_entropy_thold();
+  Params *with_entropy_thold(float entropy_thold) {
+    fp->entropy_thold = entropy_thold;
+    return this;
+  }
 
   // Set logprob_thold. See
   // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/transcribe.py#L274-L278
   // for more information.
   // Defaults to -1.0.
-  void set_logprob_thold(float logprob_thold);
-  float get_logprob_thold();
+  Params *with_logprob_thold(float logprob_thold) {
+    fp->logprob_thold = logprob_thold;
+    return this;
+  }
 
   /// Set no_speech_thold. Currently (as of v1.2.0) not implemented.
   /// Defaults to 0.6.
-  void set_no_speech_thold(float no_speech_thold);
-  float get_no_speech_thold();
+  Params *with_no_speech_thold(float no_speech_thold) {
+    fp->no_speech_thold = no_speech_thold;
+    return this;
+  }
 
   // called for every newly generated text segments
   // Do not use this function unless you know what you are doing.
@@ -313,6 +441,10 @@ public:
   // Defaults to None. See set_logits_filter_callback.
   void set_logits_filter_callback_user_data(void *user_data);
 };
+
+void ExportParamsApi(py::module &m);
+
+void ExportSamplingStrategiesApi(py::module &m);
 
 class Context {
 public:
