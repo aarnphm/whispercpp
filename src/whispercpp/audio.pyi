@@ -8,6 +8,8 @@ from numpy.typing import NDArray
 from .api import Params
 from .api import Context
 
+def sdl_poll_events() -> bool: ...
+
 class AudioCapture:
     transcript: list[str]
     def __init__(self, length_ms: int) -> None: ...
