@@ -3,17 +3,18 @@
 #ifdef BAZEL_BUILD
 #include "SDL.h"
 #include "SDL_audio.h"
-#include "context.h"
 #include "examples/common.h"
+#include "pybind11/functional.h"
 #include "pybind11/numpy.h"
 #else
 #include "SDL.h"
 #include "SDL_audio.h"
-#include "context.h"
 #include "examples/common.h"
+#include "pybind11/functional.h"
 #include "pybind11/numpy.h"
 #endif
 
+#include "context.h"
 #include <atomic>
 #include <cstdint>
 #include <mutex>

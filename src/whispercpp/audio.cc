@@ -4,8 +4,6 @@
 #include <thread>
 #include <vector>
 
-using namespace pybind11::literals;
-
 namespace whisper {
 PYBIND11_MODULE(audio_cpp2py_export, m) {
   m.doc() = "Experimental: Audio capture API";
@@ -362,13 +360,12 @@ int AudioCapture::stream_transcribe(Context *ctx, Params *params,
 
     // Running inference
     {
-      params->set_print_progress(false);
-      params->set_print_realtime(false);
-      params->set_no_context(no_context);
-      params->set_single_segment(!use_vad);
-
-      // disable temperature fallback
-      params->set_temperature_inc(-1.0f);
+      params->with_print_progress(false)
+          ->with_print_realtime(false)
+          ->with_no_context(no_context)
+          ->with_single_segment(!use_vad)
+          // disable temperature fallback
+          ->with_temperature_inc(-1.0f);
 
       if (ctx->full(*params, pcmf32) != 0) {
         fprintf(stderr, "%s: Failed to process audio!\n", __func__);
