@@ -8,6 +8,24 @@ load("@com_github_bentoml_plugins//rules:deps.bzl", "plugins_dependencies")
 
 plugins_dependencies()
 
+load("@io_bazel_rules_go//go:deps.bzl", "go_rules_dependencies")
+
+go_rules_dependencies()
+
+load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains")
+
+go_register_toolchains(version = "1.19")
+
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+
+# If you use WORKSPACE.bazel, use the following line instead of the bare gazelle_dependencies():
+# gazelle_dependencies(go_repository_default_config = "@//:WORKSPACE.bazel")
+gazelle_dependencies()
+
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+
+protobuf_deps()
+
 load("@build_bazel_rules_nodejs//:repositories.bzl", "build_bazel_rules_nodejs_dependencies")
 
 build_bazel_rules_nodejs_dependencies()
