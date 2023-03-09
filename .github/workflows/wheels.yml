@@ -64,6 +64,7 @@ jobs:
         exclude:
           # TODO: disable manylinux_aarch64 for now
           - platform: [manylinux_aarch64, ubuntu-latest]
+          - platform: [musllinux_x86_64, ubuntu-latest]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
