@@ -96,7 +96,7 @@ public:
   static SamplingStrategies from_sampling_strategy(SamplingType *st);
 };
 
-class Context;
+struct Context;
 
 template <typename CB> struct CallbackAndContext {
   struct Container {
@@ -142,7 +142,7 @@ private:
 
   CallbackAndContext<NewSegmentCallback> new_segment_callback;
 
-  friend class Context;
+  friend struct Context;
 
   // this copies Params for submitting it to whisper_full{,_parallel}
   // A single Params can be used for multiple whisper_full{,_parallel} calls,
@@ -169,15 +169,11 @@ public:
   static Params from_sampling_strategy(SamplingStrategies *sampling_strategies);
   static Params from_enum(whisper_sampling_strategy *enum_);
 
-  whisper_full_params *get() { return fp.get(); }
+  whisper_full_params *get() const { return fp.get(); }
 
   Params *build() { return this; }
 
-  std::string to_string() {
-    std::ostringstream ss;
-    ss << &(*this);
-    return ss.str();
-  };
+  std::string to_string() const;
 
   // Set the number of threads to use for decoding.
   // Defaults to min(4, std::thread::hardware_concurrency()).
@@ -443,12 +439,14 @@ void ExportParamsApi(py::module &m);
 
 void ExportSamplingStrategiesApi(py::module &m);
 
-class Context {
-public:
+struct Context {
+private:
   whisper_context *ctx;
   bool spectrogram_initialized;
   bool encode_completed;
   bool decode_once;
+
+public:
   static Context from_file(const char *filename);
   static Context from_buffer(std::vector<char> *buffer);
   void free();

@@ -24,6 +24,33 @@ PYBIND11_MODULE(api_cpp2py_export, m) {
   m.attr("HOP_LENGTH") = py::int_(WHISPER_HOP_LENGTH);
   m.attr("CHUNK_SIZE") = py::int_(WHISPER_CHUNK_SIZE);
 
+  // whisper_token_data -> TokenData
+  py::class_<whisper_token_data>(m, "TokenData", "Data for the token")
+      .def_readonly("id", &whisper_token_data::id)
+      .def_readonly("tid", &whisper_token_data::tid)
+      .def_readonly("p", &whisper_token_data::p)
+      .def_readonly("plog", &whisper_token_data::plog)
+      .def_readonly("pt", &whisper_token_data::pt)
+      .def_readonly("ptsum", &whisper_token_data::ptsum)
+      .def_readonly("t0", &whisper_token_data::t0)
+      .def_readonly("t1", &whisper_token_data::t1)
+      .def_readonly("vlen", &whisper_token_data::vlen)
+      .def("__repr__", [](const whisper_token_data &t) {
+        std::stringstream s;
+        s << "("
+          << "id=" << t.id << ", "
+          << "tid=" << t.tid << ", "
+          << "p=" << t.p << ", "
+          << "plog=" << t.plog << ", "
+          << "pt=" << t.pt << ", "
+          << "ptsum=" << t.ptsum << ", "
+          << "t0=" << t.t0 << ", "
+          << "t1=" << t.t1 << ", "
+          << "vlen=" << t.vlen << ")";
+
+        return s.str();
+      });
+
   py::enum_<whisper_sampling_strategy>(m, "StrategyType")
       .value("SAMPLING_GREEDY",
              whisper_sampling_strategy::WHISPER_SAMPLING_GREEDY)
