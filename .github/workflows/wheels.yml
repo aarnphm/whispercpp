@@ -32,22 +32,22 @@ jobs:
         uses: ./.github/actions/setup-repo
         with:
           python-version: "3.8"
-      - name: Build sdist
+      - name: Build source distributions
         run: |
           # TODO: when bazel support releasing sdist, we can remove this.
-          pip install build
-
-          python -m build --sdist
+          pipx run build --sdist
       - name: Test built sdist
-        if: ${{ github.event_name == 'pull_request' }}
         run: |
           python -m venv venv
           source venv/bin/activate
           pip install dist/*.tar.gz && python -c "import whispercpp as w;print(dir(w.api)); print(dir(w.audio));"
-  build-arm-wheels:
-    name: Build ARM wheels for ${{ matrix.python[1] }}-${{ matrix.platform[0] }}
+      - uses: actions/upload-artifact@v3
+        with:
+          path: dist/*.tar.gz
+  build-arm-musl-wheels:
+    name: Build wheels for ${{ matrix.python[1] }}-${{ matrix.platform[0] }}
     runs-on: ${{ matrix.platform[1] }}
-    if: ${{ failure() }} # Disable this for now. We will tackle this later.
+    if: github.repository_owner == 'aarnphm' # Don't run on fork repository
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -59,7 +59,12 @@ jobs:
           - ["cp311", "3.11"]
         platform:
           - [manylinux_aarch64, ubuntu-latest]
+          - [musllinux_x86_64, ubuntu-latest]
           - [macosx_arm64, macos-latest]
+        exclude:
+          # TODO: disable manylinux_aarch64 for now
+          - platform: [manylinux_aarch64, ubuntu-latest]
+          - platform: [musllinux_x86_64, ubuntu-latest]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -83,7 +88,28 @@ jobs:
           name: ${{ matrix.python[0] }}-${{ startsWith(matrix.platform[0], 'macosx')
             && 'macosx' || matrix.platform[0] }}
           path: ./wheelhouse/*.whl
-  build-wheel:
+  release-wheels-sdist:
+    needs: [build-arm-musl-wheels, build-sdist]
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'aarnphm'
+    steps:
+      - uses: actions/download-artifact@v3
+      - name: Sanity check and setup dist folder
+        run: |
+          ls -R
+          mkdir -p dist
+          cp -r artifact/* dist/
+          # MacOS wheels
+          cp -r cp310-macosx/*.whl dist/
+          cp -r cp311-macosx/*.whl dist/
+          cp -r cp38-macosx/*.whl dist/
+          cp -r cp39-macosx/*.whl dist/
+      - uses: pypa/gh-action-pypi-publish@v1.5.0
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+  bazel-build-and-release-wheels:
     name: Build wheels for python${{ matrix.python-version }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
@@ -92,10 +118,9 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.8", "3.9", "3.10", "3.11.2"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
         exclude:
           - os: "windows-latest"
-          - python-version: "3.11.2"
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -110,8 +135,6 @@ jobs:
         uses: docker/setup-qemu-action@v2
         with:
           platforms: all
-      - name: Running update requirements
-        run: bazel run pypi_update
       - name: Building wheels
         if: github.event_name == 'pull_request'
         run: bazel build whispercpp_wheel
@@ -127,10 +150,10 @@ jobs:
         run: |
           VERSION=${{ github.ref_name }}
           echo "version=${VERSION:1}" >>$GITHUB_OUTPUT
-      - name: Publish built wheels
+      - name: Publish built wheels with bazel
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          ./tools/bazel run --define=ci=true --stamp --embed_label=${{ steps.get-info.outputs.version }} -- //:whispercpp_wheel.publish --repository pypi --verbose
+          bazel run --define=ci=true --stamp --embed_label=${{ steps.get-info.outputs.version }} -- //:whispercpp_wheel.publish --repository pypi --verbose

@@ -3,6 +3,7 @@ from pathlib import Path
 from subprocess import check_output
 
 from setuptools import setup
+from setuptools.dist import Distribution
 from wheel.bdist_wheel import bdist_wheel
 from setuptools.command.build_py import build_py
 
@@ -36,6 +37,11 @@ class BuildPy(build_py):
         build_py.run(self)
 
 
+class WhisperDistribution(Distribution):
+    def has_ext_modules(self):
+        return True
+
+
 setup(
     include_dirs=[
         "./extern/whispercpp",
@@ -43,4 +49,5 @@ setup(
         "./src/whispercpp/",
     ],
     cmdclass={"bdist_wheel": BdistWheel, "build_py": BuildPy},
+    distclass=WhisperDistribution,
 )

@@ -37,10 +37,6 @@ fi
 
 tag_name="v$VERSION"
 
-echo "Install dependencies"
-
-pip install twine wheel build
-
 if git rev-parse "$tag_name" > /dev/null 2>&1; then
     echo "git tag '$tag_name' exist, using existing tag."
     echo "To redo releasing and overwrite existing tag, delete tag with the following and re-run release.sh:"
@@ -58,17 +54,5 @@ else
 
     git push origin "$tag_name"
 fi
-
-echo "Generating PyPI source distribution..."
-cd "$GIT_ROOT" || exit 1
-
-python -m build -s
-
-# Use testpypi by default, run script with: "REPO=pypi release.sh" for
-# releasing to Pypi.org
-REPO=${REPO:=testpypi}
-
-echo "Uploading sdist to $REPO..."
-twine upload --repository "$REPO" dist/* --verbose
 
 echo "Done releasing version $VERSION."
