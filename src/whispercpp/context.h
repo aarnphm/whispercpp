@@ -139,6 +139,7 @@ public:
 
 private:
   std::shared_ptr<whisper_full_params> fp;
+  std::string language;
 
   CallbackAndContext<NewSegmentCallback> new_segment_callback;
 
@@ -332,8 +333,9 @@ public:
   // Set target language.
   // For auto-detection, set this either to 'auto' or nullptr.
   // defaults to 'en'.
-  Params *with_language(const char *language) {
-    fp->language = language;
+  Params *with_language(std::string language) {
+    this->language = language;
+    fp->language = this->language.c_str();
     return this;
   }
 
