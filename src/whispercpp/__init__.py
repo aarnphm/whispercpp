@@ -76,7 +76,7 @@ class Whisper:
 
     @staticmethod
     def from_pretrained(
-        model_name: str, basedir: str | None = None, no_state: bool = True
+        model_name: str, basedir: str | None = None, no_state: bool = False
     ):
         """Load a preconverted model from a given model name.
 
@@ -86,7 +86,7 @@ class Whisper:
             model_name (str): Name of the preconverted model.
             basedir (str, optional): Base directory to store the model. Defaults to None.
                                      Default will be "$XDG_DATA_HOME/whispercpp" for directory.
-            no_state (bool, optional): Whether to initialize the model state. Defaults to True.
+            no_state (bool, optional): Whether to initialize the model state. Defaults to False.
 
         Returns:
             A ``Whisper`` object.
@@ -117,7 +117,7 @@ class Whisper:
         model_name: str,
         params: api.Params,  # noqa # type: ignore
         basedir: str | None = None,
-        no_state: bool = True,
+        no_state: bool = False,
     ):
         """Load a preconverted model from a given model name and params.
 
@@ -128,7 +128,7 @@ class Whisper:
             params (api.Params): Params to be passed to Whisper.
             basedir (str, optional): Base directory to store the model. Defaults to None.
                                      Default will be "$XDG_DATA_HOME/whispercpp" for directory.
-            no_state (bool, optional): Whether to initialize the model state. Defaults to True.
+            no_state (bool, optional): Whether to initialize the model state. Defaults to False.
 
         Returns:
             A ``Whisper`` object.

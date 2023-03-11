@@ -12,7 +12,7 @@
     }                                                                          \
   } while (0)
 
-#define throw_exceptions(msg)                                                  \
+#define RAISE_RUNTIME_ERROR(msg)                                               \
   do {                                                                         \
     throw std::runtime_error((std::stringstream()                              \
                               << __FILE__ << "#L" << std::to_string(__LINE__)  \
@@ -23,8 +23,8 @@
 #define RAISE_IF_NULL(ptr)                                                     \
   do {                                                                         \
     if ((ptr) == nullptr) {                                                    \
-      throw_exceptions(#ptr << " is not initialized. Make sure to call "       \
-                               "'from_file()' or 'from_buffer()' first.");     \
+      RAISE_RUNTIME_ERROR(#ptr << " is not initialized. Make sure to call "    \
+                                  "'from_file()' or 'from_buffer()' first.");  \
     }                                                                          \
   } while (0)
 
@@ -294,7 +294,7 @@ int Context::full(Params params, std::vector<float> data) {
                              "or 'from_buffer' and try again.");
   }
   if (!init_with_state) {
-    throw_exceptions("state is not initialized");
+    RAISE_RUNTIME_ERROR("state is not initialized");
   }
   Params copy = params.copy_for_full(*this);
   int ret = whisper_full(ctx, *copy.get(), data.data(), data.size());
