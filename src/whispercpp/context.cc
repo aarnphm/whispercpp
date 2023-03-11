@@ -551,8 +551,8 @@ void ExportContextApi(py::module &m) {
       .def_static(
           "from_buffer",
           [](py::buffer buffer, bool no_state) {
-            const py::buffer_info info = buffer.request();
-            return Context::from_buffer(info.ptr, info.size, no_state);
+            const py::buffer_info buf_info = buffer.request();
+            return Context::from_buffer(buf_info.ptr, buf_info.size, no_state);
           },
           "buffer"_a, "no_state"_a = false, py::keep_alive<0, 1>())
       .def("init_state", &Context::init_state,

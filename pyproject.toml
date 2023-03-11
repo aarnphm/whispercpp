@@ -49,6 +49,7 @@ whispercpp = ["py.typed", "*.so", "*.pyi"]
 [tool.pytest.ini_options]
 addopts = [
     "-rfEX",
+    "-vvv",
     "--cov=src/whispercpp",
     "--cov-report=term-missing",
     "--ignore=extern",

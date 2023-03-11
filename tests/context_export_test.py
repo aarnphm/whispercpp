@@ -28,23 +28,10 @@ def fixture_audio_file() -> NDArray[np.float32]:
     ).mono
 
 
-@pytest.mark.parametrize(
-    "models", [path.__fspath__() for path in ROOT_TEST.joinpath("models").glob("*.bin")]
-)
-def test_from_file_with_state(
-    models: str, params: w.api.Params, audio_file: NDArray[np.float32]
+def test_init_state_runtime_error(
+    params: w.api.Params, audio_file: NDArray[np.float32]
 ):
-    context = w.api.Context.from_file(models)
-    assert not context.full(params, audio_file)
-
-
-@pytest.mark.parametrize(
-    "models", [path.__fspath__() for path in ROOT_TEST.joinpath("models").glob("*.bin")]
-)
-def test_full_raise_exception(
-    models: str, params: w.api.Params, audio_file: NDArray[np.float32]
-):
-    context = w.api.Context.from_file(models, no_state=True)
+    context = w.api.Context.from_file(w.utils.download_model("tiny.en"), True)
     with pytest.raises(RuntimeError):
         context.full(params, audio_file)
 
@@ -52,10 +39,18 @@ def test_full_raise_exception(
 def test_full_with_init_state_manually(
     params: w.api.Params, audio_file: NDArray[np.float32]
 ):
-    context = w.api.Context.from_file(
-        ROOT_TEST.joinpath("models", "ggml-tiny.bin").__fspath__(), no_state=True
-    )
+    context = w.api.Context.from_file(w.utils.download_model("tiny.en"), True)
     context.init_state()
+    assert not context.full(params, audio_file)
+
+
+@pytest.mark.parametrize(
+    "models", [path.__fspath__() for path in ROOT_TEST.joinpath("models").glob("*.bin")]
+)
+def test_from_file_with_state(
+    models: str, params: w.api.Params, audio_file: NDArray[np.float32]
+):
+    context = w.api.Context.from_file(models)
     assert not context.full(params, audio_file)
 
 

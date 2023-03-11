@@ -2,6 +2,8 @@
 # in https://github.com/bazelbuild/bazel/issues/6319
 import %workspace%/tools/bazel.rc
 
+test --test_timeout=900 --test_verbose_timeout_warnings
+
 # Settings for codeql
 
 # CodeQL needs to trace compiler via LD_PRELOAD + some other vars
