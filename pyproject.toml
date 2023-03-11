@@ -32,7 +32,7 @@ dynamic = ["version"]
 
 [tool.setuptools_scm]
 write_to = "src/whispercpp/__about__.py"
-git_describe_command = "git describe --dirty --tags --long --first-parent"
+git_describe_command = "git describe --tags --first-parent"
 version_scheme = "post-release"
 fallback_version = "0.0.0"
 
