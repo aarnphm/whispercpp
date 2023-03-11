@@ -1,3 +1,6 @@
+"""Python-related tools. This adds a declare_python_abi rule to configure correct ABI for current toolchain.
+"""
+
 abi_bzl_template = """\
 def python_abi():
     return "{python_abi}"

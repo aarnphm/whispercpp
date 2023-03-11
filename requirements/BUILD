@@ -20,5 +20,5 @@ compile_pip_requirements(
     extra_args = extra_args,
     requirements_in = "//requirements:pypi.txt",
     requirements_txt = "//requirements:bazel-pypi.lock.txt",
-    visibility = ["//visibility:public"],
+    visibility = ["//:__subpackages__"],
 )

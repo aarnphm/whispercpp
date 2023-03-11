@@ -42,7 +42,11 @@ alias(
 alias(
     name = "pypi_update",
     actual = "//requirements:pypi.update",
-    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "release_update",
+    actual = "//requirements/release:requirements.update"
 )
 
 COPTS = [
@@ -192,7 +196,7 @@ py_wheel(
     author = "Aaron Pham",
     author_email = "aarnphm@bentoml.com",
     classifiers = [
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: POSIX :: Linux",
@@ -216,9 +220,9 @@ py_wheel(
     homepage = "https://github.com/aarnphm/whispercpp",
     license = "Apache 2.0",
     platform = select({
-        "//:aarch64-apple-darwin": "macosx_11_0_arm64",
+        "//:aarch64-apple-darwin": "macosx_10_9_arm64",
         "//:aarch64-unknown-linux-gnu": "manylinux2014_aarch64",
-        "//:x86_64-apple-darwin": "macosx_11_0_x86_64",  # this is typically macosx_10_9_x86_64?
+        "//:x86_64-apple-darwin": "macosx_10_9_x86_64",
         "//:x86_64-pc-windows-msvc": "win_amd64",
         "//:x86_64-unknown-linux-gnu": "manylinux2014_x86_64",
     }),

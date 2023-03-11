@@ -1,1 +1,4 @@
 BUILD* linguist-language=Starlark
+WORKSPACE* linguist-language=Starlark
+requirements/release/*.txt linguist-generated
+nix/* linguist-generated
