@@ -128,7 +128,6 @@ pybind_extension(
     deps = [
         ":audio_lib",
         ":context_lib",
-        "@pybind11//:pybind11_embed",
     ],
 )
 
@@ -146,10 +145,7 @@ pybind_extension(
     ],
     copts = COPTS,
     defines = ["BAZEL_BUILD"],
-    deps = [
-        ":context_lib",
-        "@pybind11//:pybind11_embed",
-    ],
+    deps = [":context_lib"],
 )
 
 write_file(

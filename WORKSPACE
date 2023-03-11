@@ -58,23 +58,14 @@ load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_depende
 
 rules_foreign_cc_dependencies()
 
-load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_multi_toolchains")
-load("@rules_python//python:versions.bzl", "MINOR_MAPPING")
+load("@rules_python//python:repositories.bzl", "py_repositories")
 
 py_repositories()
 
-python_register_multi_toolchains(
-    name = "python",
-    default_version = MINOR_MAPPING.values()[0],  # 3.10.9
-    python_versions = MINOR_MAPPING.values(),
-)
-
 load("@rules_python//python:pip.bzl", "pip_parse")
-load("@python//3.8.15:defs.bzl", "interpreter")
 
 pip_parse(
     name = "pypi",
-    python_interpreter_target = interpreter,
     requirements_lock = "//requirements:bazel-pypi.lock.txt",
 )
 
@@ -84,7 +75,6 @@ pypi_deps()
 
 pip_parse(
     name = "release",
-    python_interpreter_target = interpreter,
     requirements_darwin = "//requirements/release:requirements_darwin.txt",
     requirements_lock = "//requirements/release:requirements.txt",
     requirements_windows = "//requirements/release:requirements_windows.txt",
@@ -98,7 +88,6 @@ load("@pybind11_bazel//:python_configure.bzl", "python_configure")
 
 python_configure(
     name = "local_config_python",
-    python_interpreter_target = interpreter,
 )
 
 load("//rules:python.bzl", "declare_python_abi")
