@@ -49,7 +49,7 @@ whispercpp = ["py.typed", "*.so", "*.pyi"]
 [tool.pytest.ini_options]
 addopts = [
     "-rfEX",
-    "-vvv",
+    "--cov=src/whispercpp",
     "--cov-report=term-missing",
     "--ignore=extern",
     "--ignore-glob=bazel-*",
@@ -165,4 +165,4 @@ environment = { RUNNER_OS = "MacOS", CC = "gcc", MACOSX_DEPLOYMENT_TARGET = "10.
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
-environment = { RUNNER_OS = "Linux" , CC = "gcc"}
+environment = { RUNNER_OS = "Linux", CC = "gcc" }

@@ -133,5 +133,6 @@ bazel-*
 
 # bun lock file
 bun.lockb
+*.bin
 
 src/whispercpp/__about__.py

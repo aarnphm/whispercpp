@@ -42,7 +42,7 @@ else:
         exc_msg="Failed to import 'audio' extensions. Try to install whispercpp from source.",
     )
 
-try:
+try:  # pragma: no cover
     with open(_os.path.join(_os.path.dirname(__file__), "__about__.py")) as f:
         exec(f.read())
 except FileNotFoundError:

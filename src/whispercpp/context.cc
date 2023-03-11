@@ -1,8 +1,10 @@
 #include "context.h"
 #ifdef BAZEL_BUILD
 #include "whisper.cpp"
+#include <pybind11/pytypes.h>
 #else
 #include "whisper.cpp"
+#include <pybind11/pytypes.h>
 #endif
 
 #define NO_STATE_WARNING(no_state)                                             \
@@ -31,8 +33,8 @@
   } while (0)
 
 void Context::init_state() {
-  RAISE_IF_NULL(ctx);
-  this->set_state(whisper_init_state(ctx));
+  RAISE_IF_NULL(wctx);
+  this->set_state(whisper_init_state(wctx));
 }
 
 Context Context::from_file(const char *filename, bool no_state) {
@@ -45,22 +47,21 @@ Context Context::from_file(const char *filename, bool no_state) {
     c.set_context(whisper_init_from_file(filename));
     c.set_init_with_state(true);
   }
-  RAISE_IF_NULL(c.ctx);
+  RAISE_IF_NULL(c.wctx);
   return c;
 }
 
-Context Context::from_buffer(std::vector<char> *buffer, bool no_state) {
+Context Context::from_buffer(void *buffer, size_t buffer_size, bool no_state) {
   Context c;
   NO_STATE_WARNING(no_state);
 
   if (no_state) {
-    c.set_context(
-        whisper_init_from_buffer_no_state(buffer->data(), buffer->size()));
+    c.set_context(whisper_init_from_buffer_no_state(buffer, buffer_size));
   } else {
-    c.set_context(whisper_init_from_buffer(buffer->data(), buffer->size()));
+    c.set_context(whisper_init_from_buffer(buffer, buffer_size));
     c.set_init_with_state(true);
   }
-  RAISE_IF_NULL(c.ctx);
+  RAISE_IF_NULL(c.wctx);
   return c;
 }
 
@@ -70,7 +71,7 @@ void Context::free_state() {
 }
 
 void Context::free() {
-  whisper_free(ctx);
+  whisper_free(wctx);
   this->set_context(nullptr);
   this->free_state();
 }
@@ -89,17 +90,17 @@ void Context::pc_to_mel(std::vector<float> &pcm, size_t threads,
 
   if (phase_vocoder && !init_with_state) {
     RAISE_IF_NULL(wstate);
-    res = whisper_pcm_to_mel_phase_vocoder_with_state(ctx, wstate, pcm.data(),
+    res = whisper_pcm_to_mel_phase_vocoder_with_state(wctx, wstate, pcm.data(),
                                                       pcm.size(), threads);
   } else if (phase_vocoder && init_with_state) {
     res =
-        whisper_pcm_to_mel_phase_vocoder(ctx, pcm.data(), pcm.size(), threads);
+        whisper_pcm_to_mel_phase_vocoder(wctx, pcm.data(), pcm.size(), threads);
   } else if (!phase_vocoder && !init_with_state) {
     RAISE_IF_NULL(wstate);
-    res = whisper_pcm_to_mel_with_state(ctx, wstate, pcm.data(), pcm.size(),
+    res = whisper_pcm_to_mel_with_state(wctx, wstate, pcm.data(), pcm.size(),
                                         threads);
   } else {
-    res = whisper_pcm_to_mel(ctx, pcm.data(), pcm.size(), threads);
+    res = whisper_pcm_to_mel(wctx, pcm.data(), pcm.size(), threads);
   }
 
   if (res == -1) {
@@ -119,9 +120,9 @@ void Context::set_mel(std::vector<float> &mel) {
 
   if (!init_with_state) {
     RAISE_IF_NULL(wstate);
-    res = whisper_set_mel_with_state(ctx, wstate, mel.data(), mel.size(), 80);
+    res = whisper_set_mel_with_state(wctx, wstate, mel.data(), mel.size(), 80);
   } else {
-    res = whisper_set_mel(ctx, mel.data(), mel.size(), 80);
+    res = whisper_set_mel(wctx, mel.data(), mel.size(), 80);
   }
 
   if (res == -1) {
@@ -147,9 +148,9 @@ void Context::encode(size_t offset, size_t threads) {
 
   if (!init_with_state) {
     RAISE_IF_NULL(wstate);
-    res = whisper_encode_with_state(ctx, wstate, offset, threads);
+    res = whisper_encode_with_state(wctx, wstate, offset, threads);
   } else {
-    res = whisper_encode(ctx, offset, threads);
+    res = whisper_encode(wctx, offset, threads);
   }
 
   if (res == -1) {
@@ -177,10 +178,10 @@ void Context::decode(std::vector<whisper_token> *token, size_t n_past,
 
   if (!init_with_state) {
     RAISE_IF_NULL(wstate);
-    res = whisper_decode_with_state(ctx, wstate, token->data(), token->size(),
+    res = whisper_decode_with_state(wctx, wstate, token->data(), token->size(),
                                     n_past, threads);
   } else {
-    res = whisper_decode(ctx, token->data(), token->size(), n_past, threads);
+    res = whisper_decode(wctx, token->data(), token->size(), n_past, threads);
   }
 
   if (res == -1) {
@@ -201,7 +202,7 @@ std::vector<whisper_token> Context::tokenize(std::string *text,
   std::vector<whisper_token> tokens;
   tokens.reserve(max_tokens);
 
-  int ret = whisper_tokenize(ctx, text->c_str(), tokens.data(), max_tokens);
+  int ret = whisper_tokenize(wctx, text->c_str(), tokens.data(), max_tokens);
 
   if (ret == -1) {
     RAISE_RUNTIME_ERROR("Too many results tokens.");
@@ -245,10 +246,10 @@ std::vector<float> Context::lang_detect(size_t offset_ms, size_t threads) {
 
   if (!init_with_state) {
     RAISE_IF_NULL(wstate);
-    res = whisper_lang_auto_detect_with_state(ctx, wstate, offset_ms, threads,
+    res = whisper_lang_auto_detect_with_state(wctx, wstate, offset_ms, threads,
                                               lang_probs.data());
   } else {
-    res = whisper_lang_auto_detect(ctx, offset_ms, threads, lang_probs.data());
+    res = whisper_lang_auto_detect(wctx, offset_ms, threads, lang_probs.data());
   }
 
   if (res == -1) {
@@ -277,18 +278,18 @@ size_t Context::n_len() {
     RAISE_IF_NULL(wstate);
     return whisper_n_len_from_state(wstate);
   } else {
-    return whisper_n_len(ctx);
+    return whisper_n_len(wctx);
   }
 }
 
 // Get number of vocab
-size_t Context::n_vocab() { return whisper_n_vocab(ctx); }
+size_t Context::n_vocab() { return whisper_n_vocab(wctx); }
 // Get number of text context
-size_t Context::n_text_ctx() { return whisper_n_text_ctx(ctx); }
+size_t Context::n_text_ctx() { return whisper_n_text_ctx(wctx); }
 // Get number of audio context
-size_t Context::n_audio_ctx() { return whisper_n_audio_ctx(ctx); }
+size_t Context::n_audio_ctx() { return whisper_n_audio_ctx(wctx); }
 // check if the model is multilingual
-bool Context::is_multilingual() { return whisper_is_multilingual(ctx) != 0; }
+bool Context::is_multilingual() { return whisper_is_multilingual(wctx) != 0; }
 
 // Token logits obtained from the last call to whisper_decode()
 // The logits for the last token are stored in the last row
@@ -303,7 +304,7 @@ std::vector<std::vector<float>> Context::get_logits(int segment) {
     RAISE_IF_NULL(wstate);
     ret = whisper_get_logits_from_state(wstate);
   } else {
-    ret = whisper_get_logits(ctx);
+    ret = whisper_get_logits(wctx);
   }
 
   if (ret == nullptr)
@@ -327,7 +328,7 @@ std::vector<std::vector<float>> Context::get_logits(int segment) {
 
 // Convert token id to string. Use the vocabulary in provided context
 std::string Context::token_to_str(whisper_token token_id) {
-  const char *ret = whisper_token_to_str(ctx, token_id);
+  const char *ret = whisper_token_to_str(wctx, token_id);
   if (ret == nullptr)
     RAISE_RUNTIME_ERROR("Failed to convert token to string.");
 
@@ -340,7 +341,7 @@ std::string Context::token_to_str(whisper_token token_id) {
 // Uses the specified decoding strategy to obtain the text. This is
 // usually the only function you need to call as an end user.
 int Context::full(Params params, std::vector<float> data) {
-  if (ctx == nullptr) {
+  if (wctx == nullptr) {
     RAISE_RUNTIME_ERROR("context is not initialized (due to "
                         "either 'free()' is called or "
                         "failed to create the context). Try "
@@ -352,10 +353,10 @@ int Context::full(Params params, std::vector<float> data) {
   int ret;
 
   if (init_with_state) {
-    ret = whisper_full(ctx, *copy.get(), data.data(), data.size());
+    ret = whisper_full(wctx, *copy.get(), data.data(), data.size());
   } else {
     RAISE_IF_NULL(wstate);
-    ret = whisper_full_with_state(ctx, wstate, *copy.get(), data.data(),
+    ret = whisper_full_with_state(wctx, wstate, *copy.get(), data.data(),
                                   data.size());
   }
 
@@ -394,7 +395,7 @@ int Context::full_parallel(Params params, std::vector<float> data,
 
   if (wstate != nullptr && num_processor > 1) {
     // NOTE: need to point the current state for the context to work.
-    ctx->state = wstate;
+    wctx->state = wstate;
   }
 
   if (num_processor == 1) {
@@ -402,7 +403,7 @@ int Context::full_parallel(Params params, std::vector<float> data,
   }
 
   Params copy = params.copy_for_full(*this);
-  int ret = whisper_full_parallel(ctx, *copy.get(), data.data(), data.size(),
+  int ret = whisper_full_parallel(wctx, *copy.get(), data.data(), data.size(),
                                   num_processor);
 
   if (ret == -1) {
@@ -434,7 +435,7 @@ int Context::full_n_segments() {
     RAISE_IF_NULL(wstate);
     return whisper_full_n_segments_from_state(wstate);
   } else {
-    return whisper_full_n_segments(ctx);
+    return whisper_full_n_segments(wctx);
   }
 }
 
@@ -445,7 +446,7 @@ int Context::full_lang_id() {
     return whisper_full_lang_id_from_state(wstate);
   } else {
 
-    return whisper_full_lang_id(ctx);
+    return whisper_full_lang_id(wctx);
   }
 }
 
@@ -455,7 +456,7 @@ int Context::full_get_segment_t0(int segment) {
     RAISE_IF_NULL(wstate);
     return whisper_full_get_segment_t0_from_state(wstate, segment);
   } else {
-    return whisper_full_get_segment_t0(ctx, segment);
+    return whisper_full_get_segment_t0(wctx, segment);
   }
 }
 
@@ -465,7 +466,7 @@ int Context::full_get_segment_t1(int segment) {
     RAISE_IF_NULL(wstate);
     return whisper_full_get_segment_t1_from_state(wstate, segment);
   } else {
-    return whisper_full_get_segment_t1(ctx, segment);
+    return whisper_full_get_segment_t1(wctx, segment);
   }
 }
 
@@ -477,7 +478,7 @@ const char *Context::full_get_segment_text(int segment) {
     RAISE_IF_NULL(wstate);
     ret = whisper_full_get_segment_text_from_state(wstate, segment);
   } else {
-    ret = whisper_full_get_segment_text(ctx, segment);
+    ret = whisper_full_get_segment_text(wctx, segment);
   }
 
   if (ret == nullptr)
@@ -491,7 +492,7 @@ int Context::full_n_tokens(int segment) {
     RAISE_IF_NULL(wstate);
     return whisper_full_n_tokens_from_state(wstate, segment);
   } else {
-    return whisper_full_n_tokens(ctx, segment);
+    return whisper_full_n_tokens(wctx, segment);
   }
 }
 
@@ -501,9 +502,9 @@ std::string Context::full_get_token_text(int segment, int token) {
 
   if (!init_with_state) {
     RAISE_IF_NULL(wstate);
-    ret = whisper_full_get_token_text_from_state(ctx, wstate, segment, token);
+    ret = whisper_full_get_token_text_from_state(wctx, wstate, segment, token);
   } else {
-    ret = whisper_full_get_token_text(ctx, segment, token);
+    ret = whisper_full_get_token_text(wctx, segment, token);
   }
 
   if (ret == nullptr)
@@ -518,7 +519,7 @@ whisper_token Context::full_get_token_id(int segment, int token) {
     RAISE_IF_NULL(wstate);
     return whisper_full_get_token_id_from_state(wstate, segment, token);
   } else {
-    return whisper_full_get_token_id(ctx, segment, token);
+    return whisper_full_get_token_id(wctx, segment, token);
   }
 }
 
@@ -529,7 +530,7 @@ whisper_token_data Context::full_get_token_data(int segment, int token) {
     RAISE_IF_NULL(wstate);
     return whisper_full_get_token_data_from_state(wstate, segment, token);
   } else {
-    return whisper_full_get_token_data(ctx, segment, token);
+    return whisper_full_get_token_data(wctx, segment, token);
   }
 }
 
@@ -539,7 +540,7 @@ float Context::full_get_token_prob(int segment, int token) {
     RAISE_IF_NULL(wstate);
     return whisper_full_get_token_p_from_state(wstate, segment, token);
   } else {
-    return whisper_full_get_token_p(ctx, segment, token);
+    return whisper_full_get_token_p(wctx, segment, token);
   }
 }
 
@@ -547,8 +548,13 @@ void ExportContextApi(py::module &m) {
   py::class_<Context>(m, "Context", "A light wrapper around whisper_context")
       .def_static("from_file", &Context::from_file, "filename"_a,
                   "no_state"_a = false)
-      .def_static("from_buffer", &Context::from_buffer, "buffer"_a,
-                  "no_state"_a = false)
+      .def_static(
+          "from_buffer",
+          [](py::buffer buffer, bool no_state) {
+            const py::buffer_info info = buffer.request();
+            return Context::from_buffer(info.ptr, info.size, no_state);
+          },
+          "buffer"_a, "no_state"_a = false, py::keep_alive<0, 1>())
       .def("init_state", &Context::init_state,
            py::return_value_policy::take_ownership, py::keep_alive<0, 1>())
       // free will delete the context, hence the take_ownership

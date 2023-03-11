@@ -445,7 +445,7 @@ void ExportSamplingStrategiesApi(py::module &m);
 
 struct Context {
 private:
-  whisper_context *ctx;
+  whisper_context *wctx;
   whisper_state *wstate = nullptr;
 
   bool init_with_state;
@@ -457,7 +457,7 @@ public:
   ~Context() = default;
 
   // setters functions
-  void set_context(whisper_context *wctx) { this->ctx = wctx; }
+  void set_context(whisper_context *wctx) { this->wctx = wctx; }
   void set_state(whisper_state *wstate) { this->wstate = wstate; }
 
   // check if whether context is set with state
@@ -471,7 +471,8 @@ public:
   void init_state();
 
   static Context from_file(const char *filename, bool no_state = false);
-  static Context from_buffer(std::vector<char> *buffer, bool no_state = false);
+  static Context from_buffer(void *buffer, size_t buffer_size,
+                             bool no_state = false);
   // TODO: implement init(loader, no_state=false) [whisper_init]
 
   // Convert RAW PCM audio to log mel spectrogram.
@@ -532,21 +533,21 @@ public:
   size_t lang_max_id() { return whisper_lang_max_id(); }
 
   // Some special tokens
-  whisper_token eot_token() { return whisper_token_eot(ctx); }
-  whisper_token sot_token() { return whisper_token_sot(ctx); }
-  whisper_token prev_token() { return whisper_token_prev(ctx); }
-  whisper_token solm_token() { return whisper_token_solm(ctx); }
-  whisper_token not_token() { return whisper_token_not(ctx); }
-  whisper_token beg_token() { return whisper_token_beg(ctx); }
+  whisper_token eot_token() { return whisper_token_eot(wctx); }
+  whisper_token sot_token() { return whisper_token_sot(wctx); }
+  whisper_token prev_token() { return whisper_token_prev(wctx); }
+  whisper_token solm_token() { return whisper_token_solm(wctx); }
+  whisper_token not_token() { return whisper_token_not(wctx); }
+  whisper_token beg_token() { return whisper_token_beg(wctx); }
   whisper_token token_translate() { return whisper_token_translate(); }
   whisper_token token_transcribe() { return whisper_token_transcribe(); }
   whisper_token lang_token(int lang_id) {
-    return whisper_token_lang(ctx, lang_id);
+    return whisper_token_lang(wctx, lang_id);
   }
 
   // perf inform and sys info
-  void print_timings() { whisper_print_timings(ctx); }
-  void reset_timings() { whisper_reset_timings(ctx); }
+  void print_timings() { whisper_print_timings(wctx); }
+  void reset_timings() { whisper_reset_timings(wctx); }
   std::string sys_info() { return std::string(whisper_print_system_info()); }
 
   // Run the entire model: PCM -> log mel spectrogram -> encoder -> decoder ->

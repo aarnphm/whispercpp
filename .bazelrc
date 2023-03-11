@@ -1,3 +1,14 @@
 # load bazelrc from the legacy location as recommended
 # in https://github.com/bazelbuild/bazel/issues/6319
 import %workspace%/tools/bazel.rc
+
+# Settings for codeql
+
+# CodeQL needs to trace compiler via LD_PRELOAD + some other vars
+build:codeql --action_env LD_PRELOAD --action_env ODASA_TRACER_CONFIGURATION --action_env SEMMLE_EXECP --action_env SEMMLE_JAVA_TOOL_OPTIONS --action_env SEMMLE_PRELOAD_libtrace --action_env SEMMLE_PRELOAD_libtrace32 --action_env SEMMLE_PRELOAD_libtrace64 --action_env SEMMLE_COPY_EXECUTABLES_ROOT
+
+# CodeQL needs to compile everything locally and without cache
+build:codeql --noremote_accept_cached --remote_upload_local_results=false --spawn_strategy=local
+
+# Pass along CODEQL_* env vars
+build:codeql --action_env CODEQL_EXEC_ARGS_OFFSET --action_env CODEQL_EXTRACTOR_JAVA_LOG_DIR --action_env CODEQL_EXTRACTOR_JAVA_RAM --action_env CODEQL_EXTRACTOR_JAVA_ROOT --action_env CODEQL_EXTRACTOR_JAVA_SOURCE_ARCHIVE_DIR --action_env CODEQL_EXTRACTOR_JAVA_THREADS --action_env CODEQL_EXTRACTOR_JAVA_TRAP_DIR --action_env CODEQL_EXTRACTOR_JAVA_WIP_DATABASE --action_env CODEQL_JAVA_HOME --action_env CODEQL_PARENT_ID --action_env CODEQL_PLATFORM --action_env CODEQL_PLATFORM_DLL_EXTENSION --action_env CODEQL_RAM --action_env CODEQL_SCRATCH_DIR --action_env CODEQL_THREADS --action_env CODEQL_DIST --action_env CODEQL_TRACER_LOG

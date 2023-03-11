@@ -1,1 +1,1 @@
-exports_files(["jfk.wav"])
+exports_files(glob(["*.wav"]))

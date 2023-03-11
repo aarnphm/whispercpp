@@ -33,7 +33,18 @@ py_test(
     deps = [
         "//src/whispercpp:whispercpp_lib",
         requirement("bazel-runfiles"),
-        requirement("numpy"),
-        requirement("ffmpeg-python"),
+    ],
+)
+
+py_test(
+    name = "context",
+    srcs = ["context_export_test.py"],
+    data = [
+        "//:api_cpp2py_export.so",
+        "//samples:jfk.wav",
+    ] + glob(["models/*.bin"]),
+    deps = [
+        "//src/whispercpp:whispercpp_lib",
+        requirement("bazel-runfiles"),
     ],
 )
