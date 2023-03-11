@@ -8,7 +8,10 @@ py_test(
         "bindings/explore.py",
         "bindings/explore_test.py",
     ],
-    data = ["//samples:jfk.wav"],
+    data = [
+        "//samples:jfk.wav",
+        "//tests:conftest.py",
+    ],
     deps = [
         "//src/whispercpp:whispercpp_lib",
         requirement("bazel-runfiles"),
