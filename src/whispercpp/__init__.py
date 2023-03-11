@@ -211,11 +211,9 @@ class Whisper:
 
     def stream_transcribe(
         self,
-        *,
-        length_ms: int = 10000,
         device_id: int = 0,
         sample_rate: int | None = None,
-        step_ms: int = 3000,
+        **kwargs: t.Any,
     ) -> t.Generator[str, None, list[str]]:
         """
         Streaming transcription from microphone. Note that this function is blocking.
@@ -233,6 +231,7 @@ class Whisper:
 
         if sample_rate is None:
             sample_rate = api.SAMPLE_RATE
+        length_ms = kwargs.pop("length_ms", 10000)
 
         ac = audio.AudioCapture(length_ms)
         if not ac.init_device(device_id, sample_rate):
@@ -243,7 +242,9 @@ class Whisper:
                 is_running = audio.sdl_poll_events()
                 if not is_running:
                     break
-                ac.stream_transcribe(self.context, self.params, step_ms)
+                ac.stream_transcribe(
+                    self.context, self.params, length_ms=length_ms, **kwargs
+                )
         except KeyboardInterrupt:
             # handled from C++
             pass

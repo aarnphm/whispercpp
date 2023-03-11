@@ -63,6 +63,6 @@ py_test(
     deps = [
         "//src/whispercpp:whispercpp_lib",
         requirement("bazel-runfiles"),
-        requirement("numpy")
+        requirement("numpy"),
     ],
 )

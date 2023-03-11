@@ -6,12 +6,16 @@
 #include "examples/common.h"
 #include "pybind11/functional.h"
 #include "pybind11/numpy.h"
+#include "pybind11/pytypes.h"
+#include "whisper.h"
 #else
 #include "SDL.h"
 #include "SDL_audio.h"
 #include "examples/common.h"
 #include "pybind11/functional.h"
 #include "pybind11/numpy.h"
+#include "pybind11/pytypes.h"
+#include "whisper.h"
 #endif
 
 #include "context.h"
@@ -31,7 +35,12 @@ public:
     m_length_ms = length_ms;
     m_running = false;
   };
-  ~AudioCapture();
+
+  ~AudioCapture() {
+    if (m_dev_id) {
+      SDL_CloseAudioDevice(m_dev_id);
+    }
+  }
 
   bool init_device(int capture_id, int sample_rate);
 
@@ -46,9 +55,9 @@ public:
   void callback(uint8_t *stream, int len);
 
   // retrieve audio data from the buffer
-  void retrieve_audio(int ms, std::vector<float> &audio);
+  void get(int ms, std::vector<float> &audio);
 
-  int stream_transcribe(Context *ctx, Params *params, int32_t step_ms);
+  int stream_transcribe(Context *, Params *, const py::kwargs &);
 
   std::vector<std::string> m_transcript;
 
