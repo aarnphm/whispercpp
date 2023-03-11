@@ -342,6 +342,9 @@ void ExportContextApi(py::module &m) {
       .def("lang_detect", &Context::lang_detect, "offset_ms"_a, "threads"_a = 1)
       .def("get_logits", &Context::get_logits, "segment"_a)
       .def("token_to_str", &Context::token_to_str, "token_id"_a)
+      .def("token_to_bytes", [](Context & context, whisper_token token_id) {
+          return py::bytes(context.token_to_str(token_id));
+      }, "token_id"_a)
       .def("lang_token", &Context::lang_token, "lang_id"_a)
       .def_property_readonly("n_len", &Context::n_len)
       .def_property_readonly("n_vocab", &Context::n_vocab)
