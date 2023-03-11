@@ -74,6 +74,8 @@ class Whisper:
         no_state: bool
         basedir: str | None
 
+    _context_initialized: bool = False
+
     @staticmethod
     def from_pretrained(
         model_name: str, basedir: str | None = None, no_state: bool = False
@@ -109,6 +111,7 @@ class Whisper:
             .build()
         )
         context.reset_timings()
+        _context_initialized = not no_state
         _ref.__dict__.update(locals())
         return _ref
 
@@ -145,21 +148,37 @@ class Whisper:
             utils.download_model(model_name, basedir=basedir), no_state=no_state
         )
         context.reset_timings()
+        _context_initialized = not no_state
         _ref.__dict__.update(locals())
         return _ref
 
-    def transcribe(self, data: NDArray[np.float32], num_proc: int = 1):
+    def transcribe(
+        self, data: NDArray[np.float32], num_proc: int = 1, strict: bool = False
+    ):
         """Transcribe audio from a given numpy array.
 
         Args:
             data (np.ndarray): Audio data as a numpy array.
             num_proc (int, optional): Number of processes to use for transcription. Defaults to 1.
                                       Note that if num_proc > 1, transcription accuracy may decrease.
+            strict (bool, optional): If False, then ``context.init_state()`` will be called if no_state=True.
+                                     Default to False.
 
         Returns:
             Transcribed text.
         """
+        if strict:
+            assert (
+                self.context.is_initialized
+            ), "strict=True and context is not initialized. Make sure to call 'context.init_state()' before."
+        else:
+            if not self.context.is_initialized and not self._context_initialized:
+                self.context.init_state()
+                # NOTE: Make sure context should only be initialized once.
+                self._context_initialized = True
+
         self.context.full_parallel(self.params, data, num_proc)
+
         return "".join(
             [
                 self.context.full_get_segment_text(i)
@@ -167,7 +186,9 @@ class Whisper:
             ]
         )
 
-    def transcribe_from_file(self, filename: str, num_proc: int = 1):
+    def transcribe_from_file(
+        self, filename: str, num_proc: int = 1, strict: bool = False
+    ):
         """Transcribe audio from a given file. This function uses a simple C++ implementation for loading audio file.
 
         Currently only WAV files are supported. PRs are welcome for other format supports.
@@ -178,11 +199,15 @@ class Whisper:
             filename (str): Path to the audio file.
             num_proc (int, optional): Number of processes to use for transcription. Defaults to 1.
                                       Note that if num_proc > 1, transcription accuracy may decrease.
+            strict (bool, optional): If False, then ``context.init_state()`` will be called if no_state=True.
+                                     Default to False.
 
         Returns:
             Transcribed text.
         """
-        return self.transcribe(api.load_wav_file(filename).mono, num_proc)
+        return self.transcribe(
+            api.load_wav_file(filename).mono, num_proc=num_proc, strict=strict
+        )
 
     def stream_transcribe(
         self,

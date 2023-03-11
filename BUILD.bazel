@@ -93,11 +93,11 @@ cc_library(
     name = "context_lib",
     srcs = [
         "//src/whispercpp:context.cc",
-        "//src/whispercpp:context.h",
         "//src/whispercpp:params.cc",
     ],
     hdrs = [
         "//src/whispercpp:context.h",
+        "@com_github_ggerganov_whisper//:whisper.cpp",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
     copts = COPTS,
@@ -136,6 +136,7 @@ pybind_extension(
         "//src/whispercpp:context.h",
         "//src/whispercpp:params.cc",
         "@com_github_ggerganov_whisper//:examples/common.h",
+        "@com_github_ggerganov_whisper//:ggml.h",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
     copts = COPTS,
