@@ -3,6 +3,7 @@ load("@pypi//:requirements.bzl", "requirement")
 
 py_test(
     name = "export",
+    size = "small",
     srcs = ["export_test.py"],
     data = [
         "//:api_cpp2py_export.so",
@@ -18,6 +19,7 @@ py_test(
 
 py_test(
     name = "utils",
+    size = "small",
     srcs = ["utils_test.py"],
     data = ["//:api_cpp2py_export.so"],
     deps = [
@@ -28,6 +30,7 @@ py_test(
 
 py_test(
     name = "params",
+    size = "small",
     srcs = ["params_export_test.py"],
     data = ["//:api_cpp2py_export.so"],
     deps = [
@@ -38,6 +41,7 @@ py_test(
 
 py_test(
     name = "context",
+    timeout = "moderate",
     srcs = ["context_export_test.py"],
     data = [
         "//:api_cpp2py_export.so",

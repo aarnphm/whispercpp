@@ -3,6 +3,7 @@ load("@pypi//:requirements.bzl", "requirement")
 
 py_test(
     name = "explore",
+    size = "small",
     srcs = [
         "bindings/explore.py",
         "bindings/explore_test.py",
