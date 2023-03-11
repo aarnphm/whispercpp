@@ -12,12 +12,14 @@
 #include "whisper.h"
 #endif
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <numeric>
 #include <sstream>
+#include <stdexcept>
 #include <stdio.h>
 #include <string>
 #include <type_traits>
@@ -135,12 +137,12 @@ template <typename CB> struct CallbackAndContext {
 
 struct Params {
 public:
-  typedef std::function<void(Context &, int)> NewSegmentCallback;
+  typedef std::function<void(Context &, int)> NewSegmentCallbackHandler;
 
 private:
   std::shared_ptr<whisper_full_params> fp;
 
-  CallbackAndContext<NewSegmentCallback> new_segment_callback;
+  CallbackAndContext<NewSegmentCallbackHandler> new_segment_callback;
 
   friend struct Context;
 
@@ -157,7 +159,7 @@ public:
   Params();
 
   Params(std::shared_ptr<whisper_full_params> &&fp,
-         CallbackAndContext<NewSegmentCallback> new_segment_callback)
+         CallbackAndContext<NewSegmentCallbackHandler> new_segment_callback)
       : fp(fp), new_segment_callback(new_segment_callback){};
 
   Params(Params const &);
@@ -417,7 +419,7 @@ public:
   // called for every newly generated text segments
   // Do not use this function unless you know what you are doing.
   // Defaults to None.
-  void set_new_segment_callback(NewSegmentCallback callback);
+  void set_new_segment_callback(NewSegmentCallbackHandler callback);
 
   // Set the callback for starting the encoder.
   // Do not use this function unless you know what you are doing.
@@ -441,14 +443,22 @@ void ExportSamplingStrategiesApi(py::module &m);
 
 struct Context {
 private:
-  whisper_context *ctx;
+  whisper_context *wctx;
+  whisper_state *wstate;
+  bool state_initialized;
   bool spectrogram_initialized;
   bool encode_completed;
   bool decode_once;
 
 public:
-  static Context from_file(const char *filename);
-  static Context from_buffer(std::vector<char> *buffer);
+  // setters functions
+  void set_context(whisper_context *wctx) { this->wctx = wctx; }
+  void set_state(whisper_state *wstate) { this->wstate = wstate; }
+
+  static Context from_file(const char *filename, bool no_state = false);
+  static Context from_buffer(std::vector<char> *buffer, bool no_state = false);
+  // TODO: implement whisper_init(loader, no_state=false)
+  void *init_state();
   void free();
   void pc_to_mel(std::vector<float> &pcm, size_t threads, bool phase_vocoder);
   void set_mel(std::vector<float> &mel);

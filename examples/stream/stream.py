@@ -13,6 +13,7 @@ def main(**kwargs: t.Any):
             length_ms=kwargs["length_ms"],
             device_id=kwargs["device_id"],
             sample_rate=kwargs["sample_rate"],
+            step_ms=kwargs["step_ms"],
         )
     finally:
         assert iterator is not None, "Something went wrong!"
@@ -43,6 +44,7 @@ if __name__ == "__main__":
         help="Sample rate of the audio device",
         default=w.api.SAMPLE_RATE,
     )
+    parser.add_argument("--step_ms", type=int, help="Step size", default=500)
     parser.add_argument(
         "--list_audio_devices",
         action="store_true",

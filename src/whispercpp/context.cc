@@ -1,26 +1,75 @@
 #include "context.h"
-#include <assert.h>
-#include <sstream>
 
-Context Context::from_file(const char *filename) {
-  Context context;
-  context.ctx = whisper_init_from_file(filename);
-  if (context.ctx == nullptr) {
-    throw std::runtime_error("whisper_init_from_file failed");
-  }
-  return context;
+#define NO_STATE_WARNING(no_state)                                             \
+  do {                                                                         \
+    if (no_state) {                                                            \
+      fprintf(stderr,                                                          \
+              "%s#L%d: '%s' is called with "                                   \
+              "'no_state=True'. Make sure "                                    \
+              "to call "                                                       \
+              "'init_state()' before inference\n",                             \
+              __FILE__, __LINE__, __func__);                                   \
+    }                                                                          \
+  } while (0)
+
+#define throw_exceptions(msg)                                                  \
+  do {                                                                         \
+    throw std::runtime_error((std::stringstream()                              \
+                              << __FILE__ << "#L" << std::to_string(__LINE__)  \
+                              << ": " << msg)                                  \
+                                 .str());                                      \
+  } while (0)
+
+#define RAISE_IF_NULL(ptr)                                                     \
+  do {                                                                         \
+    if ((ptr) == nullptr) {                                                    \
+      throw_exceptions(#ptr << " is not initialized. Make sure to call "       \
+                               "'from_file()' or 'from_buffer()' first.");     \
+    }                                                                          \
+  } while (0)
+
+void *Context::init_state() {
+  state_initialized = true;
+  RAISE_IF_NULL(wctx);
+  whisper_state *wstate = whisper_init_state(wctx);
+  this->set_state(wstate);
+  RAISE_IF_NULL(wstate);
+  return this;
 }
 
-Context Context::from_buffer(std::vector<char> *buffer) {
-  Context context;
-  context.ctx = whisper_init_from_buffer(buffer->data(), buffer->size());
-  if (context.ctx == nullptr) {
-    throw std::runtime_error("whisper_init_from_file failed");
+Context Context::from_file(const char *filename, bool no_state) {
+  Context c;
+  NO_STATE_WARNING(no_state);
+
+  if (no_state) {
+    c.set_context(whisper_init_from_file_no_state(filename));
+  } else {
+    c.set_context(whisper_init_from_file(filename));
   }
-  return context;
+  RAISE_IF_NULL(c.wctx);
+  return c;
 }
 
-void Context::free() { whisper_free(ctx); }
+Context Context::from_buffer(std::vector<char> *buffer, bool no_state) {
+  Context c;
+  NO_STATE_WARNING(no_state);
+
+  if (no_state) {
+    c.set_context(
+        whisper_init_from_buffer_no_state(buffer->data(), buffer->size()));
+  } else {
+    c.set_context(whisper_init_from_buffer(buffer->data(), buffer->size()));
+  }
+  RAISE_IF_NULL(c.wctx);
+  return c;
+}
+
+void Context::free() {
+  whisper_free(wctx);
+  whisper_free_state(wstate);
+  this->set_context(nullptr);
+  this->set_state(nullptr);
+}
 
 // Convert RAW PCM audio to log mel spectrogram.
 // The resulting spectrogram is stored inside the provided whisper context.
@@ -34,9 +83,9 @@ void Context::pc_to_mel(std::vector<float> &pcm, size_t threads,
   int res;
   if (phase_vocoder) {
     res =
-        whisper_pcm_to_mel_phase_vocoder(ctx, pcm.data(), pcm.size(), threads);
+        whisper_pcm_to_mel_phase_vocoder(wctx, pcm.data(), pcm.size(), threads);
   } else {
-    res = whisper_pcm_to_mel(ctx, pcm.data(), pcm.size(), threads);
+    res = whisper_pcm_to_mel(wctx, pcm.data(), pcm.size(), threads);
   }
   if (res == -1) {
     throw std::runtime_error("whisper_pcm_to_mel failed");
@@ -51,7 +100,7 @@ void Context::pc_to_mel(std::vector<float> &pcm, size_t threads,
 // The resulting spectrogram is stored inside the provided whisper context.
 void Context::set_mel(std::vector<float> &mel) {
   // n_mel sets to 80
-  int res = whisper_set_mel(ctx, mel.data(), mel.size(), 80);
+  int res = whisper_set_mel(wctx, mel.data(), mel.size(), 80);
   if (res == -1) {
     throw std::runtime_error("whisper_set_mel failed");
   } else if (res == 0) {
@@ -71,7 +120,7 @@ void Context::encode(size_t offset, size_t threads) {
   }
   if (threads < 1)
     throw std::invalid_argument("threads must be >= 1");
-  int res = whisper_encode(ctx, offset, threads);
+  int res = whisper_encode(wctx, offset, threads);
   if (res == -1) {
     throw std::runtime_error("whisper_encode failed");
   } else if (res == 0) {
@@ -92,7 +141,7 @@ void Context::decode(std::vector<whisper_token> *token, size_t n_past,
   }
   if (threads < 1)
     throw std::invalid_argument("threads must be >= 1");
-  int res = whisper_decode(ctx, token->data(), token->size(), n_past, threads);
+  int res = whisper_decode(wctx, token->data(), token->size(), n_past, threads);
   if (res == -1) {
     throw std::runtime_error("whisper_decode failed");
   } else if (res == 0) {
@@ -110,7 +159,7 @@ std::vector<whisper_token> Context::tokenize(std::string *text,
                                              size_t max_tokens) {
   std::vector<whisper_token> tokens;
   tokens.reserve(max_tokens);
-  int ret = whisper_tokenize(ctx, text->c_str(), tokens.data(), max_tokens);
+  int ret = whisper_tokenize(wctx, text->c_str(), tokens.data(), max_tokens);
   if (ret == -1) {
     throw std::runtime_error("invalid text");
   } else {
@@ -153,36 +202,43 @@ std::vector<float> Context::lang_detect(size_t offset_ms, size_t threads) {
     throw std::invalid_argument("threads must be >= 1");
   std::vector<float> lang_probs(whisper_lang_max_id());
   int res =
-      whisper_lang_auto_detect(ctx, offset_ms, threads, lang_probs.data());
+      whisper_lang_auto_detect(wctx, offset_ms, threads, lang_probs.data());
   if (res == -1) {
     throw std::runtime_error("whisper_lang_detect failed");
   } else {
-    assert(res == (int)lang_probs.size());
+    if (res != (int)lang_probs.size()) {
+      fprintf(stderr,
+              "whisper_lang_detect returned %d, expected "
+              "size %zu\n",
+              res, lang_probs.size());
+      throw std::runtime_error("whisper_lang_detect returned unknown "
+                               "error");
+    }
     return lang_probs;
   }
 }
 
 // Get mel spectrogram length
-size_t Context::n_len() { return whisper_n_len(ctx); }
+size_t Context::n_len() { return whisper_n_len(wctx); }
 
 // Get number of vocab
-size_t Context::n_vocab() { return whisper_n_vocab(ctx); }
+size_t Context::n_vocab() { return whisper_n_vocab(wctx); }
 
 // Get number of text context
-size_t Context::n_text_ctx() { return whisper_n_text_ctx(ctx); }
+size_t Context::n_text_ctx() { return whisper_n_text_ctx(wctx); }
 
 // Get number of audio context
-size_t Context::n_audio_ctx() { return whisper_n_audio_ctx(ctx); }
+size_t Context::n_audio_ctx() { return whisper_n_audio_ctx(wctx); }
 
 // check if the model is multilingual
-bool Context::is_multilingual() { return whisper_is_multilingual(ctx) != 0; }
+bool Context::is_multilingual() { return whisper_is_multilingual(wctx) != 0; }
 
 // Token logits obtained from last call to decode()
 std::vector<std::vector<float>> Context::get_logits(int segment) {
   if (!spectrogram_initialized) {
     throw std::runtime_error("spectrogram not initialized");
   }
-  float *ret = whisper_get_logits(ctx);
+  float *ret = whisper_get_logits(wctx);
   if (ret == nullptr) {
     throw std::runtime_error("whisper_get_logits failed");
   }
@@ -202,7 +258,7 @@ std::vector<std::vector<float>> Context::get_logits(int segment) {
 
 // Convert token id to string. Use the vocabulary in provided context
 std::string Context::token_to_str(whisper_token token_id) {
-  const char *ret = whisper_token_to_str(ctx, token_id);
+  const char *ret = whisper_token_to_str(wctx, token_id);
   if (ret == nullptr) {
     throw std::runtime_error("whisper_token_to_str failed");
   }
@@ -210,22 +266,22 @@ std::string Context::token_to_str(whisper_token token_id) {
 }
 
 // Some special tokens
-whisper_token Context::eot_token() { return whisper_token_eot(ctx); }
-whisper_token Context::sot_token() { return whisper_token_sot(ctx); }
-whisper_token Context::prev_token() { return whisper_token_prev(ctx); }
-whisper_token Context::solm_token() { return whisper_token_solm(ctx); }
-whisper_token Context::not_token() { return whisper_token_not(ctx); }
-whisper_token Context::beg_token() { return whisper_token_beg(ctx); }
+whisper_token Context::eot_token() { return whisper_token_eot(wctx); }
+whisper_token Context::sot_token() { return whisper_token_sot(wctx); }
+whisper_token Context::prev_token() { return whisper_token_prev(wctx); }
+whisper_token Context::solm_token() { return whisper_token_solm(wctx); }
+whisper_token Context::not_token() { return whisper_token_not(wctx); }
+whisper_token Context::beg_token() { return whisper_token_beg(wctx); }
 whisper_token Context::lang_token(int lang_id) {
-  return whisper_token_lang(ctx, lang_id);
+  return whisper_token_lang(wctx, lang_id);
 }
 // task tokens
 whisper_token Context::token_translate() { return whisper_token_translate(); }
 whisper_token Context::token_transcribe() { return whisper_token_transcribe(); }
 
 // perf inform and sys info
-void Context::print_timings() { whisper_print_timings(ctx); }
-void Context::reset_timings() { whisper_reset_timings(ctx); }
+void Context::print_timings() { whisper_print_timings(wctx); }
+void Context::reset_timings() { whisper_reset_timings(wctx); }
 std::string Context::sys_info() {
   return std::string(whisper_print_system_info());
 }
@@ -236,8 +292,18 @@ std::string Context::sys_info() {
 // Uses the specified decoding strategy to obtain the text. This is
 // usually the only function you need to call as an end user.
 int Context::full(Params params, std::vector<float> data) {
+  if (wctx == nullptr) {
+    throw std::runtime_error("context is not initialized (due to "
+                             "either 'free()' is called or "
+                             "failed to create the context). Try "
+                             "to initialize with 'from_file' "
+                             "or 'from_buffer' and try again.");
+  }
+  if (!state_initialized) {
+    throw_exceptions("state is not initialized");
+  }
   Params copy = params.copy_for_full(*this);
-  int ret = whisper_full(ctx, *copy.get(), data.data(), data.size());
+  int ret = whisper_full(wctx, *copy.get(), data.data(), data.size());
   if (ret == -1) {
     throw std::runtime_error("unable to calculate spectrogram");
   } else if (ret == 7) {
@@ -256,7 +322,7 @@ int Context::full(Params params, std::vector<float> data) {
 int Context::full_parallel(Params params, std::vector<float> data,
                            int num_processor) {
   Params copy = params.copy_for_full(*this);
-  int ret = whisper_full_parallel(ctx, *copy.get(), data.data(), data.size(),
+  int ret = whisper_full_parallel(wctx, *copy.get(), data.data(), data.size(),
                                   num_processor);
   if (ret == -1) {
     throw std::runtime_error("unable to calculate spectrogram");
@@ -273,24 +339,24 @@ int Context::full_parallel(Params params, std::vector<float> data,
 
 // Number of generated text segments.
 // A segment can be a few words, a sentence, or even a paragraph.
-int Context::full_n_segments() { return whisper_full_n_segments(ctx); }
+int Context::full_n_segments() { return whisper_full_n_segments(wctx); }
 
 // Get language id associated with current context
-int Context::full_lang_id() { return whisper_full_lang_id(ctx); }
+int Context::full_lang_id() { return whisper_full_lang_id(wctx); }
 
 // Get the start time of the specified segment.
 int Context::full_get_segment_t0(int segment) {
-  return whisper_full_get_segment_t0(ctx, segment);
+  return whisper_full_get_segment_t0(wctx, segment);
 }
 
 // Get the end time of the specified segment.
 int Context::full_get_segment_t1(int segment) {
-  return whisper_full_get_segment_t1(ctx, segment);
+  return whisper_full_get_segment_t1(wctx, segment);
 }
 
 // Get the text of the specified segment.
 const char *Context::full_get_segment_text(int segment) {
-  const char *ret = whisper_full_get_segment_text(ctx, segment);
+  const char *ret = whisper_full_get_segment_text(wctx, segment);
   if (ret == nullptr) {
     throw std::runtime_error("null pointer");
   }
@@ -299,37 +365,42 @@ const char *Context::full_get_segment_text(int segment) {
 
 // Get numbers of tokens in specified segments.
 int Context::full_n_tokens(int segment) {
-  return whisper_full_n_tokens(ctx, segment);
+  return whisper_full_n_tokens(wctx, segment);
 }
 
 // Get the token text of the specified token in the specified segment.
 std::string Context::full_get_token_text(int segment, int token) {
-  const char *ret = whisper_full_get_token_text(ctx, segment, token);
+  const char *ret = whisper_full_get_token_text(wctx, segment, token);
   if (ret == nullptr) {
     throw std::runtime_error("null pointer");
   }
   return std::string(ret);
 }
 whisper_token Context::full_get_token_id(int segment, int token) {
-  return whisper_full_get_token_id(ctx, segment, token);
+  return whisper_full_get_token_id(wctx, segment, token);
 }
 
 // Get token data for the specified token in the specified segment.
 // This contains probabilities, timestamps, etc.
 whisper_token_data Context::full_get_token_data(int segment, int token) {
-  return whisper_full_get_token_data(ctx, segment, token);
+  return whisper_full_get_token_data(wctx, segment, token);
 }
 
 // Get the probability of the specified token in the specified segment.
 float Context::full_get_token_prob(int segment, int token) {
-  return whisper_full_get_token_p(ctx, segment, token);
+  return whisper_full_get_token_p(wctx, segment, token);
 }
 
 void ExportContextApi(py::module &m) {
   py::class_<Context>(m, "Context", "A light wrapper around whisper_context")
-      .def_static("from_file", &Context::from_file, "filename"_a)
-      .def_static("from_buffer", &Context::from_buffer, "buffer"_a)
-      .def("free", &Context::free)
+      .def_static("from_file", &Context::from_file, "filename"_a,
+                  "no_state"_a = false)
+      .def_static("from_buffer", &Context::from_buffer, "buffer"_a,
+                  "no_state"_a = false)
+      .def("init_state", &Context::init_state,
+           py::call_guard<py::gil_scoped_release>())
+      // free will dealloc the context, hence the take_ownership
+      .def("free", &Context::free, py::return_value_policy::take_ownership)
       .def("pc_to_mel", &Context::pc_to_mel, "pcm"_a, "threads"_a = 1,
            "phase_vocoder"_a = false)
       .def("set_mel", &Context::set_mel, "mel"_a)

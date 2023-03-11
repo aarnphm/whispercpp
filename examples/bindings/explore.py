@@ -1,21 +1,13 @@
-"""
-Demonstrate how to use the C++ binding directly.
-"""
+"""Demonstrate how to use the C++ binding directly."""
 from __future__ import annotations
 
 import sys
-import typing as t
 import functools as f
 from os import environ
 from pathlib import Path
 
+# NOTE: don't change this import, as it is currently used for a hack on test.
 import whispercpp as w
-from whispercpp.utils import LazyLoader
-
-if t.TYPE_CHECKING:
-    import numpy as np
-else:
-    np = LazyLoader("np", globals(), "numpy")
 
 _model: w.Whisper | None = None
 

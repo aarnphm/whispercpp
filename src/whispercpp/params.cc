@@ -33,10 +33,12 @@ SamplingStrategies::from_sampling_strategy(SamplingType *st) {
   return ss;
 };
 
-void new_segment_callback_handler(whisper_context *ctx, int n_new,
+void new_segment_callback_handler(whisper_context *ctx,
+                                  whisper_state * /* state */, int n_new,
                                   void *user_data) {
   auto new_segment_callback =
-      (CallbackAndContext<Params::NewSegmentCallback>::Container *)user_data;
+      (CallbackAndContext<Params::NewSegmentCallbackHandler>::Container *)
+          user_data;
   auto callback = new_segment_callback->callback;
   if (callback != nullptr) {
     (*callback)(*new_segment_callback->context, n_new);
@@ -53,7 +55,7 @@ Params Params::from_sampling_strategy(SamplingStrategies *ss) {
   auto strategy = ss->build();
 
   whisper_full_params fp = ::whisper_full_default_params(ss->to_enum());
-  CallbackAndContext<NewSegmentCallback> new_segment_callback;
+  CallbackAndContext<NewSegmentCallbackHandler> new_segment_callback;
   fp.new_segment_callback = new_segment_callback_handler;
   fp.new_segment_callback_user_data = new_segment_callback.data.get();
 
@@ -112,9 +114,9 @@ void Params::set_tokens(std::vector<int> &tokens) {
 // called for every newly generated text segments
 // Do not use this function unless you know what you are
 // doing. Defaults to None.
-void Params::set_new_segment_callback(NewSegmentCallback callback) {
+void Params::set_new_segment_callback(NewSegmentCallbackHandler callback) {
   (*new_segment_callback.data).callback =
-      std::make_shared<NewSegmentCallback>(callback);
+      std::make_shared<NewSegmentCallbackHandler>(callback);
 }
 
 // Set the callback for starting the encoder.

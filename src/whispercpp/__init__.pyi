@@ -35,6 +35,7 @@ class Whisper:
         length_ms: int = ...,
         device_id: int = ...,
         sample_rate: int | None = ...,
+        step_ms: int = ...,
     ) -> Generator[str, None, list[str]]: ...
     @classmethod
     def from_pretrained(cls, model_name: str) -> Whisper: ...

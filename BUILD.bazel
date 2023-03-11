@@ -93,8 +93,8 @@ cc_library(
     name = "context_lib",
     srcs = [
         "//src/whispercpp:context.cc",
-        "//src/whispercpp:params.cc",
         "//src/whispercpp:context.h",
+        "//src/whispercpp:params.cc",
     ],
     hdrs = [
         "//src/whispercpp:context.h",
@@ -115,8 +115,8 @@ pybind_extension(
         "//src/whispercpp:audio.cc",
         "//src/whispercpp:audio.h",
         "//src/whispercpp:context.cc",
-        "//src/whispercpp:params.cc",
         "//src/whispercpp:context.h",
+        "//src/whispercpp:params.cc",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
     copts = COPTS,
@@ -124,6 +124,7 @@ pybind_extension(
     deps = [
         ":audio_lib",
         ":context_lib",
+        "@pybind11//:pybind11_embed",
     ],
 )
 
@@ -133,14 +134,17 @@ pybind_extension(
         "//src/whispercpp:api_cpp2py_export.cc",
         "//src/whispercpp:api_cpp2py_export.h",
         "//src/whispercpp:context.cc",
-        "//src/whispercpp:params.cc",
         "//src/whispercpp:context.h",
+        "//src/whispercpp:params.cc",
         "@com_github_ggerganov_whisper//:examples/common.h",
         "@com_github_ggerganov_whisper//:whisper.h",
     ],
     copts = COPTS,
     defines = ["BAZEL_BUILD"],
-    deps = [":context_lib"],
+    deps = [
+        ":context_lib",
+        "@pybind11//:pybind11_embed",
+    ],
 )
 
 write_file(

@@ -58,7 +58,7 @@ load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_depende
 
 rules_foreign_cc_dependencies()
 
-load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_multi_toolchains")
+load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_toolchains")
 
 py_repositories()
 
@@ -66,10 +66,17 @@ load("@rules_python//python/pip_install:repositories.bzl", "pip_install_dependen
 
 pip_install_dependencies()
 
+python_register_toolchains(
+    name = "python38",
+    python_version = "3.8",
+)
+
+load("@python38//:defs.bzl", "interpreter")
 load("@rules_python//python:pip.bzl", "pip_parse")
 
 pip_parse(
     name = "pypi",
+    python_interpreter_target = interpreter,
     requirements_lock = "//requirements:bazel-pypi.lock.txt",
 )
 
@@ -79,7 +86,10 @@ install_deps()
 
 load("@pybind11_bazel//:python_configure.bzl", "python_configure")
 
-python_configure(name = "local_config_python")
+python_configure(
+    name = "local_config_python",
+    python_interpreter_target = interpreter,
+)
 
 load("//rules:python.bzl", "declare_python_abi")
 
