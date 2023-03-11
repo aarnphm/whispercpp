@@ -65,12 +65,12 @@ py_repositories()
 
 python_register_multi_toolchains(
     name = "python",
-    default_version = MINOR_MAPPING.values()[-1],
+    default_version = MINOR_MAPPING.values()[-2],  # 3.10.9
     python_versions = MINOR_MAPPING.values(),
 )
 
 load("@rules_python//python:pip.bzl", "pip_parse")
-load("@python//3.11.1:defs.bzl", "interpreter")
+load("@python//3.10.9:defs.bzl", "interpreter")
 
 pip_parse(
     name = "pypi",
