@@ -58,13 +58,9 @@ load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_depende
 
 rules_foreign_cc_dependencies()
 
-load("@rules_python//python:repositories.bzl", "py_repositories", "python_register_multi_toolchains")
+load("@rules_python//python:repositories.bzl", "py_repositories")
 
 py_repositories()
-
-load("@rules_python//python/pip_install:repositories.bzl", "pip_install_dependencies")
-
-pip_install_dependencies()
 
 load("@rules_python//python:pip.bzl", "pip_parse")
 
@@ -73,9 +69,9 @@ pip_parse(
     requirements_lock = "//requirements:bazel-pypi.lock.txt",
 )
 
-load("@pypi//:requirements.bzl", "install_deps")
+load("@pypi//:requirements.bzl", pypi_deps = "install_deps")
 
-install_deps()
+pypi_deps()
 
 load("@pybind11_bazel//:python_configure.bzl", "python_configure")
 

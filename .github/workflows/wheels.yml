@@ -136,9 +136,7 @@ jobs:
         with:
           platforms: all
       - name: Building wheels
-        run: |
-          bazel run pypi_update
-          bazel build whispercpp_wheel
+        run: bazel build whispercpp_wheel
       - name: Test built wheel
         run: |
           python -m venv venv
