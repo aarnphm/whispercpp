@@ -46,7 +46,7 @@ alias(
 
 alias(
     name = "release_update",
-    actual = "//requirements/release:requirements.update"
+    actual = "//requirements/release:requirements.update",
 )
 
 COPTS = [
@@ -128,6 +128,7 @@ pybind_extension(
     deps = [
         ":audio_lib",
         ":context_lib",
+        "@pybind11//:pybind11_embed",
     ],
 )
 
@@ -145,7 +146,10 @@ pybind_extension(
     ],
     copts = COPTS,
     defines = ["BAZEL_BUILD"],
-    deps = [":context_lib"],
+    deps = [
+        ":context_lib",
+        "@pybind11//:pybind11_embed",
+    ],
 )
 
 write_file(
