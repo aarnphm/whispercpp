@@ -21,7 +21,7 @@ jobs:
   build-sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     if: github.repository_owner == 'aarnphm' # Don't run on fork repository
     steps:
       - name: Checkout
@@ -48,7 +48,7 @@ jobs:
     name: Build wheels for ${{ matrix.python[1] }}-${{ matrix.platform[0] }}
     runs-on: ${{ matrix.platform[1] }}
     if: github.repository_owner == 'aarnphm' # Don't run on fork repository
-    timeout-minutes: 90
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -112,7 +112,7 @@ jobs:
   bazel-build-and-release-wheels:
     name: Build wheels for python${{ matrix.python-version }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 90
+    timeout-minutes: 120
     if: github.repository_owner == 'aarnphm' # Don't run on fork repository
     strategy:
       fail-fast: false
@@ -136,9 +136,10 @@ jobs:
         with:
           platforms: all
       - name: Building wheels
-        run: bazel build whispercpp_wheel
+        run: |
+          bazel run pypi_update
+          bazel build whispercpp_wheel
       - name: Test built wheel
-        if: ${{ github.event_name == 'pull_request' }}
         run: |
           python -m venv venv
           source venv/bin/activate
