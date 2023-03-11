@@ -71,9 +71,13 @@ class Whisper:
         _ref: Whisper
         context: api.Context
         params: api.Params
+        no_state: bool
+        basedir: str | None
 
     @staticmethod
-    def from_pretrained(model_name: str, basedir: str | None = None):
+    def from_pretrained(
+        model_name: str, basedir: str | None = None, no_state: bool = True
+    ):
         """Load a preconverted model from a given model name.
 
         Currently it doesn't support custom preconverted models yet. PRs are welcome.
@@ -82,6 +86,7 @@ class Whisper:
             model_name (str): Name of the preconverted model.
             basedir (str, optional): Base directory to store the model. Defaults to None.
                                      Default will be "$XDG_DATA_HOME/whispercpp" for directory.
+            no_state (bool, optional): Whether to initialize the model state. Defaults to True.
 
         Returns:
             A ``Whisper`` object.
@@ -95,13 +100,49 @@ class Whisper:
             )
         _ref = object.__new__(Whisper)
         context = api.Context.from_file(
-            utils.download_model(model_name, basedir=basedir)
+            utils.download_model(model_name, basedir=basedir), no_state=no_state
         )
-        params = (
+        params = (  # noqa # type: ignore
             api.Params.from_enum(api.SAMPLING_GREEDY)
             .with_print_progress(False)
             .with_print_realtime(False)
             .build()
+        )
+        context.reset_timings()
+        _ref.__dict__.update(locals())
+        return _ref
+
+    @staticmethod
+    def from_params(
+        model_name: str,
+        params: api.Params,  # noqa # type: ignore
+        basedir: str | None = None,
+        no_state: bool = True,
+    ):
+        """Load a preconverted model from a given model name and params.
+
+        Currently it doesn't support custom preconverted models yet. PRs are welcome.
+
+        Args:
+            model_name (str): Name of the preconverted model.
+            params (api.Params): Params to be passed to Whisper.
+            basedir (str, optional): Base directory to store the model. Defaults to None.
+                                     Default will be "$XDG_DATA_HOME/whispercpp" for directory.
+            no_state (bool, optional): Whether to initialize the model state. Defaults to True.
+
+        Returns:
+            A ``Whisper`` object.
+
+        Raises:
+            RuntimeError: If the given model name is not a valid preconverted model.
+        """
+        if model_name not in utils.MODELS_URL:
+            raise RuntimeError(
+                f"'{model_name}' is not a valid preconverted model. Choose one of {list(utils.MODELS_URL)}"
+            )
+        _ref = object.__new__(Whisper)
+        context = api.Context.from_file(
+            utils.download_model(model_name, basedir=basedir), no_state=no_state
         )
         context.reset_timings()
         _ref.__dict__.update(locals())

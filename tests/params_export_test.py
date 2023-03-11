@@ -87,6 +87,7 @@ def test_sampling_on_setattr_warning():
         ss = w.api.SamplingStrategies.from_enum(w.api.SAMPLING_BEAM_SEARCH)
         ss.beam_search = w.api.SamplingBeamSearchStrategy(2, 2)
 
+
 def test_set_language():
     params = w.api.Params.from_enum(w.api.StrategyType.SAMPLING_GREEDY)
     for lang in ["en", "de", "auto", ""]:

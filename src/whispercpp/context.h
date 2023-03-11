@@ -12,12 +12,14 @@
 #include "whisper.h"
 #endif
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <numeric>
 #include <sstream>
+#include <stdexcept>
 #include <stdio.h>
 #include <string>
 #include <type_traits>
@@ -444,13 +446,25 @@ void ExportSamplingStrategiesApi(py::module &m);
 struct Context {
 private:
   whisper_context *ctx;
+  whisper_state *wstate;
   bool spectrogram_initialized;
   bool encode_completed;
   bool decode_once;
 
+  bool init_with_state = false;
+
 public:
-  static Context from_file(const char *filename);
-  static Context from_buffer(std::vector<char> *buffer);
+  // setters functions
+  void set_context(whisper_context *wctx) { this->ctx = wctx; }
+  void set_state(whisper_state *wstate) { this->wstate = wstate; }
+  void set_init_with_state(bool init_with_state) {
+    this->init_with_state = init_with_state;
+  }
+
+  static Context from_file(const char *filename, bool no_state = false);
+  static Context from_buffer(std::vector<char> *buffer, bool no_state = false);
+  // TODO: implement whisper_init(loader, no_state=false)
+  void *init_state();
   void free();
   void pc_to_mel(std::vector<float> &pcm, size_t threads, bool phase_vocoder);
   void set_mel(std::vector<float> &mel);

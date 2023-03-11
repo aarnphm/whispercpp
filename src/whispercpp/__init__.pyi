@@ -35,6 +35,25 @@ class Whisper:
         length_ms: int = ...,
         device_id: int = ...,
         sample_rate: int | None = ...,
+        step_ms: int = ...,
     ) -> Generator[str, None, list[str]]: ...
     @classmethod
+    @overload
     def from_pretrained(cls, model_name: str) -> Whisper: ...
+    @classmethod
+    @overload
+    def from_pretrained(
+        cls, model_name: str, basedir: str | None = ..., no_state: bool = ...
+    ) -> Whisper: ...
+    @classmethod
+    @overload
+    def from_params(cls, model_name: str, params: api.Params) -> Whisper: ...
+    @classmethod
+    @overload
+    def from_params(
+        cls,
+        model_name: str,
+        params: api.Params,
+        basedir: str | None = ...,
+        no_state: bool = ...,
+    ) -> Whisper: ...

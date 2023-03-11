@@ -1,26 +1,76 @@
 #include "context.h"
-#include <assert.h>
-#include <sstream>
 
-Context Context::from_file(const char *filename) {
-  Context context;
-  context.ctx = whisper_init_from_file(filename);
-  if (context.ctx == nullptr) {
-    throw std::runtime_error("whisper_init_from_file failed");
-  }
-  return context;
+#define NO_STATE_WARNING(no_state)                                             \
+  do {                                                                         \
+    if (no_state) {                                                            \
+      fprintf(stderr,                                                          \
+              "%s#L%d: '%s' is called with "                                   \
+              "'no_state=True'. Make sure "                                    \
+              "to call "                                                       \
+              "'init_state()' before inference\n",                             \
+              __FILE__, __LINE__, __func__);                                   \
+    }                                                                          \
+  } while (0)
+
+#define throw_exceptions(msg)                                                  \
+  do {                                                                         \
+    throw std::runtime_error((std::stringstream()                              \
+                              << __FILE__ << "#L" << std::to_string(__LINE__)  \
+                              << ": " << msg)                                  \
+                                 .str());                                      \
+  } while (0)
+
+#define RAISE_IF_NULL(ptr)                                                     \
+  do {                                                                         \
+    if ((ptr) == nullptr) {                                                    \
+      throw_exceptions(#ptr << " is not initialized. Make sure to call "       \
+                               "'from_file()' or 'from_buffer()' first.");     \
+    }                                                                          \
+  } while (0)
+
+void *Context::init_state() {
+  RAISE_IF_NULL(ctx);
+  whisper_state *wstate = whisper_init_state(ctx);
+  this->set_state(wstate);
+  RAISE_IF_NULL(wstate);
+  return this;
 }
 
-Context Context::from_buffer(std::vector<char> *buffer) {
-  Context context;
-  context.ctx = whisper_init_from_buffer(buffer->data(), buffer->size());
-  if (context.ctx == nullptr) {
-    throw std::runtime_error("whisper_init_from_file failed");
+Context Context::from_file(const char *filename, bool no_state) {
+  Context c;
+  NO_STATE_WARNING(no_state);
+
+  if (no_state) {
+    c.set_context(whisper_init_from_file_no_state(filename));
+  } else {
+    c.set_context(whisper_init_from_file(filename));
+    c.set_init_with_state(true);
   }
-  return context;
+  RAISE_IF_NULL(c.ctx);
+  return c;
 }
 
-void Context::free() { whisper_free(ctx); }
+Context Context::from_buffer(std::vector<char> *buffer, bool no_state) {
+  Context c;
+  NO_STATE_WARNING(no_state);
+
+  if (no_state) {
+    c.set_context(
+        whisper_init_from_buffer_no_state(buffer->data(), buffer->size()));
+  } else {
+    c.set_context(whisper_init_from_buffer(buffer->data(), buffer->size()));
+    c.set_init_with_state(true);
+  }
+  RAISE_IF_NULL(c.ctx);
+  return c;
+}
+
+void Context::free() {
+  whisper_free(ctx);
+  whisper_free_state(wstate);
+  this->set_context(nullptr);
+  this->set_state(nullptr);
+}
 
 // Convert RAW PCM audio to log mel spectrogram.
 // The resulting spectrogram is stored inside the provided whisper context.
@@ -236,6 +286,16 @@ std::string Context::sys_info() {
 // Uses the specified decoding strategy to obtain the text. This is
 // usually the only function you need to call as an end user.
 int Context::full(Params params, std::vector<float> data) {
+  if (ctx == nullptr) {
+    throw std::runtime_error("context is not initialized (due to "
+                             "either 'free()' is called or "
+                             "failed to create the context). Try "
+                             "to initialize with 'from_file' "
+                             "or 'from_buffer' and try again.");
+  }
+  if (!init_with_state) {
+    throw_exceptions("state is not initialized");
+  }
   Params copy = params.copy_for_full(*this);
   int ret = whisper_full(ctx, *copy.get(), data.data(), data.size());
   if (ret == -1) {
@@ -327,9 +387,13 @@ float Context::full_get_token_prob(int segment, int token) {
 
 void ExportContextApi(py::module &m) {
   py::class_<Context>(m, "Context", "A light wrapper around whisper_context")
-      .def_static("from_file", &Context::from_file, "filename"_a)
-      .def_static("from_buffer", &Context::from_buffer, "buffer"_a)
-      .def("free", &Context::free)
+      .def_static("from_file", &Context::from_file, "filename"_a,
+                  "no_state"_a = false)
+      .def_static("from_buffer", &Context::from_buffer, "buffer"_a,
+                  "no_state"_a = false)
+      .def("init_state", &Context::init_state)
+      // free will delete the context, hence the take_ownership
+      .def("free", &Context::free, py::return_value_policy::take_ownership)
       .def("pc_to_mel", &Context::pc_to_mel, "pcm"_a, "threads"_a = 1,
            "phase_vocoder"_a = false)
       .def("set_mel", &Context::set_mel, "mel"_a)
@@ -342,9 +406,12 @@ void ExportContextApi(py::module &m) {
       .def("lang_detect", &Context::lang_detect, "offset_ms"_a, "threads"_a = 1)
       .def("get_logits", &Context::get_logits, "segment"_a)
       .def("token_to_str", &Context::token_to_str, "token_id"_a)
-      .def("token_to_bytes", [](Context & context, whisper_token token_id) {
-          return py::bytes(context.token_to_str(token_id));
-      }, "token_id"_a)
+      .def(
+          "token_to_bytes",
+          [](Context &context, whisper_token token_id) {
+            return py::bytes(context.token_to_str(token_id));
+          },
+          "token_id"_a)
       .def("lang_token", &Context::lang_token, "lang_id"_a)
       .def_property_readonly("n_len", &Context::n_len)
       .def_property_readonly("n_vocab", &Context::n_vocab)
