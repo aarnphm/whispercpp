@@ -229,7 +229,7 @@ py_wheel(
     python_tag = python_abi(),
     stamp = 1,
     strip_path_prefixes = ["src"],
-    twine = "@pypi_twine//:pkg",
+    twine = "@release_twine//:pkg",
     # NOTE: This can be replaced by building with --stamp --embed_label=1.2.3
     version = select({
         "//conditions:default": "0.0.12",
