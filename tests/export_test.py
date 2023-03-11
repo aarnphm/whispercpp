@@ -18,6 +18,8 @@ else:
 
 ROOT = Path(__file__).parent.parent
 
+JFK_WAV = ROOT.joinpath("samples", "jfk.wav")
+
 
 def preprocess(file: Path, sample_rate: int = 16000) -> NDArray[np.float32]:
     if not s.which("ffmpeg"):
@@ -37,6 +39,10 @@ def preprocess(file: Path, sample_rate: int = 16000) -> NDArray[np.float32]:
 def test_invalid_models():
     with p.raises(RuntimeError):
         w.Whisper.from_pretrained("whisper_v0.1")
+    with p.raises(RuntimeError):
+        w.Whisper.from_params(
+            "whisper_v0.1", w.api.Params.from_enum(w.api.SAMPLING_GREEDY)
+        )
 
 
 def test_forbid_init():
@@ -50,17 +56,27 @@ _EXPECTED = " And so my fellow Americans ask not what your country can do for yo
 @p.mark.skipif(not s.which("ffmpeg"), reason="ffmpeg not found, skipping this test.")
 def test_from_pretrained():
     m = w.Whisper.from_pretrained("tiny.en")
-    assert _EXPECTED == m.transcribe(preprocess(ROOT / "samples" / "jfk.wav"))
+    assert _EXPECTED == m.transcribe(preprocess(JFK_WAV))
+
+
+@p.mark.skipif(not s.which("ffmpeg"), reason="ffmpeg not found, skipping this test.")
+def test_from_params():
+    m = w.Whisper.from_params("tiny.en", w.api.Params.from_enum(w.api.SAMPLING_GREEDY))
+    assert _EXPECTED == m.transcribe(preprocess(JFK_WAV))
 
 
 @p.mark.skipif(not s.which("ffmpeg"), reason="ffmpeg not found, skipping this test.")
 def test_load_wav_file():
     np.testing.assert_almost_equal(
-        preprocess(ROOT / "samples" / "jfk.wav"),
-        w.api.load_wav_file(
-            ROOT.joinpath("samples", "jfk.wav").resolve().__fspath__()
-        ).mono,
+        preprocess(JFK_WAV),
+        w.api.load_wav_file(str(JFK_WAV.resolve())).mono,
     )
+
+
+def transcribe_strict():
+    m = w.Whisper.from_pretrained("tiny.en", no_state=True)
+    with p.raises(AssertionError, match="* and context is not initialized *"):
+        m.transcribe_from_file(str(JFK_WAV.resolve()))
 
 
 def test_transcribe_from_wav():

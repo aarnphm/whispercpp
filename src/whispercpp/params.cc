@@ -33,7 +33,8 @@ SamplingStrategies::from_sampling_strategy(SamplingType *st) {
   return ss;
 };
 
-void new_segment_callback_handler(whisper_context *ctx, int n_new,
+void new_segment_callback_handler(whisper_context *ctx,
+                                  whisper_state * /* state */, int n_new,
                                   void *user_data) {
   auto new_segment_callback =
       (CallbackAndContext<Params::NewSegmentCallback>::Container *)user_data;

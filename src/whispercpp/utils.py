@@ -45,7 +45,9 @@ MODELS_URL = {
 }
 
 
-def download_model(model_name: str, basedir: str | None = None) -> str:
+def download_model(
+    model_name: str, basedir: str | None = None
+) -> str:  # pragma: no cover
     """Download a preconverted model from a given model name.
 
     Currently it doesn't support custom preconverted models yet. PRs are welcome.
@@ -65,8 +67,9 @@ def download_model(model_name: str, basedir: str | None = None) -> str:
 
     model_path = path.join(models_dirs, f"ggml-{model_name}.bin")
     if not path.exists(model_path):
-        print(f"Downloading model {model_name}. It may take a while...")
+        sys.stderr.write(f"Downloading model {model_name}. It may take a while...")
         request.urlretrieve(MODELS_URL[model_name], model_path)
+        sys.stderr.flush()
     return model_path
 
 

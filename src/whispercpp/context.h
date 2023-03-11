@@ -12,12 +12,14 @@
 #include "whisper.h"
 #endif
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <numeric>
 #include <sstream>
+#include <stdexcept>
 #include <stdio.h>
 #include <string>
 #include <type_traits>
@@ -443,27 +445,73 @@ void ExportSamplingStrategiesApi(py::module &m);
 
 struct Context {
 private:
-  whisper_context *ctx;
+  whisper_context *wctx;
+  whisper_state *wstate = nullptr;
+
+  bool init_with_state;
   bool spectrogram_initialized;
   bool encode_completed;
   bool decode_once;
 
 public:
-  static Context from_file(const char *filename);
-  static Context from_buffer(std::vector<char> *buffer);
+  ~Context() = default;
+
+  // setters functions
+  void set_context(whisper_context *wctx) { this->wctx = wctx; }
+  void set_state(whisper_state *wstate) { this->wstate = wstate; }
+
+  // check if whether context is set with state
+  void set_init_with_state(bool init_with_state) {
+    this->init_with_state = init_with_state;
+  }
+  bool is_init_with_state() { return init_with_state; }
+
   void free();
+  void free_state();
+  void init_state();
+
+  static Context from_file(const char *filename, bool no_state = false);
+  static Context from_buffer(void *buffer, size_t buffer_size,
+                             bool no_state = false);
+  // TODO: implement init(loader, no_state=false) [whisper_init]
+
+  // Convert RAW PCM audio to log mel spectrogram.
+  // The resulting spectrogram is stored inside the provided whisper context.
+  // Returns 0 on success. This is the combination of whisper_pcm_to_mel and
+  // whisper_pcm_to_mel_phase_vocoder. pass in phase_vocoder = true to use
+  // Phase Vocoder. Default to false.
   void pc_to_mel(std::vector<float> &pcm, size_t threads, bool phase_vocoder);
+
+  // Low-level API for setting custom log mel spectrogram.
+  // The resulting spectrogram is stored inside the provided whisper context.
   void set_mel(std::vector<float> &mel);
 
+  // Run the Whisper encoder on the log mel spectrogram stored inside the
+  // provided whisper context. Make sure to call whisper_pcm_to_mel() or
+  // whisper_set_mel() first. offset can be used to specify the offset of the
+  // first frame in the spectrogram. Returns 0 on success
   void encode(size_t offset, size_t threads);
 
+  // Run the Whisper decoder to obtain the logits and probabilities for the
+  // next token. Make sure to call whisper_encode() first. tokens + n_tokens
+  // is the provided context for the decoder. n_past is the number of tokens
+  // to use from previous decoder calls. Returns 0 on success
   void decode(std::vector<whisper_token> *token, size_t n_past, size_t threads);
 
+  // Run the Whisper decoder to obtain the logits and probabilities for the
+  // next token. Make sure to call whisper_encode() first. tokens + n_tokens
+  // is the provided context for the decoder. n_past is the number of tokens
+  // to use from previous decoder calls. Returns vec<whisper_token> on
+  // success.
   std::vector<whisper_token> tokenize(std::string *text, size_t max_tokens);
-  size_t lang_max_id();
 
+  // Returns id of a given language, raise exception if not found
   int lang_str_to_id(const char *lang);
+  // Returns short string of specified language id, raise exception if nullptr
+  // is returned
   const char *lang_id_to_str(size_t id);
+
+  // language functions. Returns a vector of probabilities for each language.
   std::vector<float> lang_detect(size_t offset_ms, size_t threads);
 
   size_t n_len();
@@ -472,40 +520,76 @@ public:
   size_t n_audio_ctx();
   bool is_multilingual();
 
+  // Token logits obtained from the last call to whisper_decode()
+  // The logits for the last token are stored in the last row
+  // Rows: n_tokens
+  // Cols: n_vocab
   std::vector<std::vector<float>> get_logits(int segment);
 
+  // Convert token id to string. Use the vocabulary in provided context
   std::string token_to_str(whisper_token token_id);
-  whisper_token eot_token();
-  whisper_token sot_token();
-  whisper_token prev_token();
-  whisper_token solm_token();
-  whisper_token not_token();
-  whisper_token beg_token();
-  whisper_token lang_token(int lang_id);
-  whisper_token token_translate();
-  whisper_token token_transcribe();
 
-  void print_timings();
-  void reset_timings();
-  std::string sys_info();
+  // Returns largest language id
+  size_t lang_max_id() { return whisper_lang_max_id(); }
 
+  // Some special tokens
+  whisper_token eot_token() { return whisper_token_eot(wctx); }
+  whisper_token sot_token() { return whisper_token_sot(wctx); }
+  whisper_token prev_token() { return whisper_token_prev(wctx); }
+  whisper_token solm_token() { return whisper_token_solm(wctx); }
+  whisper_token not_token() { return whisper_token_not(wctx); }
+  whisper_token beg_token() { return whisper_token_beg(wctx); }
+  whisper_token token_translate() { return whisper_token_translate(); }
+  whisper_token token_transcribe() { return whisper_token_transcribe(); }
+  whisper_token lang_token(int lang_id) {
+    return whisper_token_lang(wctx, lang_id);
+  }
+
+  // perf inform and sys info
+  void print_timings() { whisper_print_timings(wctx); }
+  void reset_timings() { whisper_reset_timings(wctx); }
+  std::string sys_info() { return std::string(whisper_print_system_info()); }
+
+  // Run the entire model: PCM -> log mel spectrogram -> encoder -> decoder ->
+  // text Not thread safe for same context Uses the specified decoding strategy
+  // to obtain the text.
   int full(Params params, std::vector<float> data);
 
+  // Split the input audio in chunks and process each chunk separately using
+  // whisper_full_with_state() Result is stored in the default state of the
+  // context Not thread safe if executed in parallel on the same context. It
+  // seems this approach can offer some speedup in some cases. However, the
+  // transcription accuracy can be worse at the beginning and end of each chunk.
   int full_parallel(Params params, std::vector<float> data, int num_processor);
 
+  // Number of generated text segments
+  // A segment can be a few words, a sentence, or even a paragraph.
   int full_n_segments();
+
+  // Language id associated with the context's default state
   int full_lang_id();
+
+  // Get the start and end time of the specified segment
   int full_get_segment_t0(int segment);
+
+  // Get the end time of the specified segment.
   int full_get_segment_t1(int segment);
 
+  // Get the text of the specified segment
   const char *full_get_segment_text(int segment);
+
+  // Get number of tokens in the specified segment
   int full_n_tokens(int segment);
 
+  // Get the token text of the specified token in the specified segment
   std::string full_get_token_text(int segment, int token);
-
   whisper_token full_get_token_id(int segment, int token);
+
+  // Get token data for the specified token in the specified segment
+  // This contains probabilities, timestamps, etc.
   whisper_token_data full_get_token_data(int segment, int token);
 
+  // Get the probability of the specified token in the specified segment.
   float full_get_token_prob(int segment, int token);
 };
 
