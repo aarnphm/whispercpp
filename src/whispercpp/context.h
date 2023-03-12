@@ -551,15 +551,16 @@ public:
   std::string sys_info() { return std::string(whisper_print_system_info()); }
 
   // Run the entire model: PCM -> log mel spectrogram -> encoder -> decoder ->
-  // text Not thread safe for same context Uses the specified decoding strategy
-  // to obtain the text.
+  // text Not thread safe for same context Uses the specified decoding
+  // strategy to obtain the text.
   int full(Params params, std::vector<float> data);
 
   // Split the input audio in chunks and process each chunk separately using
   // whisper_full_with_state() Result is stored in the default state of the
   // context Not thread safe if executed in parallel on the same context. It
   // seems this approach can offer some speedup in some cases. However, the
-  // transcription accuracy can be worse at the beginning and end of each chunk.
+  // transcription accuracy can be worse at the beginning and end of each
+  // chunk.
   int full_parallel(Params params, std::vector<float> data, int num_processor);
 
   // Number of generated text segments

@@ -13,6 +13,9 @@ def main(**kwargs: t.Any):
             length_ms=kwargs["length_ms"],
             device_id=kwargs["device_id"],
             sample_rate=kwargs["sample_rate"],
+            step_ms=kwargs["step_ms"],
+            n_threads=kwargs["n_threads"],
+            no_timestamp=True,
         )
     finally:
         assert iterator is not None, "Something went wrong!"
@@ -35,13 +38,25 @@ if __name__ == "__main__":
         "--length_ms",
         type=int,
         help="Length of the audio buffer in milliseconds",
-        default=10000,
+        default=5000,
     )
     parser.add_argument(
         "--sample_rate",
         type=int,
         help="Sample rate of the audio device",
         default=w.api.SAMPLE_RATE,
+    )
+    parser.add_argument(
+        "--step_ms",
+        type=int,
+        help="Step size of the audio buffer in milliseconds",
+        default=500,
+    )
+    parser.add_argument(
+        "--n_threads",
+        type=int,
+        help="Number of threads to use for decoding",
+        default=4,
     )
     parser.add_argument(
         "--list_audio_devices",
