@@ -1,5 +1,6 @@
 """Some streaming examples."""
 
+import os
 import sys
 import typing as t
 
@@ -7,20 +8,16 @@ import whispercpp as w
 
 
 def main(**kwargs: t.Any):
+    kwargs.pop("list_audio_devices")
+    mname = kwargs.pop("model_name", os.getenv("GGML_MODEL", "tiny.en"))
     iterator: t.Iterator[str] | None = None
     try:
-        iterator = w.Whisper.from_pretrained(kwargs["model_name"]).stream_transcribe(
-            length_ms=kwargs["length_ms"],
-            device_id=kwargs["device_id"],
-            sample_rate=kwargs["sample_rate"],
-            step_ms=kwargs["step_ms"],
-            n_threads=kwargs["n_threads"],
-            no_timestamp=True,
-        )
+        iterator = w.Whisper.from_pretrained(mname).stream_transcribe(**kwargs)
     finally:
         assert iterator is not None, "Something went wrong!"
-        sys.stderr.writelines(f"- {it}\n" for it in iterator)
-        sys.stderr.write("Transcriptions:\n")
+        sys.stderr.writelines(
+            ["\nTranscription (line by line):\n"] + [f"{it}\n" for it in iterator]
+        )
         sys.stderr.flush()
 
 
@@ -47,17 +44,30 @@ if __name__ == "__main__":
         default=w.api.SAMPLE_RATE,
     )
     parser.add_argument(
-        "--step_ms",
-        type=int,
-        help="Step size of the audio buffer in milliseconds",
-        default=500,
-    )
-    parser.add_argument(
         "--n_threads",
         type=int,
         help="Number of threads to use for decoding",
-        default=4,
+        default=8,
     )
+    parser.add_argument(
+        "--step_ms",
+        type=int,
+        help="Step size of the audio buffer in milliseconds",
+        default=2000,
+    )
+    parser.add_argument(
+        "--keep_ms",
+        type=int,
+        help="Length of the audio buffer to keep in milliseconds",
+        default=200,
+    )
+    parser.add_argument(
+        "--max_tokens",
+        type=int,
+        help="Maximum number of tokens to decode",
+        default=32,
+    )
+    parser.add_argument("--audio_ctx", type=int, help="Audio context", default=0)
     parser.add_argument(
         "--list_audio_devices",
         action="store_true",

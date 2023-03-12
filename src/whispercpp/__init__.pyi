@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from typing import Iterator
 from typing import overload
-from typing import Generator
 from typing import TYPE_CHECKING
 
 from . import api as api
@@ -31,7 +31,7 @@ class Whisper:
         self, filename: str, num_proc: int = ..., strict: bool = ...
     ) -> str: ...
     @overload
-    def stream_transcribe(self) -> Generator[str, None, list[str]]: ...
+    def stream_transcribe(self) -> Iterator[str]: ...
     @overload
     def stream_transcribe(
         self,
@@ -40,7 +40,7 @@ class Whisper:
         device_id: int = ...,
         sample_rate: int | None = ...,
         step_ms: int = ...,
-    ) -> Generator[str, None, list[str]]: ...
+    ) -> Iterator[str]: ...
     @classmethod
     @overload
     def from_pretrained(cls, model_name: str) -> Whisper: ...

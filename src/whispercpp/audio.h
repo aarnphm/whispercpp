@@ -59,8 +59,6 @@ class AudioCapture {
 
     int stream_transcribe(Context *, Params *, const py::kwargs &);
 
-    std::vector<std::string> m_transcript;
-
   private:
     // Default device
     SDL_AudioDeviceID m_dev_id = 0;
