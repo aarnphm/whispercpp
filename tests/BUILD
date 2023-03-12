@@ -53,7 +53,7 @@ py_test(
 
 py_test(
     name = "context",
-    timeout = "moderate",
+    size = "enormous",
     srcs = ["context_export_test.py"],
     data = [
         ":conftest.py",
@@ -63,6 +63,6 @@ py_test(
     deps = [
         "//src/whispercpp:whispercpp_lib",
         requirement("bazel-runfiles"),
-        requirement("numpy"),
+        requirement("numpy")
     ],
 )

@@ -7,7 +7,6 @@ import typing as t
 if t.TYPE_CHECKING:
     from _pytest.config import Config
 
-
 def pytest_configure(config: Config) -> None:
     # NOTE: this is used to make sure tests can be run hermetically.
     if "BAZEL_TEST" in os.environ:

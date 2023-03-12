@@ -2,26 +2,30 @@
 
 [formatter.python]
 command = "sh"
-options = ["-eucx", """
+options = [
+"-eucx",
+"""
 black .
 isort .
 ruff --fix .
-""", "--"]
-includes = ["*.py"]
+""",
+"--"
+]
+includes = [ "*.py" ]
 excludes = ["extern"]
 
 [formatter.nix]
 command = "nixfmt"
-includes = ["*.nix"]
+includes = [ "*.nix" ]
 excludes = ["nix/sources.nix", "extern"]
 
 [formatter.clang-format]
 command = "clang-format"
-options = ["-i", "--style=file:./.clang-format"]
-includes = ["*.c", "*.cpp", "*.cc", "*.h", "*.hpp"]
+options = [ "-i", "--style=LLVM" ]
+includes = [ "*.c", "*.cpp", "*.cc", "*.h", "*.hpp" ]
 excludes = ["extern/*"]
 
 [formatter.buildifier]
 command = "buildifier"
-options = ["-mode", "fix", "-type", "auto"]
+options = ["-mode", "fix", "-type",  "auto"]
 includes = ["*.bzl", "*.bazel", "BUILD", "WORKSPACE"]

@@ -30,51 +30,51 @@ namespace py = pybind11;
 
 namespace whisper {
 class AudioCapture {
-  public:
-    AudioCapture(int length_ms) {
-        m_length_ms = length_ms;
-        m_running = false;
-    };
+public:
+  AudioCapture(int length_ms) {
+    m_length_ms = length_ms;
+    m_running = false;
+  };
 
-    ~AudioCapture() {
-        if (m_dev_id) {
-            SDL_CloseAudioDevice(m_dev_id);
-        }
+  ~AudioCapture() {
+    if (m_dev_id) {
+      SDL_CloseAudioDevice(m_dev_id);
     }
+  }
 
-    bool init_device(int capture_id, int sample_rate);
+  bool init_device(int capture_id, int sample_rate);
 
-    static std::vector<int> list_available_devices();
+  static std::vector<int> list_available_devices();
 
-    // Needs to keep the last len_ms of audio in circular buffer
-    bool resume();
-    bool pause();
-    bool clear();
+  // Needs to keep the last len_ms of audio in circular buffer
+  bool resume();
+  bool pause();
+  bool clear();
 
-    // implement a SDL callback
-    void callback(uint8_t *stream, int len);
+  // implement a SDL callback
+  void callback(uint8_t *stream, int len);
 
-    // retrieve audio data from the buffer
-    void get(int ms, std::vector<float> &audio);
+  // retrieve audio data from the buffer
+  void get(int ms, std::vector<float> &audio);
 
-    int stream_transcribe(Context *, Params *, const py::kwargs &);
+  int stream_transcribe(Context *, Params *, const py::kwargs &);
 
-    std::vector<std::string> m_transcript;
+  std::vector<std::string> m_transcript;
 
-  private:
-    // Default device
-    SDL_AudioDeviceID m_dev_id = 0;
+private:
+  // Default device
+  SDL_AudioDeviceID m_dev_id = 0;
 
-    int m_length_ms = 0;
-    int m_sample_rate = 0;
+  int m_length_ms = 0;
+  int m_sample_rate = 0;
 
-    std::atomic_bool m_running;
-    std::mutex m_mutex;
+  std::atomic_bool m_running;
+  std::mutex m_mutex;
 
-    std::vector<float> m_audio;
-    std::vector<float> m_audio_new;
-    size_t m_audio_pos = 0;
-    size_t m_audio_len = 0;
+  std::vector<float> m_audio;
+  std::vector<float> m_audio_new;
+  size_t m_audio_pos = 0;
+  size_t m_audio_len = 0;
 };
 
 } // namespace whisper
