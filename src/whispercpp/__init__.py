@@ -73,6 +73,7 @@ class Whisper:
         params: api.Params
         no_state: bool
         basedir: str | None
+        _transcript: list[str]
 
     _context_initialized: bool = False
 
@@ -112,6 +113,7 @@ class Whisper:
         )
         context.reset_timings()
         _context_initialized = not no_state
+        _transcript = []
         _ref.__dict__.update(locals())
         return _ref
 
@@ -149,6 +151,7 @@ class Whisper:
         )
         context.reset_timings()
         _context_initialized = not no_state
+        _transcript = []
         _ref.__dict__.update(locals())
         return _ref
 
@@ -214,9 +217,8 @@ class Whisper:
         device_id: int = 0,
         sample_rate: int | None = None,
         **kwargs: t.Any,
-    ) -> t.Generator[str, None, list[str]]:
-        """
-        Streaming transcription from microphone. Note that this function is blocking.
+    ) -> list[str]:
+        """Streaming transcription from microphone. Note that this function is blocking.
 
         Args:
             length_ms (int, optional): Length of audio to transcribe in milliseconds. Defaults to 10000.
@@ -227,30 +229,34 @@ class Whisper:
         Returns:
             A generator of all transcripted text from given audio device.
         """
-        is_running = True
-
         if sample_rate is None:
             sample_rate = api.SAMPLE_RATE
-        length_ms = kwargs.pop("length_ms", 10000)
+        if "length_ms" not in kwargs:
+            kwargs["length_ms"] = 5000
+        if "step_ms" not in kwargs:
+            kwargs["step_ms"] = 700
 
-        ac = audio.AudioCapture(length_ms)
+        if kwargs["step_ms"] < 500:
+            raise ValueError("step_ms must be >= 500")
+
+        ac = audio.AudioCapture(kwargs["length_ms"])
         if not ac.init_device(device_id, sample_rate):
             raise RuntimeError("Failed to initialize audio capture device.")
 
+        self.params.on_new_segment(self._store_transcript_handler, self._transcript)
+
         try:
-            while is_running:
-                is_running = audio.sdl_poll_events()
-                if not is_running:
-                    break
-                ac.stream_transcribe(
-                    self.context, self.params, length_ms=length_ms, **kwargs
-                )
+            ac.stream_transcribe(self.context, self.params, **kwargs)
         except KeyboardInterrupt:
             # handled from C++
             pass
-        finally:
-            yield from ac.transcript
-            return ac.transcript
+        return self._transcript
+
+    def _store_transcript_handler(self, ctx: api.Context, n_new: int, data: list[str]):
+        segment = ctx.full_n_segments() - n_new
+        while segment < ctx.full_n_segments():
+            data.append(ctx.full_get_segment_text(segment))
+            segment += 1
 
 
 __all__ = ["Whisper", "api", "utils", "audio"]
