@@ -80,7 +80,7 @@ jobs:
         with:
           platforms: all
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.0
+        uses: pypa/cibuildwheel@v2.12.1
         env:
           CIBW_BUILD: ${{ matrix.python[0] }}-${{ matrix.platform[0] }}
       - uses: actions/upload-artifact@v3
