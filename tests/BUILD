@@ -66,3 +66,13 @@ py_test(
         requirement("numpy"),
     ],
 )
+
+# NOTE: disable context test on CI, since it takes too long to run
+test_suite(
+    name = "ci",
+    tests = [
+        ":export",
+        ":params",
+        ":utils",
+    ],
+)

@@ -47,5 +47,4 @@ jobs:
           python -m pip install -r requirements/pypi.txt
           python -m pip install .
       - name: Run tests on python${{ matrix.python-version }}
-        # Set timeout to 90 mins
-        run: bazel test --test_timeout 5400 tests/... examples/...
+        run: bazel test tests:ci examples/...
