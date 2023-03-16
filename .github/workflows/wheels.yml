@@ -32,6 +32,7 @@ jobs:
         uses: ./.github/actions/setup-repo
         with:
           python-version: '3.8'
+          submodules: true
       - name: Build source distributions
         run: |
           # TODO: when bazel support releasing sdist, we can remove this.
@@ -45,9 +46,10 @@ jobs:
         with:
           path: dist/*.tar.gz
   build-arm-musl-wheels:
-    name: Build wheels for ${{ matrix.python[1] }}-${{ matrix.platform[0] }}
+    name: Build wheels for ${{ matrix.python[1] }}-${{ startsWith(matrix.platform[0],
+      'macosx') && 'macosx' || matrix.platform[0] }}
     runs-on: ${{ matrix.platform[1] }}
-    if: github.repository_owner == 'aarnphm' # Don't run on fork repository
+    if: ${{ failure() }} # Don't run on fork repository
     timeout-minutes: 120
     strategy:
       fail-fast: false
@@ -60,7 +62,7 @@ jobs:
         platform:
           - [manylinux_aarch64, ubuntu-latest]
           - [musllinux_x86_64, ubuntu-latest]
-          - [macosx_arm64, macos-latest]
+          - ['macosx_*', macos-latest]
         exclude:
           # TODO: disable manylinux_aarch64 for now
           - platform: [manylinux_aarch64, ubuntu-latest]
@@ -83,6 +85,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.12.1
         env:
           CIBW_BUILD: ${{ matrix.python[0] }}-${{ matrix.platform[0] }}
+          CIBW_ARCHS_MACOS: x86_64 arm64
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.python[0] }}-${{ startsWith(matrix.platform[0], 'macosx')
