@@ -20,8 +20,3 @@ command = "clang-format"
 options = ["-i", "--style=file:./.clang-format"]
 includes = ["*.c", "*.cpp", "*.cc", "*.h", "*.hpp"]
 excludes = ["extern/*"]
-
-[formatter.buildifier]
-command = "buildifier"
-options = ["-mode", "fix", "-type", "auto"]
-includes = ["*.bzl", "*.bazel", "BUILD", "WORKSPACE"]
