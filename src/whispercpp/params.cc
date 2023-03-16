@@ -273,6 +273,16 @@ void ExportSamplingStrategiesApi(py::module &m) {
         .def_static("from_strategy_type",
                     &SamplingStrategies::from_sampling_strategy,
                     "strategy_type"_a)
+        .def_static(
+            "from_strategy_type",
+            [](whisper_sampling_strategy *enum_) {
+                PyErr_WarnEx(PyExc_DeprecationWarning,
+                             "'from_strategy_type' will not take an enum in "
+                             "future release. Enum initialization should be "
+                             "using 'from_enum' instead.",
+                             1);
+                return SamplingStrategies::from_enum(enum_);
+            })
         .def_static("from_enum", &SamplingStrategies::from_enum,
                     "strategy_enum"_a)
         .def_property(
