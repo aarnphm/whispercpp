@@ -7,10 +7,11 @@
 #include <pybind11/pytypes.h>
 #endif
 
-#ifndef __clang__
-    #define GCC_STRINGSTREAM_CAST static_cast< std::stringstream & >
-#elif __GNUC__
-    #define GCC_STRINGSTREAM_CAST ""
+
+#if __GNUC__ > 10 || defined(__clang__)
+#define STREAM_CAST 
+#else
+#define STREAM_CAST static_cast< std::stringstream & >
 #endif
 
 #define NO_STATE_WARNING(no_state)                                             \
@@ -23,15 +24,28 @@
         }                                                                      \
     } while (0)
 
+#if __GNUC__ > 10 || defined(__clang__)
 #define RAISE_RUNTIME_ERROR(msg)                                               \
     do {                                                                       \
-        throw std::runtime_error(GCC_STRINGSTREAM_CAST            \
-                                  (std::stringstream()                         \
-                                  << __FILE__ << "#L"                          \
-                                  << std::to_string(__LINE__) << ": " << msg   \
-                                  << "\n")                                     \
-                                     .str());                                  \
+        throw std::runtime_error((std::stringstream()                          \
+                            << __FILE__ << "#L"                                \
+                            << std::to_string(__LINE__) << ": " << msg         \
+                            << "\n")                                           \
+                                .str());                                       \
     } while (0)
+#else
+#define RAISE_RUNTIME_ERROR(msg)                                               \
+    do {                                                                       \
+        throw std::runtime_error(                                              \
+            static_cast< std::stringstream & > (std::stringstream()            \
+                            << __FILE__ << "#L"                                \
+                            << std::to_string(__LINE__) << ": " << msg         \
+                            << "\n")                                           \
+                                .str());                                       \
+    } while (0)
+#endif
+
+
 
 #define RAISE_IF_NULL(ptr)                                                     \
     do {                                                                       \
@@ -264,12 +278,12 @@ std::vector<float> Context::lang_detect(size_t offset_ms, size_t threads) {
     }
 
     if (res == -1) {
-        RAISE_RUNTIME_ERROR(GCC_STRINGSTREAM_CAST (std::stringstream()
+        RAISE_RUNTIME_ERROR(STREAM_CAST (std::stringstream()
                              << "offset " << offset_ms
                              << "ms is before the start of audio.")
                                 .str());
     } else if (res == -2) {
-        RAISE_RUNTIME_ERROR(GCC_STRINGSTREAM_CAST (std::stringstream()
+        RAISE_RUNTIME_ERROR(STREAM_CAST (std::stringstream()
                              << "offset " << offset_ms
                              << "ms is past the end of the audio.")
                                 .str());
@@ -379,7 +393,7 @@ int Context::full(Params params, std::vector<float> data) {
     } else if (ret == -3) {
         RAISE_RUNTIME_ERROR("Failed to auto-detect language.");
     } else if (ret == -5) {
-        RAISE_RUNTIME_ERROR(GCC_STRINGSTREAM_CAST (std::stringstream()
+        RAISE_RUNTIME_ERROR(STREAM_CAST (std::stringstream()
                              << "audio_ctx is larger than maximum allowed ("
                              << std::to_string(params.get()->audio_ctx) << " > "
                              << this->n_audio_ctx() << ").")
@@ -425,7 +439,7 @@ int Context::full_parallel(Params params, std::vector<float> data,
     } else if (ret == -3) {
         RAISE_RUNTIME_ERROR("Failed to auto-detect language.");
     } else if (ret == -5) {
-        RAISE_RUNTIME_ERROR(GCC_STRINGSTREAM_CAST (std::stringstream()
+        RAISE_RUNTIME_ERROR(STREAM_CAST (std::stringstream()
                              << "audio_ctx is larger than maximum allowed ("
                              << std::to_string(params.get()->audio_ctx) << " > "
                              << this->n_audio_ctx() << ").")
