@@ -28,11 +28,11 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # fetch all tags and branches
+          submodules: true
       - name: Setup CI
         uses: ./.github/actions/setup-repo
         with:
           python-version: '3.8'
-          submodules: true
       - name: Build source distributions
         run: |
           # TODO: when bazel support releasing sdist, we can remove this.
@@ -46,8 +46,7 @@ jobs:
         with:
           path: dist/*.tar.gz
   build-arm-musl-wheels:
-    name: Build wheels for ${{ matrix.python[1] }}-${{ startsWith(matrix.platform[0],
-      'macosx') && 'macosx' || matrix.platform[0] }}
+    name: Build wheels for ${{ matrix.python[1] }}-${{ startsWith(matrix.platform[0], 'macosx') && 'macosx' || matrix.platform[0] }}
     runs-on: ${{ matrix.platform[1] }}
     if: ${{ failure() }} # Don't run on fork repository
     timeout-minutes: 120
@@ -88,8 +87,7 @@ jobs:
           CIBW_ARCHS_MACOS: x86_64 arm64
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.python[0] }}-${{ startsWith(matrix.platform[0], 'macosx')
-            && 'macosx' || matrix.platform[0] }}
+          name: ${{ matrix.python[0] }}-${{ startsWith(matrix.platform[0], 'macosx') && 'macosx' || matrix.platform[0] }}
           path: ./wheelhouse/*.whl
   release-wheels-sdist:
     needs: [build-arm-musl-wheels, build-sdist]
