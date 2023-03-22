@@ -90,7 +90,7 @@ jobs:
           name: ${{ matrix.python[0] }}-${{ startsWith(matrix.platform[0], 'macosx') && 'macosx' || matrix.platform[0] }}
           path: ./wheelhouse/*.whl
   release-wheels-sdist:
-    needs: [build-arm-musl-wheels, build-sdist]
+    needs: [build-sdist]
     runs-on: ubuntu-latest
     if: github.repository_owner == 'aarnphm'
     steps:
