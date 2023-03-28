@@ -97,14 +97,20 @@ class Whisper:
         Raises:
             RuntimeError: If the given model name is not a valid preconverted model.
         """
-        if model_name not in utils.MODELS_URL:
+        if model_name not in utils.MODELS_URL and not _os.path.isfile(model_name):
             raise RuntimeError(
-                f"'{model_name}' is not a valid preconverted model. Choose one of {list(utils.MODELS_URL)}"
+                f"'{model_name}' is not a valid preconverted model or a file path. \
+                    Choose one of {list(utils.MODELS_URL)}"
             )
         _ref = object.__new__(Whisper)
-        context = api.Context.from_file(
-            utils.download_model(model_name, basedir=basedir), no_state=no_state
-        )
+
+        if model_name in utils.MODELS_URL:
+            context = api.Context.from_file(
+                utils.download_model(model_name, basedir=basedir), no_state=no_state
+            )
+        else:
+            context = api.Context.from_file(model_name, no_state=no_state)
+
         params = (  # noqa # type: ignore
             api.Params.from_enum(api.SAMPLING_GREEDY)
             .with_print_progress(False)
@@ -141,14 +147,20 @@ class Whisper:
         Raises:
             RuntimeError: If the given model name is not a valid preconverted model.
         """
-        if model_name not in utils.MODELS_URL:
+        if model_name not in utils.MODELS_URL and not _os.path.isfile(model_name):
             raise RuntimeError(
-                f"'{model_name}' is not a valid preconverted model. Choose one of {list(utils.MODELS_URL)}"
+                f"'{model_name}' is not a valid preconverted model or a file path. \
+                    Choose one of {list(utils.MODELS_URL)}"
             )
         _ref = object.__new__(Whisper)
-        context = api.Context.from_file(
-            utils.download_model(model_name, basedir=basedir), no_state=no_state
-        )
+
+        if model_name in utils.MODELS_URL:
+            context = api.Context.from_file(
+                utils.download_model(model_name, basedir=basedir), no_state=no_state
+            )
+        else:
+            context = api.Context.from_file(model_name, no_state=no_state)
+
         context.reset_timings()
         _context_initialized = not no_state
         _transcript = []
