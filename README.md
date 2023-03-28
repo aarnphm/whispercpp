@@ -54,12 +54,13 @@ The binding provides a `Whisper` class:
 from whispercpp import Whisper
 
 w = Whisper.from_pretrained("tiny.en")
+w = Whisper.from_pretrained("/path/to/ggml-model.bin")
 ```
 
 Currently, the inference API is provided via `transcribe`:
 
 ```python
-w.transcribe(np.ones((1, 16000)))
+w.transcribe(np.ones(16000))
 ```
 
 You can use any of your favorite audio libraries
@@ -127,12 +128,11 @@ See [DEVELOPMENT.md](./DEVELOPMENT.md)
 
 2. `Whisper.transcribe(arr: NDArray[np.float32], num_proc: int = 1)`
 
-   Running transcription on a given Numpy array. This calls `full` from
-   `whisper.cpp`. If `num_proc` is greater than 1, it will use `full_parallel`
-   instead.
+   Running transcription on a given Numpy array. This calls `full_parallel` from
+   `whisper.cpp`.
 
    ```python
-   w.transcribe(np.ones((1, 16000)))
+   w.transcribe(np.ones(16000))
    ```
 
    To transcribe from a WAV file use `transcribe_from_file`:
