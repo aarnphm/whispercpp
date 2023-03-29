@@ -45,6 +45,15 @@ def test_invalid_models():
         )
 
 
+def test_invalid_filepaths():
+    with p.raises(RuntimeError):
+        w.Whisper.from_pretrained("nonexistent.bin")
+    with p.raises(RuntimeError):
+        w.Whisper.from_params(
+            "nonexistent.bin", w.api.Params.from_enum(w.api.SAMPLING_GREEDY)
+        )
+
+
 def test_forbid_init():
     with p.raises(RuntimeError):
         w.Whisper()
@@ -54,14 +63,32 @@ _EXPECTED = " And so my fellow Americans ask not what your country can do for yo
 
 
 @p.mark.skipif(not s.which("ffmpeg"), reason="ffmpeg not found, skipping this test.")
-def test_from_pretrained():
+def test_from_pretrained_name():
     m = w.Whisper.from_pretrained("tiny.en")
     assert _EXPECTED == m.transcribe(preprocess(JFK_WAV))
 
 
 @p.mark.skipif(not s.which("ffmpeg"), reason="ffmpeg not found, skipping this test.")
-def test_from_params():
+@p.mark.parametrize(
+    "models", [path.__fspath__() for path in Path(__file__).parent.joinpath("models").glob("*.bin")]
+)
+def test_from_pretrained_file(models: str):
+    m = w.Whisper.from_pretrained(models)
+    assert _EXPECTED == m.transcribe(preprocess(JFK_WAV))
+
+
+@p.mark.skipif(not s.which("ffmpeg"), reason="ffmpeg not found, skipping this test.")
+def test_from_params_name():
     m = w.Whisper.from_params("tiny.en", w.api.Params.from_enum(w.api.SAMPLING_GREEDY))
+    assert _EXPECTED == m.transcribe(preprocess(JFK_WAV))
+
+
+@p.mark.skipif(not s.which("ffmpeg"), reason="ffmpeg not found, skipping this test.")
+@p.mark.parametrize(
+    "models", [path.__fspath__() for path in Path(__file__).parent.joinpath("models").glob("*.bin")]
+)
+def test_from_params_file(models: str):
+    m = w.Whisper.from_params(models, w.api.Params.from_enum(w.api.SAMPLING_GREEDY))
     assert _EXPECTED == m.transcribe(preprocess(JFK_WAV))
 
 
