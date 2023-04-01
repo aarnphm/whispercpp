@@ -116,10 +116,11 @@ See [DEVELOPMENT.md](./DEVELOPMENT.md)
 1. `Whisper.from_pretrained(model_name: str) -> Whisper`
 
    Load a pre-trained model from the local cache or download and cache if
-   needed.
+   needed. Supports loading a custom ggml model from a local path passed as `model_name`.
 
    ```python
    w = Whisper.from_pretrained("tiny.en")
+   w = Whisper.from_pretrained("/path/to/model.bin")
    ```
 
    The model will be saved to `$XDG_DATA_HOME/whispercpp` or
