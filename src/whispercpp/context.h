@@ -140,12 +140,14 @@ template <typename CB> struct CallbackAndContext {
 struct Params {
   public:
     typedef std::function<void(Context &, int)> NewSegmentCallback;
+    typedef std::function<void(Context &, int)> ProgressCallback;
 
   private:
     std::shared_ptr<whisper_full_params> fp;
     std::string language;
 
     CallbackAndContext<NewSegmentCallback> new_segment_callback;
+    CallbackAndContext<ProgressCallback> progress_callback;
 
     friend struct Context;
 
@@ -162,8 +164,10 @@ struct Params {
     Params();
 
     Params(std::shared_ptr<whisper_full_params> &&fp,
-           CallbackAndContext<NewSegmentCallback> new_segment_callback)
-        : fp(fp), new_segment_callback(new_segment_callback){};
+           CallbackAndContext<NewSegmentCallback> new_segment_callback,
+           CallbackAndContext<ProgressCallback> progress_callback)
+        : fp(fp), new_segment_callback(new_segment_callback),
+          progress_callback(progress_callback){};
 
     Params(Params const &);
     Params &operator=(Params const &);
@@ -425,6 +429,10 @@ struct Params {
     // Do not use this function unless you know what you are doing.
     // Defaults to None.
     void set_new_segment_callback(NewSegmentCallback callback);
+
+    // called for every newly generated text segments
+    // Defaults to None.
+    void set_progress_callback(ProgressCallback callback);
 
     // Set the callback for starting the encoder.
     // Do not use this function unless you know what you are doing.

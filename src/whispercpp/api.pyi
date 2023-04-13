@@ -130,6 +130,9 @@ class Params:
     def on_new_segment(
         self, callback: t.Callable[[Context, int, T], None], userdata: T
     ) -> None: ...
+    def on_progress(
+        self, callback: t.Callable[[Context, int, T], None], userdata: T
+    ) -> None: ...
 
 T = t.TypeVar("T")
 

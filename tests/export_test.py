@@ -131,3 +131,16 @@ def test_callback():
 
     correct = m.transcribe(preprocess(ROOT / "samples" / "jfk.wav"))
     assert "".join(text) == correct
+
+
+def test_progress_callback():
+    def handleProgress(context: w.api.Context, progress: int, progresses: list[int]):
+        progresses.append(progress)
+
+    m = w.Whisper.from_pretrained("tiny.en")
+
+    progresses = []
+    m.params.on_progress(handleProgress, progresses)
+
+    m.transcribe(preprocess(ROOT / "samples" / "jfk.wav"))
+    assert len(progresses) > 0

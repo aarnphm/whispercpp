@@ -45,6 +45,17 @@ void new_segment_callback_handler(whisper_context *ctx,
     }
 }
 
+void progress_callback_handler(whisper_context *ctx,
+                               whisper_state * /* state */, int progress,
+                               void *user_data) {
+    auto progress_callback =
+        (CallbackAndContext<Params::ProgressCallback>::Container *)user_data;
+    auto callback = progress_callback->callback;
+    if (callback != nullptr) {
+        (*callback)(*progress_callback->context, progress);
+    }
+}
+
 Params Params::from_enum(whisper_sampling_strategy *enum_) {
     SamplingStrategies ss = SamplingStrategies::from_enum(enum_);
     return Params::from_sampling_strategy(&ss);
@@ -59,6 +70,10 @@ Params Params::from_sampling_strategy(SamplingStrategies *ss) {
     fp.new_segment_callback = new_segment_callback_handler;
     fp.new_segment_callback_user_data = new_segment_callback.data.get();
 
+    CallbackAndContext<ProgressCallback> progress_callback;
+    fp.progress_callback = progress_callback_handler;
+    fp.progress_callback_user_data = progress_callback.data.get();
+
     switch (strategy->to_enum()) {
     case WHISPER_SAMPLING_GREEDY:
         fp.greedy.best_of = ((SamplingGreedy *)strategy)->best_of;
@@ -71,18 +86,23 @@ Params Params::from_sampling_strategy(SamplingStrategies *ss) {
         throw std::runtime_error("Unknown sampling strategy");
     }
     return Params(std::make_shared<whisper_full_params>(fp),
-                  new_segment_callback);
+                  new_segment_callback, progress_callback);
 };
 
 Params::Params() {
     fp->new_segment_callback = new_segment_callback_handler;
     fp->new_segment_callback_user_data = new_segment_callback.data.get();
+    fp->progress_callback = progress_callback_handler;
+    fp->progress_callback_user_data = progress_callback.data.get();
 }
 
 Params::Params(Params const &other)
-    : fp(other.fp), new_segment_callback(other.new_segment_callback) {
+    : fp(other.fp), new_segment_callback(other.new_segment_callback),
+      progress_callback(other.progress_callback) {
     fp->new_segment_callback = new_segment_callback_handler;
     fp->new_segment_callback_user_data = new_segment_callback.data.get();
+    fp->progress_callback = progress_callback_handler;
+    fp->progress_callback_user_data = progress_callback.data.get();
 }
 
 Params &Params::operator=(Params const &other) {
@@ -90,6 +110,9 @@ Params &Params::operator=(Params const &other) {
     new_segment_callback = other.new_segment_callback;
     fp->new_segment_callback = new_segment_callback_handler;
     fp->new_segment_callback_user_data = new_segment_callback.data.get();
+    progress_callback = other.progress_callback;
+    fp->progress_callback = progress_callback_handler;
+    fp->progress_callback_user_data = progress_callback.data.get();
     return *this;
 }
 
@@ -97,6 +120,9 @@ Params Params::copy_for_full(Context &context) {
     Params params(*this);
     if (params.new_segment_callback.data) {
         params.new_segment_callback.data->context = &context;
+    }
+    if (params.progress_callback.data) {
+        params.progress_callback.data->context = &context;
     }
     return params;
 }
@@ -117,6 +143,13 @@ void Params::set_tokens(std::vector<int> &tokens) {
 void Params::set_new_segment_callback(NewSegmentCallback callback) {
     (*new_segment_callback.data).callback =
         std::make_shared<NewSegmentCallback>(callback);
+}
+
+// Called for progresss updates
+// Defaults to None.
+void Params::set_progress_callback(ProgressCallback callback) {
+    (*progress_callback.data).callback =
+        std::make_shared<ProgressCallback>(callback);
 }
 
 // Set the callback for starting the encoder.
@@ -208,6 +241,7 @@ std::string Params::to_string() const {
 }
 
 typedef std::function<void(Context &, int, py::object &)> NewSegmentCallback;
+typedef std::function<void(Context &, int, py::object &)> ProgressCallback;
 
 #define WITH_DEPRECATION(depr)                                                 \
     PyErr_WarnEx(PyExc_DeprecationWarning,                                     \
@@ -670,6 +704,20 @@ void ExportParamsApi(py::module &m) {
                     [](NewSegmentCallback &callback, py::object &user_data,
                        Context &ctx, int n_new) mutable {
                         (callback)(ctx, n_new, user_data);
+                    },
+                    std::move(callback), std::move(user_data), _1, _2));
+            },
+            "callback"_a, "user_data"_a = py::none(), py::keep_alive<1, 2>(),
+            py::keep_alive<1, 3>())
+        .def(
+            "on_progress",
+            [](Params &self, ProgressCallback &callback,
+               py::object &user_data) {
+                using namespace std::placeholders;
+                self.set_progress_callback(std::bind(
+                    [](ProgressCallback &callback, py::object &user_data,
+                       Context &ctx, int progress) mutable {
+                        (callback)(ctx, progress, user_data);
                     },
                     std::move(callback), std::move(user_data), _1, _2));
             },
