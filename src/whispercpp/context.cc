@@ -289,7 +289,6 @@ std::vector<float> Context::lang_detect(size_t offset_ms, size_t threads) {
     } else if (res == -7) {
         RAISE_RUNTIME_ERROR("Failed to decode.");
     } else {
-        assert(res == (int)lang_probs.size());
         return lang_probs;
     }
 }
