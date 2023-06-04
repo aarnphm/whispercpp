@@ -2,8 +2,8 @@ blank_issues_enabled: true
 version: 2.1
 contact_links:
   - name: Discussions
-    url: https://github.com/aarnphm/ecosystem/discussions
+    url: https://github.com/aarnphm/whispercpp/discussions
     about: Please ask general questions here.
   - name: Issues
-    url: https://github.com/aarnphm/ecosystem/issues?q=is:issue+is:open+sort:updated-desc
+    url: https://github.com/aarnphm/whispercpp/issues?q=is:issue+is:open+sort:updated-desc
     about: Please create and issue new tickets.
