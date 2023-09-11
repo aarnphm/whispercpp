@@ -95,3 +95,11 @@ def test_set_language():
         params_with_lang = params.with_language(lang)
         print(lang, params_with_lang.language)
         assert params_with_lang.language == lang
+
+def test_set_initial_prompt():
+    params = w.api.Params.from_enum(w.api.StrategyType.SAMPLING_GREEDY)
+    for prompt in ["This is a test initial prompt", ""]:
+        assert params.initial_prompt != ""
+        params_with_initial_prompt = params.with_initial_prompt(prompt)
+        print(prompt, params_with_initial_prompt.initial_prompt)
+        assert params_with_initial_prompt.initial_prompt == prompt 
