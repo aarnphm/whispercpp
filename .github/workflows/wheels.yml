@@ -77,7 +77,7 @@ jobs:
           python-version: ${{ matrix.python[1] }}
       - name: Set up QEMU
         if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
         with:
           platforms: all
       - name: Build wheels
@@ -133,7 +133,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Set up QEMU
         if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
         with:
           platforms: all
       - name: Building wheels
