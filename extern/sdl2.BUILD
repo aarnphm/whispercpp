@@ -26,6 +26,7 @@ cmake(
         "CMAKE_OSX_ARCHITECTURES": "x86_64;arm64",
         "CMAKE_OSX_DEPLOYMENT_TARGET": "10.14",
         "CMAKE_POSITION_INDEPENDENT_CODE": "ON",
+        "CMAKE_INSTALL_LIBDIR": "lib",
         "SDL_SHARED": "OFF",
         "SDL_JOYSTICK": "OFF",
         "SDL_HAPTIC": "OFF",
