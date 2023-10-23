@@ -44,7 +44,7 @@ jobs:
           python -m isort --check .
           python -m ruff check src
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: "17"
       - name: Install pyright
