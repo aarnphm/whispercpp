@@ -105,7 +105,7 @@ jobs:
           cp -r cp311-macosx/*.whl dist/
           cp -r cp38-macosx/*.whl dist/
           cp -r cp39-macosx/*.whl dist/
-      - uses: pypa/gh-action-pypi-publish@v1.8.10
+      - uses: pypa/gh-action-pypi-publish@v1.8.11
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         with:
           user: __token__
