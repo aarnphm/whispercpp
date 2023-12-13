@@ -25,18 +25,18 @@ jobs:
       - name: Setup CI
         uses: ./.github/actions/setup-repo
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
       - name: Autobuild
         if: ${{ matrix.language != 'cpp' }}
-        uses: github/codeql-action/autobuild@v2
+        uses: github/codeql-action/autobuild@v3
       - run: |
           bazel run pypi_update
           bazel build --config codeql audio_lib context_lib
         name: 'Build C++ for CodeQL'
         if: ${{ matrix.language == 'cpp' }}
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
         with:
           category: '/language:${{matrix.language}}'
