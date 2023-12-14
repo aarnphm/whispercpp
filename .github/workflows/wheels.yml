@@ -42,7 +42,7 @@ jobs:
           python -m venv venv
           source venv/bin/activate
           pip install dist/*.tar.gz && python -c "import whispercpp as w;print(dir(w.api)); print(dir(w.audio));"
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: dist/*.tar.gz
   build-arm-musl-wheels:
@@ -85,7 +85,7 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.python[0] }}-${{ matrix.platform[0] }}
           CIBW_ARCHS_MACOS: x86_64 arm64
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.python[0] }}-${{ startsWith(matrix.platform[0], 'macosx') && 'macosx' || matrix.platform[0] }}
           path: ./wheelhouse/*.whl
