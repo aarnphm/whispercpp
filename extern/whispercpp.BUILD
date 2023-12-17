@@ -13,9 +13,7 @@ exports_files(
 )
 
 HEADERS = [
-    "ggml.h",
-    "whisper.h",
-]
+] + glob(["*.h"])
 
 EXAMPLE_HEADERS = [
     "examples/common-sdl.h",
@@ -30,6 +28,10 @@ CFLAGS = [
     "-std=c11",
     "-fPIC",
     "-pthread",
+    "-DWHISPER_USE_OPENVINO",
+    "-D_POSIX_C_SOURCE=200809L",
+    "-D_USE_MATH_DEFINES",
+    "-D_GNU_SOURCE",
 ]
 
 CXXFLAGS = [
@@ -39,6 +41,10 @@ CXXFLAGS = [
     "-std=c++11",
     "-fPIC",
     "-pthread",
+    "-DWHISPER_USE_OPENVINO",
+    "-D_POSIX_C_SOURCE=200809L",
+    "-D_USE_MATH_DEFINES",
+    "-D_GNU_SOURCE",
 ]
 
 cc_library(
@@ -132,5 +138,9 @@ cc_library(
             "Accelerate",
         ],
     }),
-    deps = [":ggml"],
+    deps = [
+        ":ggml",
+	"@linux_openvino//:openvino_new_headers",
+	"@linux_openvino//:openvino",
+    ],
 )

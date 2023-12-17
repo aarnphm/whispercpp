@@ -78,6 +78,12 @@ def internal_deps():
         shallow_since = "1678217790 +0200",
     )
 
+    native.new_local_repository(
+        name = "linux_openvino",
+        path = "/home/pi/code/v3/openvino/l_openvino_toolkit_debian9_2023.2.0.13089.cfd42bd2cb0_arm64/runtime/",
+        build_file = "//extern:openvino.BUILD",
+    )
+
     http_archive(
         name = "com_github_libsdl_sdl2",
         build_file = Label("//extern:sdl2.BUILD"),
