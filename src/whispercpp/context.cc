@@ -67,6 +67,7 @@ Context Context::from_file(const char *filename, bool no_state) {
         c.set_init_with_state(true);
     }
     RAISE_IF_NULL(c.wctx);
+    whisper_ctx_init_openvino_encoder(c.wctx, nullptr, "CPU", nullptr);
     return c;
 }
 
@@ -81,6 +82,7 @@ Context Context::from_buffer(void *buffer, size_t buffer_size, bool no_state) {
         c.set_init_with_state(true);
     }
     RAISE_IF_NULL(c.wctx);
+    whisper_ctx_init_openvino_encoder(c.wctx, nullptr, "CPU", nullptr);
     return c;
 }
 
