@@ -55,6 +55,7 @@ COPTS = [
     "-std=c++11",
     "-fPIC",
     "-Wall",
+    "-DWHISPER_USE_OPENVINO",
 ] + selects.with_or({
     "//conditions:default": [],
     "@bazel_tools//src/conditions:linux_x86_64": [
