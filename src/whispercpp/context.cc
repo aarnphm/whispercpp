@@ -303,6 +303,8 @@ size_t Context::n_len() {
     }
 }
 
+// Get number of mels per segment
+size_t Context::model_n_mels() { return whisper_model_n_mels(wctx); }
 // Get number of vocab
 size_t Context::n_vocab() { return whisper_n_vocab(wctx); }
 // Get number of text context

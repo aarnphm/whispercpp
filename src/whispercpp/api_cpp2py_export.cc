@@ -20,7 +20,6 @@ PYBIND11_MODULE(api_cpp2py_export, m) {
     // NOTE: default attributes
     m.attr("SAMPLE_RATE") = py::int_(WHISPER_SAMPLE_RATE);
     m.attr("N_FFT") = py::int_(WHISPER_N_FFT);
-    m.attr("N_MEL") = py::int_(WHISPER_N_MEL);
     m.attr("HOP_LENGTH") = py::int_(WHISPER_HOP_LENGTH);
     m.attr("CHUNK_SIZE") = py::int_(WHISPER_CHUNK_SIZE);
 

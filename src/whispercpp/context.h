@@ -526,6 +526,7 @@ struct Context {
     // language functions. Returns a vector of probabilities for each language.
     std::vector<float> lang_detect(size_t offset_ms, size_t threads);
 
+    size_t model_n_mels();
     size_t n_len();
     size_t n_vocab();
     size_t n_text_ctx();
@@ -551,8 +552,8 @@ struct Context {
     whisper_token solm_token() { return whisper_token_solm(wctx); }
     whisper_token not_token() { return whisper_token_not(wctx); }
     whisper_token beg_token() { return whisper_token_beg(wctx); }
-    whisper_token token_translate() { return whisper_token_translate(); }
-    whisper_token token_transcribe() { return whisper_token_transcribe(); }
+    whisper_token token_translate() { return whisper_token_translate(wctx); }
+    whisper_token token_transcribe() { return whisper_token_transcribe(wctx); }
     whisper_token lang_token(int lang_id) {
         return whisper_token_lang(wctx, lang_id);
     }
