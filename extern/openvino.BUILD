@@ -1,4 +1,4 @@
-
+load("@bazel_skylib//lib:selects.bzl", "selects")
 
 package(
 	default_visibility = ["//visibility:public"],
@@ -37,13 +37,18 @@ cc_library(
 
 cc_library(
 	name = "openvino",
-	srcs = glob([
-		"lib/aarch64/libopenvino.so"
-	]),
+    srcs = selects.with_or({
+        "@bazel_tools//src/conditions:linux_x86_64": [
+            "lib/intel64/libopenvino.so",
+        ],
+        "@bazel_tools//src/conditions:linux_aarch64": [
+            "lib/aarch64/libopenvino.so",
+        ],
+    }),
 	strip_include_prefix = "include/ie",
 	visibility = ["//visibility:public"],
 	deps = [
 		"@linux_openvino//:ngraph",
 		"@linux_openvino//:openvino_new_headers",
-        ],
+    ],
 )
