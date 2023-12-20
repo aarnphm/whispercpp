@@ -11,6 +11,7 @@
 #include "pybind11/stl.h"
 #include "whisper.h"
 #endif
+#include <pybind11/numpy.h>
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -141,6 +142,9 @@ struct Params {
   public:
     typedef std::function<void(Context &, int)> NewSegmentCallback;
     typedef std::function<void(Context &, int)> ProgressCallback;
+    typedef std::function<void(Context &, int /*n_logits*/,
+                               py::array_t<float> /*logits*/
+                              )> LogitsFilterCallback;
 
   private:
     std::shared_ptr<whisper_full_params> fp;
@@ -148,6 +152,7 @@ struct Params {
 
     CallbackAndContext<NewSegmentCallback> new_segment_callback;
     CallbackAndContext<ProgressCallback> progress_callback;
+    CallbackAndContext<LogitsFilterCallback> logits_filter_callback;
 
     friend struct Context;
 
@@ -165,9 +170,11 @@ struct Params {
 
     Params(std::shared_ptr<whisper_full_params> &&fp,
            CallbackAndContext<NewSegmentCallback> new_segment_callback,
-           CallbackAndContext<ProgressCallback> progress_callback)
+           CallbackAndContext<ProgressCallback> progress_callback,
+           CallbackAndContext<LogitsFilterCallback> logits_filter_callback)
         : fp(fp), new_segment_callback(new_segment_callback),
-          progress_callback(progress_callback){};
+          progress_callback(progress_callback),
+          logits_filter_callback(logits_filter_callback){};
 
     Params(Params const &);
     Params &operator=(Params const &);
@@ -434,6 +441,11 @@ struct Params {
     // Defaults to None.
     void set_progress_callback(ProgressCallback callback);
 
+    // Set the callback for each decoder to filter obtained logits.
+    // Do not use this function unless you know what you are doing.
+    // Defaults to None.
+    void set_logits_filter_callback(LogitsFilterCallback callback);
+
     // Set the callback for starting the encoder.
     // Do not use this function unless you know what you are doing.
     // Defaults to None.
@@ -441,10 +453,6 @@ struct Params {
     // Set the user data to be passed to the encoder begin callback.
     // Defaults to None. See set_encoder_begin_callback.
     void set_encoder_begin_callback_user_data(void *user_data);
-    // Set the callback for each decoder to filter obtained logits.
-    // Do not use this function unless you know what you are doing.
-    // Defaults to None.
-    void set_logits_filter_callback(whisper_logits_filter_callback callback);
     // Set the user data to be passed to the logits filter callback.
     // Defaults to None. See set_logits_filter_callback.
     void set_logits_filter_callback_user_data(void *user_data);

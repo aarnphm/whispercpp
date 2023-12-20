@@ -133,6 +133,9 @@ class Params:
     def on_progress(
         self, callback: t.Callable[[Context, int, T], None], userdata: T
     ) -> None: ...
+    def on_new_logits(
+        self, callback: t.Callable[[Context, int, NDArray[float], T], None], userdata: T
+    ) -> None: ...
 
 T = t.TypeVar("T")
 

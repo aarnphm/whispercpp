@@ -144,3 +144,21 @@ def test_progress_callback():
 
     m.transcribe(preprocess(ROOT / "samples" / "jfk.wav"))
     assert len(progresses) > 0
+
+
+def test_logits_callback():
+    def handleLogits(context: w.api.Context, n_tokens: int, logits: NDArray):
+        logits_data.append(n_tokens, logits)
+
+    m = w.Whisper.from_pretrained("tiny.en")
+
+    logits_data = []
+    m.params.on_new_logits(handleLogits, logits_data)
+
+    m.trasncripe(preprocess(ROOT / "samples" / "jfk.wav"))
+    assert len(logits_data) > 0
+
+    # make sure logits are passed by reference, so all logits stored
+    # should be equal to one another as none of them were copied in the
+    # callback and copies don't happen by default.
+    assert np.all(logits_data[0][1] == logits_data[1][1])
