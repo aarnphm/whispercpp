@@ -39,7 +39,7 @@ jobs:
         uses: ./.github/actions/setup-repo
         with:
           python-version: '3.8' # sync with default version in WORKSPACE.
-      - uses: FedericoCarboni/setup-ffmpeg@v2
+      - uses: FedericoCarboni/setup-ffmpeg@v3
         id: setup-ffmpeg
       - name: Install development dependencies and bindings
         run: |
