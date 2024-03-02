@@ -604,6 +604,15 @@ void ExportParamsApi(py::module &m) {
                 WITH_DEPRECATION("language");
                 self.with_language(language);
             })
+        // NOTE set initial_prompt
+        .def("with_initial_prompt", &Params::with_initial_prompt, "initial_prompt"_a,
+             py::return_value_policy::reference)
+        .def_property(
+            "initial_prompt", [](Params &self) { return self.get()->initial_prompt; },
+            [](Params &self, const char *initial_prompt) {
+                WITH_DEPRECATION("initial_prompt");
+                self.with_initial_prompt(initial_prompt);   
+            })
         // NOTE setting suppress_blank
         .def("with_suppress_blank", &Params::with_suppress_blank,
              "suppress_blank"_a, py::return_value_policy::reference)

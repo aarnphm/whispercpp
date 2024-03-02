@@ -145,6 +145,7 @@ struct Params {
   private:
     std::shared_ptr<whisper_full_params> fp;
     std::string language;
+    std::string initial_prompt;
 
     CallbackAndContext<NewSegmentCallback> new_segment_callback;
     CallbackAndContext<ProgressCallback> progress_callback;
@@ -348,6 +349,13 @@ struct Params {
         return this;
     }
 
+    // Set initial prompt
+    Params *with_initial_prompt(std::string initial_prompt) {
+        this->initial_prompt = initial_prompt;
+        fp->initial_prompt = this->initial_prompt.c_str();
+        return this;
+    }
+    
     // Set suppress_blank. See
     // https://github.com/openai/whisper/blob/f82bc59f5ea234d4b97fb2860842ed38519f7e65/whisper/decoding.py#L89
     // for more information.
