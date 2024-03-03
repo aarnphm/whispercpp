@@ -56,6 +56,29 @@ void progress_callback_handler(whisper_context *ctx,
     }
 }
 
+void logits_filter_callback_handler(whisper_context * ctx,
+                                    whisper_state * state,
+                                    const whisper_token_data * tokens,
+                                    int n_tokens,
+                                    float * logits,
+                                    void * user_data) {
+    auto logits_filter_callback =
+        (CallbackAndContext<Params::LogitsFilterCallback>::Container *)user_data;
+    auto callback = logits_filter_callback->callback;
+    if (callback != nullptr) {
+        int n_vocab = whisper_n_vocab(ctx);
+
+        py::array_t<float> logits_buf = py::array_t<float>(
+            n_vocab,
+            logits,
+            py::cast(logits_filter_callback->context)
+        );
+
+        (*callback)(*logits_filter_callback->context, n_tokens, logits_buf);
+    }
+}
+
+
 Params Params::from_enum(whisper_sampling_strategy *enum_) {
     SamplingStrategies ss = SamplingStrategies::from_enum(enum_);
     return Params::from_sampling_strategy(&ss);
@@ -74,6 +97,10 @@ Params Params::from_sampling_strategy(SamplingStrategies *ss) {
     fp.progress_callback = progress_callback_handler;
     fp.progress_callback_user_data = progress_callback.data.get();
 
+    CallbackAndContext<LogitsFilterCallback> logits_filter_callback;
+    fp.logits_filter_callback = logits_filter_callback_handler;
+    fp.logits_filter_callback_user_data = logits_filter_callback.data.get();
+
     switch (strategy->to_enum()) {
     case WHISPER_SAMPLING_GREEDY:
         fp.greedy.best_of = ((SamplingGreedy *)strategy)->best_of;
@@ -86,7 +113,8 @@ Params Params::from_sampling_strategy(SamplingStrategies *ss) {
         throw std::runtime_error("Unknown sampling strategy");
     }
     return Params(std::make_shared<whisper_full_params>(fp),
-                  new_segment_callback, progress_callback);
+                  new_segment_callback, progress_callback,
+                  logits_filter_callback);
 };
 
 Params::Params() {
@@ -94,15 +122,20 @@ Params::Params() {
     fp->new_segment_callback_user_data = new_segment_callback.data.get();
     fp->progress_callback = progress_callback_handler;
     fp->progress_callback_user_data = progress_callback.data.get();
+    fp->logits_filter_callback = logits_filter_callback_handler;
+    fp->logits_filter_callback_user_data = logits_filter_callback.data.get();
 }
 
 Params::Params(Params const &other)
     : fp(other.fp), new_segment_callback(other.new_segment_callback),
-      progress_callback(other.progress_callback) {
+      progress_callback(other.progress_callback),
+      logits_filter_callback(other.logits_filter_callback) {
     fp->new_segment_callback = new_segment_callback_handler;
     fp->new_segment_callback_user_data = new_segment_callback.data.get();
     fp->progress_callback = progress_callback_handler;
     fp->progress_callback_user_data = progress_callback.data.get();
+    fp->logits_filter_callback = logits_filter_callback_handler;
+    fp->logits_filter_callback_user_data = logits_filter_callback.data.get();
 }
 
 Params &Params::operator=(Params const &other) {
@@ -113,6 +146,9 @@ Params &Params::operator=(Params const &other) {
     progress_callback = other.progress_callback;
     fp->progress_callback = progress_callback_handler;
     fp->progress_callback_user_data = progress_callback.data.get();
+    logits_filter_callback = other.logits_filter_callback;
+    fp->logits_filter_callback = logits_filter_callback_handler;
+    fp->logits_filter_callback_user_data = logits_filter_callback.data.get();
     return *this;
 }
 
@@ -123,6 +159,9 @@ Params Params::copy_for_full(Context &context) {
     }
     if (params.progress_callback.data) {
         params.progress_callback.data->context = &context;
+    }
+    if (params.logits_filter_callback.data) {
+        params.logits_filter_callback.data->context = &context;
     }
     return params;
 }
@@ -145,11 +184,18 @@ void Params::set_new_segment_callback(NewSegmentCallback callback) {
         std::make_shared<NewSegmentCallback>(callback);
 }
 
-// Called for progresss updates
+// Called for progress updates
 // Defaults to None.
 void Params::set_progress_callback(ProgressCallback callback) {
     (*progress_callback.data).callback =
         std::make_shared<ProgressCallback>(callback);
+}
+
+// called for every decoding pass when new logits are available
+// Defaults to None.
+void Params::set_logits_filter_callback(LogitsFilterCallback callback) {
+    (*logits_filter_callback.data).callback =
+        std::make_shared<LogitsFilterCallback>(callback);
 }
 
 // Set the callback for starting the encoder.
@@ -165,20 +211,6 @@ void Params::set_encoder_begin_callback(
 void Params::set_encoder_begin_callback_user_data(void *user_data) {
     fp->encoder_begin_callback_user_data = user_data;
 }
-
-// Set the callback for each decoder to filter obtained
-// logits. Do not use this function unless you know what you
-// are doing. Defaults to None.
-void Params::set_logits_filter_callback(
-    whisper_logits_filter_callback callback) {
-    fp->logits_filter_callback = callback;
-}
-// Set the user data to be passed to the logits filter
-// callback. Defaults to None. See
-// set_logits_filter_callback.
-void Params::set_logits_filter_callback_user_data(void *user_data) {
-    fp->logits_filter_callback_user_data = user_data;
-};
 
 inline std::ostream &operator<<(std::ostream &os, const Params &params) {
     os << params.to_string();
@@ -242,6 +274,7 @@ std::string Params::to_string() const {
 
 typedef std::function<void(Context &, int, py::object &)> NewSegmentCallback;
 typedef std::function<void(Context &, int, py::object &)> ProgressCallback;
+typedef std::function<void(Context &, int, py::array_t<float>, py::object &)> LogitsFilterCallback;
 
 #define WITH_DEPRECATION(depr)                                                 \
     PyErr_WarnEx(PyExc_DeprecationWarning,                                     \
@@ -722,6 +755,20 @@ void ExportParamsApi(py::module &m) {
                     std::move(callback), std::move(user_data), _1, _2));
             },
             "callback"_a, "user_data"_a = py::none(), py::keep_alive<1, 2>(),
-            py::keep_alive<1, 3>());
-    // TODO: encoder_begin_callback and logits_filter_callback are still missing
+            py::keep_alive<1, 3>())
+        .def("on_new_logits",
+           [](Params &self, LogitsFilterCallback &callback,
+               py::object &user_data) {
+                using namespace std::placeholders;
+                self.set_logits_filter_callback(std::bind(
+                    [](LogitsFilterCallback &callback, py::object &user_data,
+                       Context &ctx, int n_tokens, py::array_t<float> logits) mutable {
+                        // TODO pass float and tokens and stuff
+                        (callback)(ctx, n_tokens, logits, user_data);
+                    },
+                    std::move(callback), std::move(user_data), _1, _2, _3));
+           },
+           "callback"_a, "user_data"_a = py::none(), py::keep_alive<1, 2>(),
+           py::keep_alive<1, 3>());
+    // TODO: encoder_begin_callback is still missing
 }
