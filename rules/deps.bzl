@@ -74,8 +74,14 @@ def internal_deps():
         init_submodules = True,
         recursive_init_submodules = True,
         remote = "https://github.com/ggerganov/whisper.cpp.git",
-        commit = "2f889132c66051b14c6f8770e9b3d4e3f159821d",
+        commit = "c5f9acf4b79780171e25b91d227c615e828568f6",
         shallow_since = "1678217790 +0200",
+    )
+
+    native.new_local_repository(
+        name = "linux_openvino",
+        path = "/home/pi/code/v3/openvino/l_openvino_toolkit_debian9_2023.2.0.13089.cfd42bd2cb0_arm64/runtime/",
+        build_file = "//extern:openvino.BUILD",
     )
 
     http_archive(

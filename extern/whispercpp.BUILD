@@ -17,6 +17,9 @@ HEADERS = [
     "whisper.h",
 ]
 
+OPENVINO_HEADERS = glob(["openvino/*.h"])
+OPENVINO_SOURCES = glob(["openvino/*.cpp"])
+
 EXAMPLE_HEADERS = [
     "examples/common-sdl.h",
     "examples/common.h",
@@ -30,6 +33,10 @@ CFLAGS = [
     "-std=c11",
     "-fPIC",
     "-pthread",
+    "-DWHISPER_USE_OPENVINO",
+    "-D_POSIX_C_SOURCE=200809L",
+    "-D_USE_MATH_DEFINES",
+    "-D_GNU_SOURCE",
 ]
 
 CXXFLAGS = [
@@ -39,6 +46,10 @@ CXXFLAGS = [
     "-std=c++11",
     "-fPIC",
     "-pthread",
+    "-DWHISPER_USE_OPENVINO",
+    "-D_POSIX_C_SOURCE=200809L",
+    "-D_USE_MATH_DEFINES",
+    "-D_GNU_SOURCE",
 ]
 
 cc_library(
@@ -90,7 +101,9 @@ cc_library(
 
 cc_library(
     name = "ggml",
-    srcs = ["ggml.c"],
+    srcs = [
+        "ggml.c",
+    ],
     hdrs = HEADERS,
     copts = CFLAGS + selects.with_or({
         "//conditions:default": [],
@@ -113,8 +126,8 @@ cc_library(
 
 cc_library(
     name = "whisper",
-    srcs = ["whisper.cpp"],
-    hdrs = HEADERS + EXAMPLE_HEADERS,
+    srcs = ["whisper.cpp"] + OPENVINO_SOURCES,
+    hdrs = HEADERS + EXAMPLE_HEADERS + OPENVINO_HEADERS,
     copts = CXXFLAGS + selects.with_or({
         "//conditions:default": [],
         "@bazel_tools//src/conditions:linux_x86_64": [
@@ -132,5 +145,9 @@ cc_library(
             "Accelerate",
         ],
     }),
-    deps = [":ggml"],
+    deps = [
+        ":ggml",
+	"@linux_openvino//:openvino_new_headers",
+	"@linux_openvino//:openvino",
+    ],
 )
