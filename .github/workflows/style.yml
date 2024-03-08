@@ -30,7 +30,7 @@ jobs:
           fetch-depth: 0 # fetch all tags and branches
       - name: Setup CI
         uses: ./.github/actions/setup-repo
-      - uses: cachix/install-nix-action@v25
+      - uses: cachix/install-nix-action@v26
         name: Setup nix setup
         with:
           nix_path: nixpkgs=channel:nixos-unstable
